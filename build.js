@@ -1,10 +1,10 @@
 "use strict";
 
-const build = Object.freeze({
-  targetFirmware: "12.00",
-  id: "1200-test-0001"
-});
+window.PS4_WEBKIT_BUILD = {
+  firmwareTarget: "12.00",
+  buildId: "1200-test-0001"
+};
 
 document.querySelectorAll("[data-build-id]").forEach((element) => {
-  element.textContent = build.id;
+  element.textContent = window.PS4_WEBKIT_BUILD.buildId;
 });
