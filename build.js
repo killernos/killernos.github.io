@@ -1,8 +1,8 @@
 "use strict";
 
 window.PS4_WEBKIT_BUILD = {
-  firmwareTarget: "multi-fw",
-  buildId: "1200-test-0001"
+  firmwareTarget: "12.00",
+  buildId: "1200-test-0002"
 };
 
 document.querySelectorAll("[data-build-id]").forEach((element) => {

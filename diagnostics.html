@@ -1,16 +1,28 @@
 <!doctype html>
 <html>
 <head><meta charset="utf-8"><title>Diagnostics</title>  <script src="./build.js" defer></script>
+  <script src="./js/diagnostics.js" defer></script>
 </head>
 <body>
   <h1>PS4 WebKit Next Diagnostics</h1>
-  <pre id="log">No attempts recorded.</pre>
-  <p>Host firmware policy: Lapse through 12.02; no backend from 12.03 through 12.49; Poops from 12.50.</p>
-  <p>Local hardware verification: 12.00 only.</p>
-  <p>Build: <span data-build-id>1200-test-0001</span></p>
+  <p>Firmware: <span id="diag-firmware">Unknown</span></p>
+  <p>Selected Backend: <span id="diag-backend">None</span></p>
+  <p>Build: <span id="diag-build" data-build-id>1200-test-0002</span></p>
+  <p>User Agent: <span id="diag-user-agent">Loading...</span></p>
+  <p>Last Stage: <span id="diag-last-stage">Not reported</span></p>
+  <p>Attempts: <span id="diag-attempts">0</span></p>
+  <p>Passes: <span id="diag-passes">0</span></p>
+  <p>Failures: <span id="diag-failures">0</span></p>
   <p>Selected WebKit implementation: Not configured</p>
   <p>Selected kernel backend: Not configured</p>
   <p>Last successful stage: Not reported</p>
+  <p>
+    <button id="run-once" type="button">Run WebKit Probe</button>
+    <button id="run-ten" type="button">Run 10x</button>
+    <button id="reset-log" type="button">Reset</button>
+    <button id="export-log" type="button">Export Log</button>
+  </p>
+  <pre id="log">No diagnostic records.</pre>
   <p><a href="./index.html">Home</a></p>
 </body>
 </html>

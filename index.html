@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>PS4 WebKit Next</title>
   <script src="./build.js" defer></script>
+  <script src="./js/diagnostics.js" defer></script>
 </head>
 <body>
   <h1>PS4 WebKit Next</h1>
@@ -14,7 +15,7 @@
   <p>Selected Backend: <span id="backend">Detecting...</span></p>
   <p id="routing-status">Inspecting the PS4 browser user agent.</p>
   <p>Local hardware verification: 12.00 only.</p>
-  <p>Build: <span data-build-id>1200-test-0001</span></p>
+  <p>Build: <span data-build-id>1200-test-0002</span></p>
   <p><a href="./diagnostics.html">Diagnostics</a></p>
   <script>
     (function () {
@@ -50,6 +51,13 @@
       firmwareElement.textContent = firmware || "Unknown";
       backendElement.textContent = backend;
       statusElement.textContent = explanation + " Backend execution is not enabled in this private routing preview.";
+      window.PS4Runtime = {
+        firmware: firmware || "Unknown",
+        selectedBackend: backend,
+        isPS4: firmware !== null,
+        backendEntered: false,
+        kernelRW: false
+      };
     })();
   </script>
 </body>
