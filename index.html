@@ -9,23 +9,35 @@
 </head>
 <body>
   <h1>PS4 WebKit Next</h1>
-  <p>Research host scaffold. No exploit is wired into this page yet.</p>
+  <p>PS4 browser runtime host and diagnostics.</p>
   <p>I am not responsible for any damage. Jailbreak at your own risk.</p>
   <p>Detected Firmware: <span id="firmware">Detecting...</span></p>
   <p>Selected Backend: <span id="backend">Detecting...</span></p>
+  <p>Launcher State: <span id="launcher-state">Waiting</span></p>
+  <p>Userland State: <span id="userland-state">Not started</span></p>
+  <p>Backend State: <span id="backend-state">Not started</span></p>
+  <p>Payload State: <span id="payload-state">Not started</span></p>
   <p id="routing-status">Inspecting the PS4 browser user agent.</p>
   <p>Local hardware verification: 12.00 only.</p>
-  <p>Build: <span data-build-id>1200-test-0002</span></p>
+  <p>Build: <span data-build-id>1200-zrm-link-0001</span></p>
+  <p><button id="run-1200" type="button" disabled>Run 12.00 Runtime</button></p>
   <p><a href="./diagnostics.html">Diagnostics</a></p>
   <script>
     (function () {
       var firmwareElement = document.getElementById("firmware");
       var backendElement = document.getElementById("backend");
+      var launcherElement = document.getElementById("launcher-state");
       var statusElement = document.getElementById("routing-status");
-      var parameters = new URLSearchParams(location.search);
+      var runButton = document.getElementById("run-1200");
       var match = /PlayStation\s+4[\/ ](\d+)\.(\d+)/.exec(navigator.userAgent);
       var firmware = null;
       var firmwareNumber = null;
+      var forcedBackend = null;
+      try {
+        var parameters = new URLSearchParams(location.search);
+        forcedBackend = parameters.get("bug");
+      } catch (e) { }
+
       if (match) {
         var minor = parseInt(match[2], 16);
         var normalizedMinor = minor.toString(16);
@@ -33,9 +45,9 @@
         firmware = match[1] + "." + normalizedMinor;
         firmwareNumber = parseInt(match[1], 10) * 100 + parseInt(normalizedMinor, 10);
       }
+
       var backend = "None";
       var explanation = "User agent is not a PlayStation 4.";
-      var forcedBackend = parameters.get("bug");
       if (forcedBackend === "lapse" || forcedBackend === "poops") {
         backend = forcedBackend === "lapse" ? "Lapse" : "Poops";
         explanation = "Selected via ?bug=" + forcedBackend + ".";
@@ -48,18 +60,37 @@
       } else if (firmwareNumber !== null) {
         explanation = firmware + " has no matching backend from 12.03 through 12.49.";
       }
+
+      var canLaunch1200 = firmware === "12.00" && backend === "Lapse";
       firmwareElement.textContent = firmware || "Unknown";
       backendElement.textContent = backend;
-      statusElement.textContent = explanation + " Backend execution is not enabled in this private routing preview.";
+      launcherElement.textContent = canLaunch1200 ? "Ready" : "Unavailable";
+      statusElement.textContent = explanation + (canLaunch1200 ? " Existing 12.00 runtime is ready for manual launch." : " Runtime launch is limited to the 12.00 hardware-test target.");
+      runButton.disabled = !canLaunch1200;
+
       window.PS4Runtime = {
         firmware: firmware || "Unknown",
         selectedBackend: backend,
         isPS4: firmware !== null,
+        launcherReady: canLaunch1200,
         backendEntered: false,
         kernelRW: false
       };
+
+      runButton.addEventListener("click", function () {
+        if (!window.PS4Runtime.launcherReady) return;
+        launcherElement.textContent = "Launching";
+        try {
+          sessionStorage.setItem("ps4-webkit-next:last-launch", JSON.stringify({
+            firmware: window.PS4Runtime.firmware,
+            backend: window.PS4Runtime.selectedBackend,
+            buildId: window.PS4_WEBKIT_BUILD ? window.PS4_WEBKIT_BUILD.buildId : "Unknown",
+            timestamp: new Date().toISOString()
+          }));
+        } catch (e) { }
+        location.href = "./runtime/zrm/run_lapse.html";
+      });
     })();
   </script>
 </body>
 </html>
-

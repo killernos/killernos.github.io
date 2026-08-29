@@ -2,14 +2,12 @@
 
 window.PS4_WEBKIT_BUILD = {
   firmwareTarget: "12.00",
-  buildId: "1200-test-0002"
+  buildId: "1200-zrm-link-0001"
 };
 
-document.querySelectorAll("[data-build-id]").forEach((element) => {
-  element.textContent = window.PS4_WEBKIT_BUILD.buildId;
-});
-
-const diagnosticLog = document.getElementById("log");
-if (diagnosticLog) {
-  diagnosticLog.textContent = "Build: " + window.PS4_WEBKIT_BUILD.buildId + "\nNo runtime attempts recorded.";
-}
+(function () {
+  var elements = document.querySelectorAll("[data-build-id]");
+  for (var i = 0; i < elements.length; i++) {
+    elements[i].textContent = window.PS4_WEBKIT_BUILD.buildId;
+  }
+})();
