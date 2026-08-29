@@ -4,22 +4,338 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>PS4 WebKit Next Diagnostics</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --bg-2: #0d1d33;
+      --panel: rgba(10, 21, 40, 0.88);
+      --panel-strong: rgba(6, 15, 28, 0.94);
+      --line: rgba(152, 186, 255, 0.2);
+      --text: #eef4ff;
+      --muted: #97accf;
+      --accent: #79e0c3;
+      --accent-2: #74a9ff;
+      --warn: #ffd27a;
+      --bad: #ff9f9f;
+      --shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(116, 169, 255, 0.18), transparent 32%),
+        radial-gradient(circle at top right, rgba(121, 224, 195, 0.16), transparent 28%),
+        linear-gradient(160deg, var(--bg), var(--bg-2) 58%, #050b14);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 24px 24px;
+      mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.55), transparent 88%);
+    }
+
+    a {
+      color: #cce1ff;
+    }
+
+    .shell {
+      width: min(1100px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 56px;
+    }
+
+    .hero,
+    .panel {
+      position: relative;
+      overflow: hidden;
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: linear-gradient(145deg, rgba(12, 25, 46, 0.94), rgba(5, 14, 28, 0.92));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .hero::after,
+    .panel::after {
+      content: "";
+      position: absolute;
+      inset: auto -80px -80px auto;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(121, 224, 195, 0.18), transparent 68%);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(121, 224, 195, 0.35);
+      color: var(--accent);
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 16px 0 10px;
+      font-size: clamp(2rem, 4vw, 4rem);
+      line-height: 0.96;
+      letter-spacing: 0.02em;
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 1.15rem;
+      letter-spacing: 0.03em;
+    }
+
+    .lead,
+    .subtle,
+    .summary {
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .lead {
+      max-width: 760px;
+      margin: 0;
+      font-size: 1.04rem;
+    }
+
+    .summary {
+      margin-top: 18px;
+      padding: 14px 16px;
+      border-left: 3px solid var(--accent-2);
+      border-radius: 0 14px 14px 0;
+      background: rgba(116, 169, 255, 0.08);
+      color: #dce9ff;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .stat {
+      padding: 14px;
+      border-radius: 18px;
+      background: var(--panel-strong);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .stat-label {
+      display: block;
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .stat-value {
+      display: block;
+      margin-top: 8px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    button,
+    .link-button {
+      appearance: none;
+      border: 0;
+      border-radius: 999px;
+      padding: 13px 18px;
+      font: inherit;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 160ms ease, opacity 160ms ease, background 160ms ease;
+    }
+
+    button {
+      background: linear-gradient(135deg, var(--accent), #96f0db);
+      color: #072018;
+      font-weight: 700;
+    }
+
+    .link-button {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    button:hover,
+    .link-button:hover {
+      transform: translateY(-1px);
+    }
+
+    .log {
+      margin: 0;
+      min-height: 320px;
+      padding: 18px;
+      border-radius: 20px;
+      background: #04101f;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #d7ecff;
+      font: 0.95rem/1.55 Consolas, "Courier New", monospace;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .item {
+      padding: 14px;
+      border-radius: 18px;
+      background: var(--panel-strong);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .item strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .shell {
+        width: min(100% - 20px, 1100px);
+        padding-top: 18px;
+      }
+
+      .hero,
+      .panel {
+        padding: 20px;
+        border-radius: 22px;
+      }
+
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .log {
+        min-height: 260px;
+      }
+    }
+  </style>
   <script src="./build.js" defer></script>
   <script src="./js/diagnostics.js" defer></script>
 </head>
 <body>
-  <h1>PS4 WebKit Next Diagnostics</h1>
-  <p>Firmware: <span id="diag-firmware">Unknown</span></p>
-  <p>Selected Backend: <span id="diag-backend">None</span></p>
-  <p>Build: <span id="diag-build" data-build-id>1200-next-brand-0001</span></p>
-  <p>User Agent: <span id="diag-user-agent">Loading...</span></p>
-  <p>Last Stage: <span id="diag-last-stage">Not reported</span></p>
-  <p>Attempts: <span id="diag-attempts">0</span></p>
-  <p>Passes: <span id="diag-passes">0</span></p>
-  <p>Failures: <span id="diag-failures">0</span></p>
-  <p><button id="reset-log" type="button">Reset</button> <button id="export-log" type="button">Export Log</button></p>
-  <pre id="log">No diagnostic records.</pre>
-  <p><a href="./index.html">Home</a></p>
+  <div class="shell">
+    <section class="hero">
+      <span class="eyebrow">Diagnostics Console</span>
+      <h1>PS4 WebKit Next Diagnostics</h1>
+      <p class="lead">Current browser routing, stage history, and log export in the same visual language as the landing page, without changing the underlying diagnostic behavior.</p>
+      <p class="summary">This page reports stock-browser detection state and diagnostic events for the current session. It does not widen the validated runtime boundary beyond the existing 12.00 path.</p>
+      <div class="actions">
+        <button id="reset-log" type="button">Reset Log</button>
+        <button id="export-log" type="button">Export Log</button>
+        <a class="link-button" href="./index.html">Back To Home</a>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="panel">
+        <h2>Runtime Snapshot</h2>
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-label">Firmware</span>
+            <span class="stat-value" id="diag-firmware">Unknown</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Selected Backend</span>
+            <span class="stat-value" id="diag-backend">None</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Build</span>
+            <span class="stat-value" id="diag-build" data-build-id>1200-next-brand-0001</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Last Stage</span>
+            <span class="stat-value" id="diag-last-stage">Not reported</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Attempts</span>
+            <span class="stat-value" id="diag-attempts">0</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Passes</span>
+            <span class="stat-value" id="diag-passes">0</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Failures</span>
+            <span class="stat-value" id="diag-failures">0</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">User Agent</span>
+            <span class="stat-value" id="diag-user-agent">Loading...</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Session Notes</h2>
+        <div class="list">
+          <div class="item">
+            <strong>Signal Source</strong>
+            The counters and last-stage field are driven by the existing browser-side diagnostics script.
+          </div>
+          <div class="item">
+            <strong>Export</strong>
+            Export Log downloads the in-memory session records as JSON using the current build ID.
+          </div>
+          <div class="item">
+            <strong>Scope</strong>
+            This is a display and logging surface only. It does not change exploit timing, offsets, payloads, or runtime wiring.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" style="margin-top: 18px;">
+      <h2>Diagnostic Log</h2>
+      <p class="subtle">Session events are appended below as the page initializes and as future diagnostic hooks emit stage records.</p>
+      <pre id="log" class="log">No diagnostic records.</pre>
+    </section>
+  </div>
 </body>
 </html>
 
