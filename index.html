@@ -10,11 +10,48 @@
   <h1>PS4 WebKit Next</h1>
   <p>Research host scaffold. No exploit is wired into this page yet.</p>
   <p>I am not responsible for any damage. Jailbreak at your own risk.</p>
-  <p>Host firmware policy: Lapse through 12.02; no backend from 12.03 through 12.49; Poops from 12.50.</p>
+  <p>Detected Firmware: <span id="firmware">Detecting...</span></p>
+  <p>Selected Backend: <span id="backend">Detecting...</span></p>
+  <p id="routing-status">Inspecting the PS4 browser user agent.</p>
   <p>Local hardware verification: 12.00 only.</p>
-  <p>Host/deployment validation build.</p>
   <p>Build: <span data-build-id>1200-test-0001</span></p>
   <p><a href="./diagnostics.html">Diagnostics</a></p>
+  <script>
+    (function () {
+      var firmwareElement = document.getElementById("firmware");
+      var backendElement = document.getElementById("backend");
+      var statusElement = document.getElementById("routing-status");
+      var parameters = new URLSearchParams(location.search);
+      var match = /PlayStation\s+4[\/ ](\d+)\.(\d+)/.exec(navigator.userAgent);
+      var firmware = null;
+      var firmwareNumber = null;
+      if (match) {
+        var minor = parseInt(match[2], 16);
+        var normalizedMinor = minor.toString(16);
+        if (normalizedMinor.length < 2) normalizedMinor = "0" + normalizedMinor;
+        firmware = match[1] + "." + normalizedMinor;
+        firmwareNumber = parseInt(match[1], 10) * 100 + parseInt(normalizedMinor, 10);
+      }
+      var backend = "None";
+      var explanation = "User agent is not a PlayStation 4.";
+      var forcedBackend = parameters.get("bug");
+      if (forcedBackend === "lapse" || forcedBackend === "poops") {
+        backend = forcedBackend === "lapse" ? "Lapse" : "Poops";
+        explanation = "Selected via ?bug=" + forcedBackend + ".";
+      } else if (firmwareNumber !== null && firmwareNumber <= 1202) {
+        backend = "Lapse";
+        explanation = firmware + " is within the Lapse routing range.";
+      } else if (firmwareNumber !== null && firmwareNumber >= 1250) {
+        backend = "Poops";
+        explanation = firmware + " is within the Poops routing range.";
+      } else if (firmwareNumber !== null) {
+        explanation = firmware + " has no matching backend from 12.03 through 12.49.";
+      }
+      firmwareElement.textContent = firmware || "Unknown";
+      backendElement.textContent = backend;
+      statusElement.textContent = explanation + " Backend execution is not enabled in this private routing preview.";
+    })();
+  </script>
 </body>
 </html>
 
