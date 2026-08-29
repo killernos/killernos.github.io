@@ -1,4 +1,4 @@
-"use strict";
+﻿"use strict";
 
 window.PS4_WEBKIT_BUILD = {
   firmwareTarget: "12.00",
