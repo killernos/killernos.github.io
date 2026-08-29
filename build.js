@@ -1,7 +1,7 @@
 "use strict";
 
 window.PS4_WEBKIT_BUILD = {
-  firmwareTarget: "12.00",
+  firmwareTarget: "multi-fw",
   buildId: "1200-test-0001"
 };
 
