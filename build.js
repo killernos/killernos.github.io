@@ -2,8 +2,8 @@
 
 window.PS4_WEBKIT_BUILD = {
   firmwareTarget: "12.00",
-  buildId: "1200-next-recovery-0001",
-  cacheRevision: "1200-next-recovery-0001"
+  buildId: "1200-next-manual-0001",
+  cacheRevision: "1200-next-manual-0001"
 };
 
 (function () {

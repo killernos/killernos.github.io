@@ -183,16 +183,6 @@
       line-height: 1.6;
     }
 
-    .is-hidden {
-      display: none !important;
-    }
-
-    .stack-note {
-      margin-top: 12px;
-      color: var(--muted);
-      line-height: 1.6;
-    }
-
     .status-pill {
       display: inline-flex;
       align-items: center;
@@ -331,7 +321,6 @@
   </style>
   <script src="./build.js" defer></script>
   <script src="./js/diagnostics.js" defer></script>
-  <script src="./js/autoload-controller.js" defer></script>
 </head>
 <body>
   <div class="shell">
@@ -377,12 +366,12 @@
             <span class="stat-value"><span id="launcher-state" class="status-pill status-warn">Waiting</span></span>
           </div>
           <div class="stat">
-            <span class="stat-label">Automatic Launch</span>
-            <span class="stat-value"><span id="autoload-state" class="status-pill status-warn">Checking</span></span>
+            <span class="stat-label">Launch Mode</span>
+            <span class="stat-value">Manual</span>
           </div>
           <div class="stat">
-            <span class="stat-label">Failed Auto Launches</span>
-            <span class="stat-value" id="autoload-failures">0 / 3</span>
+            <span class="stat-label">Recovery Path</span>
+            <span class="stat-value">Browser Home</span>
           </div>
           <div class="stat">
             <span class="stat-label">Userland State</span>
@@ -398,18 +387,13 @@
           </div>
           <div class="stat">
             <span class="stat-label">Build</span>
-            <span class="stat-value" data-build-id>1200-next-recovery-0001</span>
+            <span class="stat-value" data-build-id>1200-next-manual-0001</span>
           </div>
         </div>
         <p id="routing-status" class="routing-copy">Inspecting the PS4 browser user agent.</p>
-        <p id="autoload-message" class="routing-copy">Recovery controller waiting for firmware routing.</p>
-        <p id="options-status" class="stack-note">OPTIONS cancellation is pending PS4 hardware verification. The on-screen Cancel Autoload control remains available.</p>
+        <p class="routing-copy">Automatic launch is intentionally disabled here. Open NEXT manually so the console always retains a recovery path back to the normal PS4 shell.</p>
         <div class="actions">
           <button id="run-1200" type="button" disabled>Run 12.00 Runtime</button>
-          <button id="launch-now" type="button" class="is-hidden">Launch Now</button>
-          <button id="cancel-autoload" type="button" class="is-hidden">Cancel Autoload</button>
-          <button id="disable-autoload" type="button" class="is-hidden">Disable Autoload</button>
-          <button id="reenable-autoload" type="button" class="is-hidden">Re-enable Autoload</button>
           <a class="link-button" href="./diagnostics.html">Open Diagnostics</a>
         </div>
       </div>
@@ -437,6 +421,82 @@
       </div>
     </section>
   </div>
+  <script>
+    (function () {
+      var firmwareElement = document.getElementById("firmware");
+      var backendElement = document.getElementById("backend");
+      var launcherElement = document.getElementById("launcher-state");
+      var upstreamElement = document.getElementById("upstream-state");
+      var statusElement = document.getElementById("routing-status");
+      var runButton = document.getElementById("run-1200");
+      var match = /PlayStation\s+4[\/ ](\d+)\.(\d+)/.exec(navigator.userAgent);
+      var firmware = null;
+      var firmwareNumber = null;
+      var forcedBackend = null;
+      try {
+        var parameters = new URLSearchParams(location.search);
+        forcedBackend = parameters.get("bug");
+      } catch (e) { }
+
+      if (match) {
+        var minor = parseInt(match[2], 16);
+        var normalizedMinor = minor.toString(16);
+        if (normalizedMinor.length < 2) normalizedMinor = "0" + normalizedMinor;
+        firmware = match[1] + "." + normalizedMinor;
+        firmwareNumber = parseInt(match[1], 10) * 100 + parseInt(normalizedMinor, 10);
+      }
+
+      var backend = "None";
+      var explanation = "User agent is not a PlayStation 4.";
+      if (forcedBackend === "lapse" || forcedBackend === "poops") {
+        backend = forcedBackend === "lapse" ? "Lapse" : "Poops";
+        explanation = "Selected via ?bug=" + forcedBackend + ".";
+      } else if (firmwareNumber !== null && firmwareNumber <= 1202) {
+        backend = "Lapse";
+        explanation = firmware + " is within the Lapse routing range.";
+      } else if (firmwareNumber !== null && firmwareNumber >= 1250) {
+        backend = "Poops";
+        explanation = firmware + " is within the Poops routing range.";
+      } else if (firmwareNumber !== null) {
+        explanation = firmware + " has no matching backend from 12.03 through 12.49.";
+      }
+
+      var upstreamSupported = backend !== "None";
+      var canLaunch1200 = firmware === "12.00" && backend === "Lapse";
+      firmwareElement.textContent = firmware || "Unknown";
+      backendElement.textContent = backend;
+      launcherElement.textContent = canLaunch1200 ? "Ready" : "Unavailable";
+      launcherElement.className = "status-pill " + (canLaunch1200 ? "status-ready" : "status-bad");
+      upstreamElement.textContent = upstreamSupported ? "Supported Upstream" : "Unsupported Upstream";
+      upstreamElement.className = "status-pill " + (upstreamSupported ? "status-ready" : "status-bad");
+      statusElement.textContent = explanation + (canLaunch1200 ? " Existing 12.00 runtime is ready for manual launch." : " Upstream support does not automatically imply a validated local launch path here.");
+      runButton.disabled = !canLaunch1200;
+
+      window.PS4Runtime = {
+        firmware: firmware || "Unknown",
+        selectedBackend: backend,
+        isPS4: firmware !== null,
+        launcherReady: canLaunch1200,
+        backendEntered: false,
+        kernelRW: false
+      };
+
+      runButton.addEventListener("click", function () {
+        if (!window.PS4Runtime.launcherReady) return;
+        launcherElement.textContent = "Launching";
+        try {
+          sessionStorage.setItem("ps4-webkit-next:last-launch", JSON.stringify({
+            firmware: window.PS4Runtime.firmware,
+            backend: window.PS4Runtime.selectedBackend,
+            buildId: window.PS4_WEBKIT_BUILD ? window.PS4_WEBKIT_BUILD.buildId : "Unknown",
+            cacheRevision: window.PS4_WEBKIT_BUILD ? window.PS4_WEBKIT_BUILD.cacheRevision : "Unknown",
+            timestamp: new Date().toISOString()
+          }));
+        } catch (e) { }
+        location.href = "./runtime/next/run_lapse.html";
+      });
+    })();
+  </script>
 </body>
 </html>
 
