@@ -10,7 +10,9 @@
   var RECORDS_KEY = "ps4-webkit-next:diagnostics-records";
   var PREVIOUS_KEY = "ps4-webkit-next:previous-session";
   var SETTINGS_KEY = "ps4-webkit-next:diagnostics-settings";
+  var REPORT_ID_KEY = "ps4-webkit-next:community-report-id";
   var PUBLIC_GITHUB_REPORT_URL = "https://github.com/killernos/PS4-WebKit/issues/new";
+  var MAX_GITHUB_URL_LENGTH = 6000;
   var HANDOFF_MAX_AGE_MS = 15000;
   var allowedConsoleModels = { Original: true, Slim: true, Pro: true, Unknown: true };
   var filterGroups = {
@@ -52,6 +54,21 @@
       actualSize: 0,
       actualSha256: ""
     },
+    hen: {
+      family: "none",
+      selection: "none",
+      displayName: "No HEN",
+      identifier: "none",
+      version: null,
+      payloadPath: null,
+      loaderReference: "skip",
+      evidence: "source-confirmed",
+      compatibility: "skipped",
+      requested: false,
+      attempted: false,
+      status: "SKIPPED",
+      error: ""
+    },
     backend: {
       selected: "Unknown",
       entered: false,
@@ -86,6 +103,7 @@
     cacheRevision: "Unknown",
     diagnosticsSchema: DIAG_SCHEMA,
     researchBuildId: "",
+    reportId: "",
     research: {
       researchMode: false,
       candidate: "",
@@ -121,6 +139,16 @@
       return JSON.parse(value);
     } catch (error) {
       return fallback;
+    }
+  }
+
+  function readStoredText(storageKind, keyName) {
+    var store = getStore(storageKind);
+    if (!store) return "";
+    try {
+      return String(store.getItem(keyName) || "");
+    } catch (error) {
+      return "";
     }
   }
 
@@ -289,8 +317,10 @@
       firmware: state.firmware,
       backend: state.backend,
       payload: state.payload,
+      hen: state.hen,
       buildId: state.buildId,
       cacheRevision: state.cacheRevision,
+      reportId: state.reportId,
       lastStage: state.lastStage,
       page: state.page,
       onlineState: state.onlineState,
@@ -400,7 +430,8 @@
       researchBuildId: build.researchBuildId,
       pageName: state.page.pageName,
       relativePath: state.page.relativePath,
-      payload: state.payload
+      payload: state.payload,
+      hen: state.hen
     };
   }
 
@@ -708,12 +739,14 @@
     state.firmware = snapshot.firmware || defaults.firmware;
     state.backend = snapshot.backend || state.backend;
     state.payload = snapshot.payload || state.payload;
+    state.hen = snapshot.hen || state.hen;
     state.page = currentPage && currentPage.pageName ? currentPage : (snapshot.page || state.page);
     state.onlineState = defaults.onlineState || snapshot.onlineState || state.onlineState;
     state.consoleModel = snapshot.consoleModel || state.consoleModel;
     state.research = snapshot.research || state.research;
     state.buildId = snapshot.buildId || state.buildId;
     state.cacheRevision = snapshot.cacheRevision || state.cacheRevision;
+    state.reportId = snapshot.reportId || readStoredText("sessionStorage", REPORT_ID_KEY) || readStoredText("localStorage", REPORT_ID_KEY) || state.reportId;
     state.lastStage = snapshot.lastStage || state.lastStage;
     state.lastNormalizedStage = snapshot.lastNormalizedStage || state.lastNormalizedStage;
   }
@@ -781,38 +814,120 @@
   }
 
   function buildSummaryText() {
-    var repeat = repeatedFailureStage();
+    var entrypoint = state.page.pageName === "NEXT-1302-RESEARCH" ? "SlopKit" : (state.backend.selected || "Unknown");
+    var kernelRW = state.research.kernelRead && state.research.kernelWrite ? "VERIFIED" : "NOT VERIFIED";
+    var userlandArw = /USERLAND-ARW-VERIFIED/.test(state.lastStage) ? "VERIFIED" : "NOT VERIFIED";
     var lines = [
-      "NEXT Diagnostic Summary",
+      "PS4 WebKit NEXT",
+      "Created by KillerNoS",
       "",
       "Firmware: " + (state.firmware ? state.firmware.firmware : "Unknown"),
-      "Console: " + state.consoleModel,
-      "Backend: " + state.backend.selected,
       "Build: " + state.buildId,
-      "",
-      "Attempts: " + state.attempts,
-      "Passes: " + state.passes,
-      "Failures: " + state.failures,
-      "",
-      "Last Stage:",
-      state.lastStage,
-      "",
-      "Normalized Stage:",
-      state.lastNormalizedStage,
-      "",
-      "Previous Session:",
-      formatPreviousSession(),
-      state.previousSession ? "Last Stage: " + (state.previousSession.lastStage || "Unknown") : "",
-      "",
-      "Payload:",
-      state.payload.displayName || "Unknown"
+      "Backend: " + state.backend.selected,
+      "Entrypoint: " + entrypoint,
+      "Selected HEN: " + (state.hen.displayName || "No HEN"),
+      "HEN Load Status: " + (state.hen.status || "SKIPPED"),
+      "Last Stage: " + state.lastStage,
+      "Userland ARW: " + userlandArw,
+      "Kernel R/W: " + kernelRW,
+      "Outcome: " + (state.testerOutcome || "Not provided"),
+      "Report ID: " + getOrCreateReportId()
     ];
-    if (repeat) {
-      lines.push("", "Repeated failure:", repeat.stage + " correlated with " + repeat.count + " failure event(s).");
+    return lines.join("\n");
+  }
+
+  function persistReportId() {
+    var localStore = getStore("localStorage");
+    var sessionStore = getStore("sessionStorage");
+    if (localStore) {
+      try {
+        if (state.reportId) localStore.setItem(REPORT_ID_KEY, state.reportId);
+        else localStore.removeItem(REPORT_ID_KEY);
+      } catch (error) { }
     }
-    if (state.testerOutcome) {
-      lines.push("", "Result:", state.testerOutcome);
+    if (sessionStore) {
+      try {
+        if (state.reportId) sessionStore.setItem(REPORT_ID_KEY, state.reportId);
+        else sessionStore.removeItem(REPORT_ID_KEY);
+      } catch (error) { }
     }
+  }
+
+  function resetReportId() {
+    state.reportId = "";
+    persistReportId();
+  }
+
+  function getOrCreateReportId() {
+    if (!state.reportId) state.reportId = makeId("NEXT-REPORT-");
+    persistReportId();
+    return state.reportId;
+  }
+
+  function importantGithubRecords(limit) {
+    var sessionRecords = currentSessionRecords();
+    var scored = [];
+    var index;
+    function score(record) {
+      var stage = record.stage || "";
+      var category = record.category || "";
+      var points = 0;
+      if (record.status === "FAIL") points += 10;
+      if (/ERROR|CRASH|REBOOT|FAIL/.test(stage)) points += 9;
+      if (/PRIMITIVE|USERLAND|KERNEL|PAYLOAD|HEN|DONE/.test(stage)) points += 7;
+      if (/USERLAND|KERNEL|PAYLOAD/.test(category)) points += 5;
+      return points;
+    }
+    for (index = 0; index < sessionRecords.length; index++) {
+      scored.push({ record: sessionRecords[index], score: score(sessionRecords[index]), index: index });
+    }
+    scored.sort(function (left, right) {
+      if (right.score !== left.score) return right.score - left.score;
+      return right.index - left.index;
+    });
+    scored = scored.filter(function (item) { return item.score > 0; }).slice(0, limit);
+    if (!scored.length) return sessionRecords.slice(Math.max(0, sessionRecords.length - 5));
+    scored.sort(function (left, right) { return left.index - right.index; });
+    return scored.map(function (item) { return item.record; });
+  }
+
+  function buildGithubSummary(report) {
+    var important = importantGithubRecords(10);
+    var lines = [
+      "PS4 WebKit NEXT Community Report",
+      "",
+      "Report ID: " + report.reportId,
+      "Session ID: " + report.sessionId,
+      "Firmware: " + report.firmware,
+      "Hardware/Simulation: " + (report.simulated ? "simulation" : (report.hardwareDetected ? "hardware" : "unknown")),
+      "Console Model: " + report.consoleModel,
+      "NEXT Build: " + report.buildId,
+      "Backend: " + report.backend.backendSelected,
+      "Entrypoint: " + report.entrypoint,
+      "Payload: " + report.payload.payloadDisplayName,
+      "Selected HEN: " + report.hen.henDisplayName,
+      "HEN Load Status: " + report.hen.henLoadStatus,
+      "Attempts: " + report.attemptCount,
+      "Passes: " + report.passCount,
+      "Failures: " + report.failureCount,
+      "Last Stage: " + report.lastStage,
+      "Previous Session Incomplete: " + (report.previousSessionIncomplete ? "Yes" : "No"),
+      "Userland ARW: " + report.research.userlandARWState,
+      "Kernel Read: " + report.research.kernelReadState,
+      "Kernel Write: " + report.research.kernelWriteState,
+      "Kernel Execution: " + report.research.kernelExecutionState,
+      "Tester Outcome: " + (report.testerSelectedOutcome || ""),
+      "Tester Alias: " + (report.testerAlias || ""),
+      "Tester Notes: " + (report.testerNotes || "")
+    ];
+    if (important.length) {
+      lines.push("", "Important Events:");
+      for (var index = 0; index < important.length; index++) {
+        lines.push("- " + important[index].stage + (important[index].message ? ": " + important[index].message : ""));
+      }
+    }
+    lines.push("", "Full diagnostic log was not included because browser URL length is limited.");
+    lines.push("Use the downloaded JSON report for complete diagnostics.");
     return lines.join("\n");
   }
 
@@ -831,6 +946,7 @@
       firmware: state.firmware,
       backend: state.backend,
       payload: state.payload,
+      hen: state.hen,
       cache: state.cache,
       storage: state.storage,
       page: state.page,
@@ -838,6 +954,7 @@
       consoleModel: state.consoleModel,
       buildId: state.buildId,
       cacheRevision: state.cacheRevision,
+      reportId: state.reportId,
       diagnosticsSchema: DIAG_SCHEMA,
       researchBuildId: state.researchBuildId,
       previousSession: state.previousSession,
@@ -859,7 +976,7 @@
     }
     var report = {
       schema: REPORT_SCHEMA,
-      reportId: makeId("NEXT-REPORT-"),
+      reportId: getOrCreateReportId(),
       sessionId: state.sessionId,
       timestamp: nowIso(),
       firmware: state.firmware ? state.firmware.firmware : "Unknown",
@@ -875,6 +992,7 @@
         pageName: state.page.pageName,
         relativePath: state.page.relativePath
       },
+      entrypoint: state.page.pageName === "NEXT-1302-RESEARCH" ? "SlopKit" : (state.backend.selected || "Unknown"),
       backend: {
         backendSelected: state.backend.selected,
         backendEntered: state.backend.entered,
@@ -893,6 +1011,21 @@
         payloadRecommended: state.payload.recommended,
         payloadActualSize: state.payload.actualSize,
         payloadActualSha256: state.payload.actualSha256
+      },
+      hen: {
+        henFamily: state.hen.family,
+        henSelection: state.hen.selection,
+        henDisplayName: state.hen.displayName,
+        henIdentifier: state.hen.identifier,
+        henVersion: state.hen.version,
+        henPayloadPath: state.hen.payloadPath,
+        henLoaderReference: state.hen.loaderReference,
+        henEvidence: state.hen.evidence,
+        henCompatibility: state.hen.compatibility,
+        henLoadRequested: state.hen.requested,
+        henLoadAttempted: state.hen.attempted,
+        henLoadStatus: state.hen.status,
+        henLoadError: state.hen.error
       },
       attemptCount: state.attempts,
       passCount: state.passes,
@@ -921,7 +1054,32 @@
         previousSessionIncomplete: !state.previousSessionCompleted ? "OBSERVED" : "OBSERVED",
         testerSelectedOutcome: state.testerOutcome ? "TESTER-REPORTED" : "OBSERVED"
       },
-      research: state.research
+      research: {
+        researchMode: state.research.researchMode,
+        candidate: state.research.candidate,
+        candidateStatus: state.research.candidateStatus,
+        entryReady: state.research.entryReady,
+        candidateReady: state.research.candidateReady,
+        kernelFaultObserved: state.research.kernelFaultObserved,
+        kernelLeak: state.research.kernelLeak,
+        kernelRead: state.research.kernelRead,
+        kernelWrite: state.research.kernelWrite,
+        kernelExecution: state.research.kernelExecution,
+        lastResearchStage: state.research.lastResearchStage,
+        slopkitAttempt: state.attempts,
+        slopkitLastStage: state.lastStage,
+        carrierState: /SLOPKIT-CARRIER-OBTAINED/.test(state.lastStage) ? "OBTAINED" : "NOT OBTAINED",
+        windowPState: /SLOPKIT-WINDOW-P-INSTALLED/.test(state.lastStage) ? "INSTALLED" : "NOT INSTALLED",
+        readPrimitiveState: /SLOPKIT-READ-VERIFIED|READ-PRIMITIVE-PASS/.test(state.lastStage) ? "VERIFIED" : "NOT VERIFIED",
+        writePrimitiveState: /SLOPKIT-WRITE-VERIFIED/.test(state.lastStage) ? "VERIFIED" : "NOT VERIFIED",
+        userlandARWState: /USERLAND-ARW-VERIFIED/.test(state.lastStage) ? "VERIFIED" : "NOT VERIFIED",
+        nativeSyscallState: "LOCKED",
+        celsiusState: "LOCKED",
+        kernelFaultState: state.research.kernelFaultObserved ? "OBSERVED" : "NOT OBSERVED",
+        kernelReadState: state.research.kernelRead ? "VERIFIED" : "NOT VERIFIED",
+        kernelWriteState: state.research.kernelWrite ? "VERIFIED" : "NOT VERIFIED",
+        kernelExecutionState: state.research.kernelExecution ? "VERIFIED" : "NOT VERIFIED"
+      }
     };
     if (state.includeUserAgent) report.userAgent = navigator.userAgent || "";
     report.diagnosticRecords = sessionRecords;
@@ -947,7 +1105,8 @@
   }
 
   function downloadCommunityReport() {
-    downloadJson("ps4-webkit-community-report-" + state.buildId + "-" + state.sessionId + ".json", buildCommunityReport());
+    var report = buildCommunityReport();
+    downloadJson("NEXT-Community-Report-" + report.reportId + ".json", report);
   }
 
   function setSubmissionStatus(message, kind) {
@@ -963,14 +1122,33 @@
 
   function githubReportUrl(report) {
     var title = "[Diagnostics] " + (report.firmware || "Unknown") + " / " + (report.backend.backendSelected || "Unknown") + " / " + (report.lastStage || "Unknown");
-    var body = [
-      "I reviewed this diagnostic report and want to submit it.",
-      "",
-      "```json",
-      JSON.stringify(report, null, 2),
-      "```"
-    ].join("\n");
+    var body = buildGithubSummary(report);
     return PUBLIC_GITHUB_REPORT_URL + "?title=" + encodeURIComponent(title) + "&body=" + encodeURIComponent(body);
+  }
+
+  function preserveCurrentReportState() {
+    persistSession();
+    persistRecords();
+    persistReportId();
+  }
+
+  function openGithubShortReport(report) {
+    var issueUrl = githubReportUrl(report);
+    preserveCurrentReportState();
+    if (issueUrl.length > MAX_GITHUB_URL_LENGTH) {
+      emit("FAIL", "COMMUNITY-REPORT-GITHUB-URL-TOO-LONG", "GitHub fallback was blocked because the short summary still exceeded the conservative browser limit.", { category: "COMMUNITY", urlLength: issueUrl.length });
+      setSubmissionStatus("Report too large for GitHub browser fallback. Your complete report has been preserved. Choose \"Download Full Report\" and send the JSON file to KillerNoS.", "bad");
+      return false;
+    }
+    downloadCommunityReport();
+    emit("INFO", "COMMUNITY-REPORT-GITHUB-FALLBACK", "Public GitHub issue draft opened with a short summary only.", { category: "COMMUNITY", urlLength: issueUrl.length });
+    try {
+      window.open(issueUrl, "_blank");
+      return true;
+    } catch (error) {
+      setSubmissionStatus("GitHub fallback could not be opened automatically. Use Download Full Report or Copy Short Summary.", "bad");
+      return false;
+    }
   }
 
   function submitCommunityReport() {
@@ -984,14 +1162,8 @@
     }
     report = buildCommunityReport();
     if (!endpoint) {
-      setSubmissionStatus("No private endpoint is configured. The fallback opens a public GitHub issue draft.", "warn");
-      emit("INFO", "COMMUNITY-REPORT-GITHUB-FALLBACK", "Public GitHub issue draft opened.", { category: "COMMUNITY" });
-      try {
-        window.open(githubReportUrl(report), "_blank");
-      } catch (error) {
-        location.href = githubReportUrl(report);
-      }
-      return true;
+      setSubmissionStatus("No private endpoint is configured. Use the short GitHub fallback or download the full JSON report.", "warn");
+      return openGithubShortReport(report);
     }
     try {
       var xhr = new XMLHttpRequest();
@@ -1002,20 +1174,25 @@
         if (xhr.status >= 200 && xhr.status < 300) {
           emit("PASS", "COMMUNITY-REPORT-SUBMITTED", "Community report submitted to the configured endpoint.", { category: "COMMUNITY" });
           setSubmissionStatus("Community report submitted to the configured endpoint.", "ok");
+          resetReportId();
+          renderReportPreview();
           return;
         }
         emit("FAIL", "COMMUNITY-REPORT-SUBMIT-FAIL", "Community report submission failed.", {
           category: "COMMUNITY",
           httpStatus: xhr.status
         });
-        setSubmissionStatus("Community report submission failed with HTTP " + xhr.status + ".", "bad");
+        preserveCurrentReportState();
+        setSubmissionStatus("Report submission failed. Your report is still stored locally.", "bad");
       };
+      preserveCurrentReportState();
       xhr.send(JSON.stringify(report));
       setSubmissionStatus("Submitting community report...", "warn");
       return true;
     } catch (error) {
       emit("FAIL", "COMMUNITY-REPORT-SUBMIT-ERROR", sanitizeText(error && error.message ? error.message : String(error), 200), { category: "COMMUNITY" });
-      setSubmissionStatus("Community report submission failed before the request could be sent.", "bad");
+      preserveCurrentReportState();
+      setSubmissionStatus("Report submission failed. Your report is still stored locally.", "bad");
       return false;
     }
   }
@@ -1128,6 +1305,22 @@
     state.resourceErrors = 0;
     state.jsErrors = 0;
     state.sessionCompleted = false;
+    state.hen = {
+      family: "none",
+      selection: "none",
+      displayName: "No HEN",
+      identifier: "none",
+      version: null,
+      payloadPath: null,
+      loaderReference: "skip",
+      evidence: "source-confirmed",
+      compatibility: "skipped",
+      requested: false,
+      attempted: false,
+      status: "SKIPPED",
+      error: ""
+    };
+    resetReportId();
     persistSession();
     persistRecords();
     emit("INFO", "BOOT", "Diagnostic log reset.");
@@ -1159,6 +1352,42 @@
     };
     persistSession();
     emit("INFO", "PAYLOAD-SELECTED", state.payload.displayName || "Unknown payload", { category: "PAYLOAD" });
+  }
+
+  function markHen(info) {
+    info = info || {};
+    state.hen = {
+      family: info.family || state.hen.family,
+      selection: info.selection || info.identifier || state.hen.selection,
+      displayName: info.displayName || state.hen.displayName,
+      identifier: info.identifier || info.selection || state.hen.identifier,
+      version: info.version !== undefined ? info.version : state.hen.version,
+      payloadPath: info.payloadPath !== undefined ? info.payloadPath : state.hen.payloadPath,
+      loaderReference: info.loaderReference !== undefined ? info.loaderReference : state.hen.loaderReference,
+      evidence: info.evidence !== undefined ? info.evidence : state.hen.evidence,
+      compatibility: info.compatibility !== undefined ? info.compatibility : state.hen.compatibility,
+      requested: info.requested !== undefined ? !!info.requested : state.hen.requested,
+      attempted: info.attempted !== undefined ? !!info.attempted : state.hen.attempted,
+      status: info.status || state.hen.status,
+      error: info.error !== undefined ? info.error : state.hen.error
+    };
+    persistSession();
+    emit(/FAIL|ERROR/.test(state.hen.status) ? "FAIL" : "INFO", "HEN-SELECTION", state.hen.displayName || "No HEN", {
+      category: "PAYLOAD",
+      henFamily: state.hen.family,
+      henSelection: state.hen.selection,
+      henDisplayName: state.hen.displayName,
+      henIdentifier: state.hen.identifier,
+      henVersion: state.hen.version,
+      henPayloadPath: state.hen.payloadPath,
+      henLoaderReference: state.hen.loaderReference,
+      henEvidence: state.hen.evidence,
+      henCompatibility: state.hen.compatibility,
+      henLoadRequested: state.hen.requested,
+      henLoadAttempted: state.hen.attempted,
+      henLoadStatus: state.hen.status,
+      henLoadError: state.hen.error
+    });
   }
 
   function markBackend(backendInfo) {
@@ -1226,6 +1455,7 @@
     state.cacheRevision = build.cacheRevision;
     state.diagnosticsSchema = DIAG_SCHEMA;
     state.researchBuildId = build.researchBuildId;
+    state.reportId = readStoredText("sessionStorage", REPORT_ID_KEY) || readStoredText("localStorage", REPORT_ID_KEY) || "";
     if (previousSnapshot && previousSnapshot.sessionId) {
       state.previousSession = previousSnapshot;
       state.previousSessionCompleted = !!previousSnapshot.sessionCompleted;
@@ -1391,6 +1621,8 @@
     var exportButton = document.getElementById("export-log");
     var downloadButton = document.getElementById("download-report");
     var copyButton = document.getElementById("copy-summary");
+    var retryButton = document.getElementById("retry-report-submit");
+    var githubButton = document.getElementById("open-github-short-report");
     var consoleModel = document.getElementById("console-model");
     var testerOutcome = document.getElementById("tester-outcome");
     var testerAlias = document.getElementById("tester-alias");
@@ -1406,6 +1638,10 @@
     if (downloadButton) downloadButton.addEventListener("click", downloadCommunityReport);
     if (copyButton) copyButton.addEventListener("click", copySummary);
     if (submitButton) submitButton.addEventListener("click", submitCommunityReport);
+    if (retryButton) retryButton.addEventListener("click", submitCommunityReport);
+    if (githubButton) githubButton.addEventListener("click", function () {
+      openGithubShortReport(buildCommunityReport());
+    });
 
     if (consoleModel) {
       consoleModel.addEventListener("change", function () {
@@ -1541,10 +1777,12 @@
     buildCommunityReport: buildCommunityReport,
     downloadCommunityReport: downloadCommunityReport,
     submitCommunityReport: submitCommunityReport,
+    openGithubShortReport: openGithubShortReport,
     beginSession: beginSession,
     endSession: endSession,
     markLaunch: markLaunch,
     markPayload: markPayload,
+    markHen: markHen,
     markBackend: markBackend,
     markCacheState: markCacheState,
     markResourceError: markResourceError,

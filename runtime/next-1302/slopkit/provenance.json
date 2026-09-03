@@ -1,0 +1,22 @@
+{
+  "buildId": "1302-next-slopkit-probe-0003",
+  "backend": "NEXT 13.02 Research",
+  "candidate": "SlopKit Userland",
+  "sources": [
+    {
+      "copiedFrom": "site/runtime/next/core.js",
+      "copiedTo": "site/runtime/next-1302/slopkit/core.js",
+      "modified": false
+    },
+    {
+      "copiedFrom": "site/runtime/next/mem.js",
+      "copiedTo": "site/runtime/next-1302/slopkit/mem.js",
+      "modified": false
+    },
+    {
+      "copiedFrom": "site/runtime/next/int64.js",
+      "copiedTo": "site/runtime/next-1302/slopkit/int64.js",
+      "modified": false
+    }
+  ]
+}

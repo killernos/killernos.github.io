@@ -316,93 +316,50 @@
 
     .selector-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: minmax(0, 1fr);
       gap: 14px;
     }
 
-    .payload-card {
-      width: 100%;
-      text-align: left;
+    .selector-field {
       padding: 18px;
       border-radius: 20px;
       border: 1px solid rgba(255, 255, 255, 0.08);
       background: var(--panel-strong);
-      color: var(--text);
+      max-width: 420px;
     }
 
-    .payload-card.is-selected {
-      border-color: rgba(121, 224, 195, 0.52);
-      box-shadow: 0 0 0 1px rgba(121, 224, 195, 0.2) inset;
-      background: linear-gradient(145deg, rgba(18, 37, 64, 0.96), rgba(7, 18, 33, 0.95));
-    }
-
-    .payload-card-header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    .payload-card-title {
-      margin: 0;
-      font-size: 1.18rem;
-      line-height: 1.25;
-    }
-
-    .badge-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 10px;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      color: var(--text);
-      background: rgba(255, 255, 255, 0.06);
-      font-size: 0.76rem;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
-
-    .badge.recommended {
-      color: #072018;
-      background: linear-gradient(135deg, var(--accent), #96f0db);
-      border-color: transparent;
-    }
-
-    .badge.compatible {
-      color: var(--accent);
-      border-color: rgba(121, 224, 195, 0.32);
-    }
-
-    .badge.incompatible {
-      color: var(--bad);
-      border-color: rgba(255, 159, 159, 0.32);
-    }
-
-    .payload-card dl {
-      display: grid;
-      grid-template-columns: 130px 1fr;
-      gap: 8px 12px;
-      margin: 16px 0 0;
-    }
-
-    .payload-card dt {
+    .selector-field label {
+      display: block;
+      margin-bottom: 10px;
       color: var(--muted);
       font-size: 0.8rem;
       text-transform: uppercase;
       letter-spacing: 0.08em;
     }
 
-    .payload-card dd {
-      margin: 0;
-      line-height: 1.5;
+    .selector-field select {
+      width: 100%;
+      border: 1px solid rgba(121, 224, 195, 0.38);
+      border-radius: 14px;
+      background: #f4f8ff;
+      color: #07111f;
+      padding: 12px 14px;
+      font: inherit;
+      font-weight: 700;
+      line-height: 1.35;
+      color-scheme: dark;
+      box-shadow: inset 0 0 0 1px rgba(7, 17, 31, 0.08);
+    }
+
+    .selector-field select:focus {
+      outline: 2px solid rgba(121, 224, 195, 0.85);
+      outline-offset: 2px;
+    }
+
+    .selector-field select option,
+    .selector-field select optgroup {
+      background: #f4f8ff;
+      color: #07111f;
     }
 
     .selector-status {
@@ -445,9 +402,6 @@
         grid-template-columns: 1fr;
       }
 
-      .payload-card dl {
-        grid-template-columns: 1fr;
-      }
     }
   </style>
   <script src="./build.js" defer></script>
@@ -519,7 +473,7 @@
             <span class="stat-value" id="backend-state">Not started</span>
           </div>
           <div class="stat">
-            <span class="stat-label">Payload State</span>
+            <span class="stat-label">HEN State</span>
             <span class="stat-value" id="payload-state">Not started</span>
           </div>
           <div class="stat">
@@ -561,17 +515,22 @@
 
     <section class="panel selector-panel">
       <div class="panel-header">
-        <h2>Choose GoldHEN Version</h2>
-        <button id="restore-recommended" type="button">Restore Recommended</button>
+        <h2>HEN / Payload Environment</h2>
       </div>
       <div id="preview-banner" class="preview-banner" hidden>PREVIEW MODE - EXPLOIT DISABLED</div>
-      <div id="payload-choices" class="selector-grid" aria-live="polite"></div>
+      <div class="selector-grid">
+        <div class="selector-field">
+          <label for="hen-select">Configured HEN</label>
+          <select id="hen-select" aria-live="polite"></select>
+        </div>
+      </div>
+      <div id="payload-choices" class="selector-status" aria-live="polite">Selected: No HEN</div>
       <div id="payload-selection-status" class="selector-status">Loading payload catalog...</div>
     </section>
   </div>
   <script>
     document.addEventListener("DOMContentLoaded", function () {
-      var SELECTION_KEY = "ps4next.payload.selected.12.00";
+      var SELECTION_KEY = "ps4-webkit-next:selected-hen";
       var firmwareElement = document.getElementById("firmware");
       var backendElement = document.getElementById("backend");
       var launcherElement = document.getElementById("launcher-state");
@@ -583,10 +542,9 @@
       var backendStateElement = document.getElementById("backend-state");
       var payloadStateElement = document.getElementById("payload-state");
       var payloadChoicesElement = document.getElementById("payload-choices");
+      var henSelectElement = document.getElementById("hen-select");
       var payloadSelectionStatus = document.getElementById("payload-selection-status");
-      var restoreRecommendedButton = document.getElementById("restore-recommended");
       var previewBanner = document.getElementById("preview-banner");
-      var payloadCatalog = [];
       var selectedPayloadId = "";
       var selectedPayload = null;
       var match = /PlayStation\s+4[\/ ](\d+)\.(\d+)/.exec(navigator.userAgent);
@@ -600,6 +558,7 @@
       var researchMode = false;
       var previewMode = false;
       var backend = "None";
+      var nextRuntimeTarget = "./runtime/next-alt/run_lapse.html";
       var baseStatusText = "";
 
       function parseQuery(name) {
@@ -629,21 +588,27 @@
         return parsed[1] + "." + minor;
       }
 
-      function recommendedForFirmware(firmwareValue) {
-        return window.PS4PayloadLoader ? window.PS4PayloadLoader.getRecommendedForFirmware(firmwareValue) : null;
+      function isNoHenSelected() {
+        return !!(window.PS4PayloadLoader && window.PS4PayloadLoader.isNoHenSelection(selectedPayloadId));
       }
 
-      function compatiblePayloadsFor(firmwareValue) {
-        var result = [];
-        var index;
-        for (index = 0; index < payloadCatalog.length; index++) {
-          if (window.PS4PayloadLoader.isCompatible(payloadCatalog[index], firmwareValue)) result.push(payloadCatalog[index]);
-        }
-        return result;
+      function allHenOptions() {
+        return window.PS4PayloadLoader ? window.PS4PayloadLoader.getHenRegistry() : [];
       }
 
-      function isRecommended(payload) {
-        return !!(window.PS4PayloadLoader && payload && window.PS4PayloadLoader.isRecommended(payload, firmware));
+      function compatibilityState(payload) {
+        return window.PS4PayloadLoader && payload ? window.PS4PayloadLoader.compatibilityState(payload, firmware) : "MISSING";
+      }
+
+      function compatibilityMessage(payload) {
+        return window.PS4PayloadLoader && payload ? window.PS4PayloadLoader.compatibilityMessage(payload, firmware) : "Configured payload is missing.";
+      }
+
+      function selectedHenDetails(payload) {
+        var state = compatibilityState(payload);
+        if (!payload) return "Selected: No HEN";
+        if (isNoHenSelected()) return "Selected: No HEN";
+        return "Selected: " + payload.displayName + " | State: " + state + (payload.version ? " | Version: " + payload.version : "") + (payload.payloadPath ? " | Payload: " + payload.payloadPath : "");
       }
 
       function setStoredSelection(payloadId) {
@@ -670,51 +635,108 @@
       }
 
       function updatePayloadState(restored) {
-        var compatible = !!(selectedPayload && window.PS4PayloadLoader.isCompatible(selectedPayload, firmware));
+        var state = compatibilityState(selectedPayload);
+        var compatible = state === "COMPATIBLE" || state === "AVAILABLE";
         if (!selectedPayload) {
-          payloadStateElement.textContent = "Selection required";
+          payloadStateElement.textContent = "No HEN";
           return;
         }
-        payloadStateElement.textContent = selectedPayload.displayName + (compatible ? (isRecommended(selectedPayload) ? " (recommended)" : "") : " (incompatible)");
+        payloadStateElement.textContent = isNoHenSelected()
+          ? (firmware === "13.02" ? "No HEN (locked)" : "No HEN (skipped)")
+          : selectedPayload.displayName + " (" + state.toLowerCase() + ")";
+        payloadChoicesElement.textContent = selectedHenDetails(selectedPayload);
         if (window.PS4Diag) {
+          window.PS4Diag.markHen({
+            family: selectedPayload.family || "none",
+            selection: selectedPayload.id,
+            displayName: selectedPayload.displayName,
+            identifier: selectedPayload.id,
+            version: selectedPayload.version || null,
+            payloadPath: selectedPayload.payloadPath || null,
+            loaderReference: selectedPayload.loaderReference || selectedPayload.loader || "skip",
+            evidence: selectedPayload.evidence || selectedPayload.verification || "unknown",
+            compatibility: firmware === "13.02" ? "LOCKED" : (isNoHenSelected() ? "AVAILABLE" : state),
+            requested: firmware === "13.02" ? false : !isNoHenSelected(),
+            attempted: false,
+            status: firmware === "13.02" ? "LOCKED" : (isNoHenSelected() ? "SKIPPED" : state),
+            error: state === "INCOMPATIBLE" ? "Selected HEN is not compatible with firmware " + firmware + "." : (state === "MISSING" ? "Selected HEN payload is missing." : (state === "DISABLED" ? "Selected HEN is disabled." : ""))
+          });
           window.PS4Diag.markPayload({
             id: selectedPayload.id,
             displayName: selectedPayload.displayName,
-            version: selectedPayload.version,
-            path: selectedPayload.file,
-            verificationStatus: selectedPayload.verification,
-            byteSize: selectedPayload.byteSize,
-            sha256: selectedPayload.sha256,
-            firmwareCompatible: compatible,
-            recommended: isRecommended(selectedPayload)
+            version: selectedPayload.version || "none",
+            path: selectedPayload.payloadPath || selectedPayload.file || "",
+            verificationStatus: selectedPayload.evidence || selectedPayload.verification || "source-confirmed",
+            byteSize: selectedPayload.byteSize || 0,
+            sha256: selectedPayload.sha256 || "",
+            firmwareCompatible: state === "COMPATIBLE",
+            recommended: false
+          });
+          if (!restored) {
+            window.PS4Diag.info("HEN-SELECTION-CHANGED", selectedPayload.displayName + " selected.", {
+              category: "PAYLOAD",
+              henFamily: selectedPayload.family || "none",
+              henIdentifier: selectedPayload.id,
+              henDisplayName: selectedPayload.displayName,
+              henVersion: selectedPayload.version || null,
+              henPayloadPath: selectedPayload.payloadPath || null,
+              henCompatibility: firmware === "13.02" ? "LOCKED" : (isNoHenSelected() ? "AVAILABLE" : state),
+              henEvidence: selectedPayload.evidence || selectedPayload.verification || "unknown"
+            });
+          }
+          window.PS4Diag.info("HEN-SELECTED", selectedPayload.displayName + " is the active HEN selection.", {
+            category: "PAYLOAD",
+            henFamily: selectedPayload.family || "none",
+            henIdentifier: selectedPayload.id,
+            henDisplayName: selectedPayload.displayName,
+            henVersion: selectedPayload.version || null,
+            henPayloadPath: selectedPayload.payloadPath || null,
+            henCompatibility: firmware === "13.02" ? "LOCKED" : (isNoHenSelected() ? "AVAILABLE" : state),
+            henEvidence: selectedPayload.evidence || selectedPayload.verification || "unknown"
+          });
+          window.PS4Diag.info("HEN-COMPATIBILITY-CHECK", compatibilityMessage(selectedPayload), {
+            category: "PAYLOAD",
+            henFamily: selectedPayload.family || "none",
+            henIdentifier: selectedPayload.id,
+            henDisplayName: selectedPayload.displayName,
+            henVersion: selectedPayload.version || null,
+            henPayloadPath: selectedPayload.payloadPath || null,
+            henCompatibility: firmware === "13.02" ? "LOCKED" : (isNoHenSelected() ? "AVAILABLE" : state),
+            henEvidence: selectedPayload.evidence || selectedPayload.verification || "unknown",
+            firmware: firmware || "Unknown"
           });
           if (restored) {
-            window.PS4Diag.info("PAYLOAD-SELECTION-RESTORED", selectedPayload.displayName + " restored from local storage.", {
+            window.PS4Diag.info("HEN-SELECTION-RESTORED", selectedPayload.displayName + " restored from local storage.", {
               category: "PAYLOAD",
-              payloadId: selectedPayload.id,
-              payloadVersion: selectedPayload.version,
-              payloadFilename: selectedPayload.file,
-              payloadExpectedSize: selectedPayload.byteSize,
-              payloadExpectedSha256: selectedPayload.sha256,
-              payloadFirmwareCompatible: compatible,
-              payloadRecommended: isRecommended(selectedPayload),
-              payloadVerification: selectedPayload.verification
+              henSelection: selectedPayload.id,
+              henDisplayName: selectedPayload.displayName,
+              henIdentifier: selectedPayload.id,
+              henLoadRequested: !isNoHenSelected(),
+              henLoadAttempted: false,
+              henLoadStatus: isNoHenSelected() ? "SKIPPED" : (compatible ? "SELECTED" : "INCOMPATIBLE")
             });
           }
         }
       }
 
       function launchReady() {
-        var payloadCompatible = !!(selectedPayload && window.PS4PayloadLoader.isCompatible(selectedPayload, firmware));
-        return firmware === "12.00" && backend === "Lapse" && !simulated && payloadCompatible;
+        var state = compatibilityState(selectedPayload);
+        var payloadCompatible = isNoHenSelected() || state === "COMPATIBLE";
+        return firmware === "12.00" && backend === "Lapse" && !simulated && !!selectedPayload && payloadCompatible;
+      }
+
+      function nextRuntimeReady() {
+        return firmware === "13.02" ? true : launchReady();
       }
 
       function updateLaunchState() {
         var ready = launchReady();
-        launcherElement.textContent = ready ? "Ready" : "Unavailable";
-        launcherElement.className = "status-pill " + (ready ? "status-ready" : "status-bad");
+        var nextReady = nextRuntimeReady();
+        launcherElement.textContent = ready || nextReady ? "Ready" : "Unavailable";
+        launcherElement.className = "status-pill " + (ready || nextReady ? "status-ready" : "status-bad");
         runButton.disabled = !ready;
-        nextAltButton.disabled = !ready;
+        nextAltButton.disabled = !nextReady;
+        nextAltButton.textContent = firmware === "13.02" ? "Run NEXT 13.02 Research" : "Run NEXT Runtime";
         if (backendStateElement) {
           backendStateElement.textContent = researchMode && firmware === "13.02"
             ? "Research only"
@@ -723,70 +745,70 @@
         statusElement.textContent = baseStatusText;
         if (previewBanner) previewBanner.hidden = !previewMode;
         if (!selectedPayload) {
-          payloadSelectionStatus.textContent = firmware === "Unknown"
-            ? "GoldHEN choices appear when firmware 12.00 is detected, or in preview mode with ?preview=1&fw=12.00."
-            : "Select a compatible GoldHEN payload to enable launch on 12.00.";
-        } else if (!window.PS4PayloadLoader.isCompatible(selectedPayload, firmware)) {
-          payloadSelectionStatus.textContent = selectedPayload.displayName + " is not compatible with firmware " + firmware + ".";
+          payloadSelectionStatus.textContent = firmware === "13.02"
+            ? "HEN loading is locked during the 13.02 userland research test."
+            : "Choose a configured HEN flavor or select No HEN to skip HEN loading.";
+        } else if (firmware === "13.02") {
+          payloadSelectionStatus.textContent = "HEN loading is locked during the 13.02 userland research test.";
+        } else if (isNoHenSelected()) {
+          payloadSelectionStatus.textContent = "No HEN selected. Runtime launch will skip HEN loading entirely.";
         } else {
-          payloadSelectionStatus.textContent = selectedPayload.displayName + " selected for firmware " + firmware + ".";
+          payloadSelectionStatus.textContent = firmware === "13.02"
+            ? "HEN loading is locked during the 13.02 userland research test."
+            : compatibilityMessage(selectedPayload);
         }
-        window.PS4Runtime.launcherReady = ready;
+        window.PS4Runtime.launcherReady = ready || nextReady;
         window.PS4Runtime.payloadId = selectedPayload ? selectedPayload.id : "";
         window.PS4Runtime.payloadVersion = selectedPayload ? selectedPayload.version : "Unknown";
+        window.PS4Runtime.henSelection = selectedPayload ? selectedPayload.id : "none";
+        window.PS4Runtime.henDisplayName = selectedPayload ? selectedPayload.displayName : "No HEN";
       }
 
       function renderPayloadChoices() {
-        var displayCatalog = firmware === "12.00" ? compatiblePayloadsFor("12.00") : previewMode ? compatiblePayloadsFor(firmware) : [];
-        var html = [];
+        var displayCatalog = allHenOptions();
+        var groups = {};
+        var groupNames = [];
         var index;
         if (!displayCatalog.length) {
-          payloadChoicesElement.innerHTML = "";
-          selectedPayload = null;
-          selectedPayloadId = "";
-          payloadStateElement.textContent = firmware === "Unknown" ? "Selection unavailable" : "Selection required";
+          if (henSelectElement) henSelectElement.innerHTML = "";
+          payloadChoicesElement.textContent = "No configured HEN payload definitions are available.";
+          selectedPayload = window.PS4PayloadLoader ? window.PS4PayloadLoader.getSelectionById("none") : null;
+          selectedPayloadId = selectedPayload ? selectedPayload.id : "none";
+          payloadStateElement.textContent = "No HEN";
           updateLaunchState();
           return;
         }
         for (index = 0; index < displayCatalog.length; index++) {
           var payload = displayCatalog[index];
-          var compatible = window.PS4PayloadLoader.isCompatible(payload, firmware);
-          var recommended = isRecommended(payload);
-          html.push(
-            '<button type="button" class="payload-card' + (payload.id === selectedPayloadId ? ' is-selected' : '') + '" data-payload-id="' + payload.id + '">' +
-              '<div class="payload-card-header">' +
-                '<div>' +
-                  '<h3 class="payload-card-title">' + payload.displayName + (recommended ? ' - Recommended' : '') + '</h3>' +
-                  '<div class="badge-row">' +
-                    '<span class="badge">Beta</span>' +
-                    '<span class="badge ' + (compatible ? 'compatible' : 'incompatible') + '">' + (compatible ? 'Compatible' : 'Incompatible') + '</span>' +
-                    (recommended ? '<span class="badge recommended">Recommended</span>' : '') +
-                  '</div>' +
-                '</div>' +
-              '</div>' +
-              '<dl>' +
-                '<dt>Version</dt><dd>' + payload.version + '</dd>' +
-                '<dt>Compatibility</dt><dd>' + (payload.supportedFirmwares || []).join(', ') + '</dd>' +
-                '<dt>File Size</dt><dd>' + payload.byteSize + ' bytes</dd>' +
-                '<dt>Verification</dt><dd>' + payload.verification + '</dd>' +
-              '</dl>' +
-            '</button>'
-          );
+          if (window.PS4PayloadLoader.isNoHenSelection(payload)) continue;
+          if (!groups[payload.family]) {
+            groups[payload.family] = [];
+            groupNames.push(payload.family);
+          }
+          groups[payload.family].push(payload);
         }
-        payloadChoicesElement.innerHTML = html.join("");
+        if (henSelectElement) {
+          var options = ['<option value="none"' + (selectedPayloadId === "none" ? ' selected' : '') + '>No HEN</option>'];
+          for (index = 0; index < groupNames.length; index++) {
+            var family = groupNames[index];
+            var familyOptions = groups[family];
+            var inner = [];
+            var optionIndex;
+            for (optionIndex = 0; optionIndex < familyOptions.length; optionIndex++) {
+              var option = familyOptions[optionIndex];
+              inner.push('<option value="' + option.id + '"' + (option.id === selectedPayloadId ? ' selected' : '') + '>' + option.displayName + (option.version ? ' (' + option.version + ')' : '') + '</option>');
+            }
+            options.push('<optgroup label="' + (familyOptions[0].name || family) + '">' + inner.join("") + '</optgroup>');
+          }
+          henSelectElement.innerHTML = options.join("");
+        }
+        payloadChoicesElement.textContent = selectedHenDetails(selectedPayload);
         updateLaunchState();
       }
 
       function selectPayload(payloadId, restored) {
-        var payload = window.PS4PayloadLoader.getById(payloadId);
-        if (!payload || !window.PS4PayloadLoader.isCompatible(payload, firmware)) {
-          selectedPayload = null;
-          selectedPayloadId = "";
-          clearStoredSelection();
-          updatePayloadState(false);
-          renderPayloadChoices();
-          return false;
-        }
+        var payload = window.PS4PayloadLoader.getSelectionById(payloadId);
+        if (!payload) return false;
         selectedPayload = payload;
         selectedPayloadId = payload.id;
         setStoredSelection(payload.id);
@@ -797,24 +819,25 @@
 
       function restoreSelection() {
         var savedId = getStoredSelection();
-        var saved = savedId ? window.PS4PayloadLoader.getById(savedId) : null;
-        var recommended = recommendedForFirmware("12.00");
-        if (saved && window.PS4PayloadLoader.isCompatible(saved, firmware || "12.00")) {
+        var saved = savedId ? window.PS4PayloadLoader.getSelectionById(savedId) : null;
+        var savedState = compatibilityState(saved);
+        if (firmware === "13.02") {
+          selectedPayload = window.PS4PayloadLoader.getSelectionById("none");
+          selectedPayloadId = selectedPayload.id;
+          setStoredSelection(selectedPayload.id);
+          updatePayloadState(false);
+          return;
+        }
+        if (saved && (window.PS4PayloadLoader.isNoHenSelection(saved) || savedState === "COMPATIBLE")) {
           selectedPayload = saved;
           selectedPayloadId = saved.id;
           updatePayloadState(true);
           return;
         }
-        if (savedId && !saved) clearStoredSelection();
-        if (recommended && window.PS4PayloadLoader.isCompatible(recommended, firmware || "12.00")) {
-          selectedPayload = recommended;
-          selectedPayloadId = recommended.id;
-          setStoredSelection(recommended.id);
-          updatePayloadState(false);
-          return;
-        }
-        selectedPayload = null;
-        selectedPayloadId = "";
+        selectedPayload = window.PS4PayloadLoader.getSelectionById("none");
+        selectedPayloadId = selectedPayload.id;
+        setStoredSelection(selectedPayload.id);
+        updatePayloadState(false);
       }
 
       function navigateToRuntime(relativeRuntimePath) {
@@ -829,6 +852,21 @@
             payloadId: selectedPayload.id,
             payloadVersion: selectedPayload.version,
             message: "Manual runtime launch requested from NEXT home."
+          });
+          window.PS4Diag.markHen({
+            selection: selectedPayload.id,
+            displayName: selectedPayload.displayName,
+            identifier: selectedPayload.id,
+            family: selectedPayload.family || "none",
+            version: selectedPayload.version || null,
+            payloadPath: selectedPayload.payloadPath || null,
+            loaderReference: selectedPayload.loaderReference || selectedPayload.loader || "skip",
+            evidence: selectedPayload.evidence || selectedPayload.verification || "unknown",
+            compatibility: firmware === "13.02" ? "LOCKED" : (isNoHenSelected() ? "AVAILABLE" : compatibilityState(selectedPayload)),
+            requested: firmware === "13.02" ? false : !isNoHenSelected(),
+            attempted: firmware === "13.02" ? false : !isNoHenSelected(),
+            status: firmware === "13.02" ? "LOCKED" : (isNoHenSelected() ? "SKIPPED" : "LOAD-REQUESTED"),
+            error: ""
           });
           window.PS4Diag.markBackend({ selected: window.PS4Runtime.selectedBackend, entered: true, completed: false, failed: false });
         }
@@ -872,9 +910,12 @@
       if (previewMode && firmware === "12.00") {
         backend = "Lapse";
         baseStatusText = "12.00 preview mode selected. Preview shows payload selection only and never launches WebKit or Lapse. PREVIEW MODE - EXPLOIT DISABLED.";
-      } else if (researchMode && firmware === "13.02") {
+      } else if (firmware === "13.02") {
         backend = "NEXT 13.02 Research";
-        baseStatusText = "13.02 research mode selected. Celsius / ffs_mountfs remains research-only and is not launched by this host. SIMULATED FIRMWARE. DEVELOPMENT ONLY. NOT HARDWARE VERIFIED.";
+        nextRuntimeTarget = "./runtime/next-1302/index.html";
+        baseStatusText = simulated
+          ? "13.02 research mode selected. HEN loading is locked during the 13.02 userland research test. Celsius / ffs_mountfs remains research-only and is not launched by this host. SIMULATED FIRMWARE. DEVELOPMENT ONLY. NOT HARDWARE VERIFIED."
+          : "13.02 routes only to the isolated SlopKit userland research probe. HEN loading is locked during the 13.02 userland research test. Celsius / ffs_mountfs remains locked and is not launched by this host.";
       } else if (forcedBackend === "lapse" || forcedBackend === "poops") {
         backend = forcedBackend === "lapse" ? "Lapse" : "Poops";
         baseStatusText = "Selected via ?bug=" + forcedBackend + ".";
@@ -916,36 +957,30 @@
         selectedBackend: backend,
         buildId: window.PS4_WEBKIT_BUILD ? window.PS4_WEBKIT_BUILD.buildId : "Unknown",
         cacheRevision: window.PS4_WEBKIT_BUILD ? window.PS4_WEBKIT_BUILD.cacheRevision : "Unknown",
-        pageName: previewMode ? "NEXT-1200-PREVIEW" : (researchMode && firmware === "13.02" ? "NEXT-1302-RESEARCH" : "NEXT-HOME"),
+        pageName: previewMode ? "NEXT-1200-PREVIEW" : (firmware === "13.02" ? "NEXT-1302-RESEARCH" : "NEXT-HOME"),
         relativePath: location.pathname || "./index.html",
         researchMode: researchMode,
-        researchCandidate: researchMode && firmware === "13.02" ? "Celsius / ffs_mountfs" : "",
-        candidateStatus: researchMode && firmware === "13.02" ? "research" : "",
+        researchCandidate: firmware === "13.02" ? "Celsius / ffs_mountfs" : "",
+        candidateStatus: firmware === "13.02" ? "research" : "",
         isPS4: hardwareDetected,
         launcherReady: false,
         backendEntered: false,
         kernelRW: false,
         payloadId: "",
-        payloadVersion: "Unknown"
+        payloadVersion: "Unknown",
+        henSelection: "none",
+        henDisplayName: "No HEN"
       };
 
-      payloadCatalog = window.PS4PayloadLoader ? window.PS4PayloadLoader.getCatalog() : [];
       restoreSelection();
       renderPayloadChoices();
       updateLaunchState();
 
-      payloadChoicesElement.addEventListener("click", function (event) {
-        var target = event.target;
-        while (target && target !== payloadChoicesElement && !target.getAttribute("data-payload-id")) target = target.parentNode;
-        if (!target || target === payloadChoicesElement) return;
-        selectPayload(target.getAttribute("data-payload-id"), false);
-      });
-
-      restoreRecommendedButton.addEventListener("click", function () {
-        var recommended = recommendedForFirmware("12.00");
-        if (recommended) selectPayload(recommended.id, false);
-      });
-
+      if (henSelectElement) {
+        henSelectElement.addEventListener("change", function () {
+          selectPayload(henSelectElement.value, false);
+        });
+      }
       if (window.PS4Diag) {
         window.PS4Diag.markPage(window.PS4Runtime.pageName, window.PS4Runtime.relativePath);
         window.PS4Diag.markBackend({ selected: window.PS4Runtime.selectedBackend, entered: false, completed: false, failed: false });
@@ -958,7 +993,11 @@
         navigateToRuntime("./runtime/next/run_lapse.html");
       });
       nextAltButton.addEventListener("click", function () {
-        navigateToRuntime("./runtime/next-alt/run_lapse.html");
+        if (firmware === "13.02") {
+          location.href = nextRuntimeTarget;
+          return;
+        }
+        navigateToRuntime(nextRuntimeTarget);
       });
     });
   </script>

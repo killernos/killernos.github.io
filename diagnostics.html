@@ -405,8 +405,8 @@
       <div class="actions">
         <button id="reset-log" type="button">Reset Log</button>
         <button id="export-log" type="button">Export Log</button>
-        <button id="download-report" type="button">Download Community Report</button>
-        <button id="copy-summary" type="button">Copy Summary</button>
+        <button id="download-report" type="button">Download Full Report</button>
+        <button id="copy-summary" type="button">Copy Short Summary</button>
         <a class="link-button" href="./index.html">Back To Home</a>
       </div>
     </section>
@@ -438,6 +438,10 @@
           <div class="stat">
             <span class="stat-label">Payload</span>
             <span class="stat-value" id="diag-payload">Unknown</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Selected HEN</span>
+            <span class="stat-value" id="diag-hen">No HEN</span>
           </div>
           <div class="stat">
             <span class="stat-label">Build</span>
@@ -632,11 +636,13 @@
 
     <section class="panel" style="margin-top: 18px;">
       <h2>Community Test Report</h2>
-      <p class="subtle">Reports are never sent automatically. Review the JSON below, confirm explicitly, and then choose submission. If no private endpoint is configured, the fallback opens a public GitHub issue draft.</p>
+      <p class="subtle">Reports are never sent automatically. Review the JSON below, confirm explicitly, and then choose submission. If no private endpoint is configured, the fallback uses a short GitHub summary only.</p>
       <div class="report-meta">Only non-sensitive fields are included by design: firmware, backend, payload metadata, stage flow, cache/storage status, tester-supplied notes, and optional User-Agent when you choose to include it.</div>
       <label class="inline-check"><input id="report-review-confirm" type="checkbox"> I reviewed this diagnostic report and want to submit it.</label>
       <div class="actions">
         <button id="submit-report" type="button" disabled>Submit Report</button>
+        <button id="retry-report-submit" type="button">Try Report Endpoint Again</button>
+        <button id="open-github-short-report" type="button">Open GitHub Short Report</button>
       </div>
       <div id="submission-status" class="submission-status">Submission is idle.</div>
       <pre id="report-preview" class="log mono">Loading report preview...</pre>

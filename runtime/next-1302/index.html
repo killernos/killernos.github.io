@@ -1,0 +1,318 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PS4 WebKit NEXT 13.02 Research</title>
+  <style>
+    :root {
+      --bg: #08111b;
+      --panel: rgba(12, 23, 38, 0.92);
+      --panel-2: rgba(8, 16, 29, 0.96);
+      --line: rgba(151, 188, 255, 0.2);
+      --text: #eef4ff;
+      --muted: #9fb5d7;
+      --accent: #8be0c8;
+      --warn: #ffd27a;
+      --bad: #ff9f9f;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(116, 169, 255, 0.2), transparent 28%),
+        radial-gradient(circle at top right, rgba(139, 224, 200, 0.15), transparent 26%),
+        linear-gradient(160deg, #07101a, var(--bg) 62%, #040a10);
+    }
+
+    .shell {
+      width: min(980px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 28px 0 48px;
+    }
+
+    .hero,
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: var(--panel);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.32);
+    }
+
+    .hero {
+      padding: 28px;
+      background: linear-gradient(145deg, rgba(13, 27, 48, 0.96), rgba(6, 14, 26, 0.94));
+    }
+
+    .eyebrow {
+      display: inline-block;
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(139, 224, 200, 0.32);
+      color: var(--accent);
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 16px 0 10px;
+      font-size: clamp(2rem, 4.8vw, 4rem);
+      line-height: 1;
+    }
+
+    .lead {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+      max-width: 760px;
+    }
+
+    .build {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .banner {
+      margin-top: 18px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(255, 210, 122, 0.3);
+      background: rgba(255, 210, 122, 0.1);
+      color: #fff0c8;
+      line-height: 1.6;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .panel {
+      padding: 24px;
+      background: var(--panel-2);
+    }
+
+    .panel h2 {
+      margin: 0 0 14px;
+      font-size: 1.15rem;
+      letter-spacing: 0.03em;
+    }
+
+    .facts {
+      display: grid;
+      gap: 10px;
+    }
+
+    .fact {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .fact strong {
+      font-size: 0.95rem;
+    }
+
+    .fact span {
+      color: var(--muted);
+      text-align: right;
+      word-break: break-word;
+    }
+
+    .status-copy {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(116, 169, 255, 0.08);
+      border: 1px solid rgba(116, 169, 255, 0.18);
+      line-height: 1.6;
+    }
+
+    .status-copy.bad {
+      background: rgba(255, 159, 159, 0.08);
+      border-color: rgba(255, 159, 159, 0.2);
+    }
+
+    .status-copy.ok {
+      background: rgba(139, 224, 200, 0.08);
+      border-color: rgba(139, 224, 200, 0.2);
+    }
+
+    .actions {
+      display: grid;
+      gap: 12px;
+    }
+
+    button,
+    a.action-link {
+      appearance: none;
+      width: 100%;
+      border: 0;
+      border-radius: 999px;
+      padding: 13px 18px;
+      font: inherit;
+      text-decoration: none;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 160ms ease, opacity 160ms ease;
+    }
+
+    button {
+      background: linear-gradient(135deg, var(--accent), #98eed9);
+      color: #072018;
+      font-weight: 700;
+    }
+
+    button.secondary,
+    a.action-link {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    button.warn {
+      background: linear-gradient(135deg, var(--warn), #ffe0a0);
+      color: #392506;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    button:not(:disabled):hover,
+    a.action-link:hover {
+      transform: translateY(-1px);
+    }
+
+    .meta {
+      margin-top: 18px;
+      display: grid;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .log {
+      margin-top: 18px;
+      min-height: 220px;
+      max-height: 420px;
+      overflow: auto;
+      padding: 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(0, 0, 0, 0.26);
+      font-family: "Courier New", monospace;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+
+    @media (max-width: 860px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .shell {
+        width: min(100% - 18px, 980px);
+        padding-top: 18px;
+      }
+
+      .hero,
+      .panel {
+        padding: 20px;
+        border-radius: 20px;
+      }
+
+      .fact {
+        grid-template-columns: 1fr;
+      }
+
+      .fact span {
+        text-align: left;
+      }
+    }
+  </style>
+  <script src="../../build.js" defer></script>
+  <script src="../../js/diagnostics.js" defer></script>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <span class="eyebrow">NEXT 13.02 Research</span>
+      <h1>PS4 WebKit NEXT<br>13.02 Research<br>Created by KillerNoS</h1>
+      <p class="lead">Isolated SlopKit userland probe for exact PS4 13.02 research. This page stops at userland validation and does not execute Celsius, kernel exploitation, or GoldHEN.</p>
+      <div class="build">Build ID: <span id="build-id">1302-next-slopkit-probe-0003</span></div>
+      <div id="simulation-banner" class="banner" hidden>
+        <strong>SIMULATED 13.02</strong><br>
+        DEVELOPMENT ONLY<br>
+        NOT HARDWARE VERIFIED
+      </div>
+    </section>
+
+    <section class="layout">
+      <section class="panel">
+        <h2>Research Status</h2>
+        <div class="facts">
+          <div class="fact"><strong>Firmware</strong><span id="field-firmware">13.02</span></div>
+          <div class="fact"><strong>Entrypoint</strong><span id="field-entrypoint">SlopKit</span></div>
+          <div class="fact"><strong>WebKit Primitive</strong><span id="field-primitive">NOT TESTED</span></div>
+          <div class="fact"><strong>Carrier</strong><span id="field-carrier">NOT OBTAINED</span></div>
+          <div class="fact"><strong>window.p</strong><span id="field-window-p">NOT INSTALLED</span></div>
+          <div class="fact"><strong>Userland Read</strong><span id="field-userland-read">NOT VERIFIED</span></div>
+          <div class="fact"><strong>Userland Write</strong><span id="field-userland-write">NOT VERIFIED</span></div>
+          <div class="fact"><strong>Userland ARW</strong><span id="field-userland-arw">NOT VERIFIED</span></div>
+          <div class="fact"><strong>Native Syscall Bridge</strong><span id="field-native-syscall">LOCKED</span></div>
+          <div class="fact"><strong>Celsius / ffs_mountfs</strong><span id="field-celsius">LOCKED</span></div>
+          <div class="fact"><strong>Kernel Read</strong><span id="field-kernel-read">NOT VERIFIED</span></div>
+          <div class="fact"><strong>Kernel Write</strong><span id="field-kernel-write">NOT VERIFIED</span></div>
+          <div class="fact"><strong>Kernel Execution</strong><span id="field-kernel-execution">NOT VERIFIED</span></div>
+          <div class="fact"><strong>GoldHEN</strong><span id="field-goldhen">LOCKED</span></div>
+        </div>
+
+        <div id="status-copy" class="status-copy">Awaiting manual start.</div>
+        <div id="success-copy" class="status-copy ok" hidden>13.02 USERLAND RESEARCH SUCCESS<br><br>Kernel exploitation has NOT been achieved.</div>
+        <div class="meta">
+          <div>Backend: <span id="backend-name">NEXT 13.02 Research</span></div>
+          <div>Candidate: <span id="candidate-name">SlopKit Userland</span></div>
+          <div>Last SlopKit Stage: <span id="last-stage">Not reported</span></div>
+          <div>Last Successful Stage: <span id="last-successful-stage">Not reported</span></div>
+          <div>SlopKit Attempt: <span id="slopkit-attempt">0</span></div>
+        </div>
+
+        <div id="event-log" class="log" aria-live="polite">No events yet.</div>
+      </section>
+
+      <section class="panel">
+        <h2>Actions</h2>
+        <div class="actions">
+          <button id="run-test" type="button">Run SlopKit Userland Test</button>
+          <button id="stop-test" type="button" class="warn">Stop Test</button>
+          <a id="open-diagnostics" class="action-link" href="../../diagnostics.html">Open Diagnostics</a>
+          <button id="download-report" type="button" class="secondary">Download Report</button>
+          <a class="action-link" href="../../index.html">Return To NEXT</a>
+        </div>
+      </section>
+    </section>
+  </div>
+  <script type="module" src="./userland-probe.js"></script>
+</body>
+</html>
