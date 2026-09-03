@@ -26,6 +26,21 @@
   <div id="state">loading lapse chain...</div>
   <div id="out"></div>
 </div>
+<script>
+  window.PS4Runtime = window.PS4Runtime || {};
+  window.PS4Runtime.selectedBackend = window.PS4Runtime.selectedBackend || "Lapse";
+  window.PS4Runtime.backendEntered = true;
+  window.PS4Runtime.pageName = "NEXT-12XX-RUNTIME";
+  window.PS4Runtime.relativePath = location.pathname || "./runtime/next/run_lapse.html";
+</script>
+<script src="../../build.js"></script>
+<script src="../../js/diagnostics.js"></script>
+<script>
+  if (window.PS4Diag) {
+    window.PS4Diag.markPage("NEXT-12XX-RUNTIME", location.pathname || "./runtime/next/run_lapse.html");
+    window.PS4Diag.markBackend({ selected: window.PS4Runtime.selectedBackend, entered: true, completed: false, failed: false });
+  }
+</script>
 <script type="module">import "./chain_lapse.js";</script>
 </body>
 </html>

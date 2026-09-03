@@ -37,7 +37,7 @@ function terse(s) {
     if (s.length > 140) s = s.slice(0, 140) + "...";
     return s;
 }
-function mark(tag, detail) {
+function mark(tag, detail, meta) {
     detail = terse(detail);
     lines.push(tag + (detail == null || detail === "" ? "" : "  " + detail));
     const esc = function (t) {
@@ -53,6 +53,11 @@ function mark(tag, detail) {
     }).join("\n");
     outEl.scrollTop = outEl.scrollHeight;
     post(tag, detail);
+    try {
+        if (window.PS4Diag && typeof window.PS4Diag.observeRuntimeEvent === "function") {
+            window.PS4Diag.observeRuntimeEvent(tag, detail, meta || {});
+        }
+    } catch (e) { }
 }
 function state(t, c) { stateEl.textContent = t; stateEl.className = c || ""; }
 
@@ -293,7 +298,7 @@ function makeRpc(worker) {
 
             onEvent: function (tag, detail, attempt) {
                 mark(tag, (attempt != null ? '[' + attempt + '] ' : '')
-                    + (detail || ''));
+                    + (detail || ''), { attempt: attempt });
             }
         });
         installWindowP(carrier);

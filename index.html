@@ -342,6 +342,10 @@
           <strong>Local Validation Boundary</strong>
           12.00 is the only locally hardware-testable firmware in this workspace.
         </div>
+        <div class="notice" id="simulation-notice" hidden>
+          <strong>Simulated Firmware</strong>
+          Development only. Not hardware verified.
+        </div>
       </div>
     </section>
 
@@ -428,27 +432,70 @@
       var launcherElement = document.getElementById("launcher-state");
       var upstreamElement = document.getElementById("upstream-state");
       var statusElement = document.getElementById("routing-status");
+      var simulationNotice = document.getElementById("simulation-notice");
       var runButton = document.getElementById("run-1200");
+      var backendStateElement = document.getElementById("backend-state");
       var match = /PlayStation\s+4[\/ ](\d+)\.(\d+)/.exec(navigator.userAgent);
       var firmware = null;
+      var firmwareSource = "desktop";
+      var hardwareDetected = false;
+      var simulated = false;
       var firmwareNumber = null;
       var forcedBackend = null;
+      var forcedFirmware = null;
+      var researchMode = false;
+
+      function parseQuery(name) {
+        var parts;
+        var index;
+        if (!location.search || location.search.length < 2) return "";
+        parts = location.search.slice(1).split("&");
+        for (index = 0; index < parts.length; index++) {
+          var pair = parts[index].split("=");
+          if (decodeURIComponent(pair[0] || "") === name) {
+            return decodeURIComponent((pair[1] || "").replace(/\+/g, " "));
+          }
+        }
+        return "";
+      }
+
+      function normalizeFirmware(value) {
+        var clean = String(value || "").replace(/\s+/g, "").trim();
+        var parsed = /^(\d+)(?:\.(\d{1,2}))?$/.exec(clean);
+        var minor;
+        if (!parsed) return "";
+        minor = parsed[2] || "00";
+        if (minor.length < 2) minor = "0" + minor;
+        return parsed[1] + "." + minor;
+      }
+
       try {
-        var parameters = new URLSearchParams(location.search);
-        forcedBackend = parameters.get("bug");
+        forcedBackend = parseQuery("bug");
+        forcedFirmware = normalizeFirmware(parseQuery("fw"));
+        researchMode = parseQuery("research") === "1";
       } catch (e) { }
 
-      if (match) {
+      if (forcedFirmware) {
+        firmware = forcedFirmware;
+        firmwareNumber = parseInt(forcedFirmware.split(".")[0], 10) * 100 + parseInt(forcedFirmware.split(".")[1], 10);
+        firmwareSource = "query";
+        simulated = true;
+      } else if (match) {
         var minor = parseInt(match[2], 16);
         var normalizedMinor = minor.toString(16);
         if (normalizedMinor.length < 2) normalizedMinor = "0" + normalizedMinor;
         firmware = match[1] + "." + normalizedMinor;
         firmwareNumber = parseInt(match[1], 10) * 100 + parseInt(normalizedMinor, 10);
+        firmwareSource = "user-agent";
+        hardwareDetected = true;
       }
 
       var backend = "None";
       var explanation = "User agent is not a PlayStation 4.";
-      if (forcedBackend === "lapse" || forcedBackend === "poops") {
+      if (researchMode && firmware === "13.02") {
+        backend = "NEXT 13.02 Research";
+        explanation = "13.02 research mode selected. Celsius / ffs_mountfs remains research-only and is not launched by this host.";
+      } else if (forcedBackend === "lapse" || forcedBackend === "poops") {
         backend = forcedBackend === "lapse" ? "Lapse" : "Poops";
         explanation = "Selected via ?bug=" + forcedBackend + ".";
       } else if (firmwareNumber !== null && firmwareNumber <= 1202) {
@@ -462,28 +509,66 @@
       }
 
       var upstreamSupported = backend !== "None";
-      var canLaunch1200 = firmware === "12.00" && backend === "Lapse";
+      var canLaunch1200 = firmware === "12.00" && backend === "Lapse" && !simulated;
       firmwareElement.textContent = firmware || "Unknown";
       backendElement.textContent = backend;
       launcherElement.textContent = canLaunch1200 ? "Ready" : "Unavailable";
       launcherElement.className = "status-pill " + (canLaunch1200 ? "status-ready" : "status-bad");
       upstreamElement.textContent = upstreamSupported ? "Supported Upstream" : "Unsupported Upstream";
       upstreamElement.className = "status-pill " + (upstreamSupported ? "status-ready" : "status-bad");
-      statusElement.textContent = explanation + (canLaunch1200 ? " Existing 12.00 runtime is ready for manual launch." : " Upstream support does not automatically imply a validated local launch path here.");
+      if (simulationNotice) simulationNotice.hidden = !simulated;
+      if (backendStateElement) {
+        backendStateElement.textContent = researchMode && firmware === "13.02"
+          ? "Research only"
+          : canLaunch1200 ? "Ready for manual launch" : "Observation only";
+      }
+      statusElement.textContent = explanation
+        + (simulated ? " SIMULATED FIRMWARE. DEVELOPMENT ONLY. NOT HARDWARE VERIFIED." : "")
+        + (canLaunch1200 ? " Existing 12.00 runtime is ready for manual launch." : " Upstream support does not automatically imply a validated local launch path here.");
       runButton.disabled = !canLaunch1200;
 
       window.PS4Runtime = {
         firmware: firmware || "Unknown",
+        firmwareRaw: firmware || "Unknown",
+        firmwareNormalized: firmware || "Unknown",
+        firmwareSource: firmwareSource,
+        hardwareDetected: hardwareDetected,
+        simulated: simulated,
         selectedBackend: backend,
-        isPS4: firmware !== null,
+        buildId: window.PS4_WEBKIT_BUILD ? window.PS4_WEBKIT_BUILD.buildId : "Unknown",
+        cacheRevision: window.PS4_WEBKIT_BUILD ? window.PS4_WEBKIT_BUILD.cacheRevision : "Unknown",
+        pageName: researchMode && firmware === "13.02" ? "NEXT-1302-RESEARCH" : "NEXT-HOME",
+        relativePath: location.pathname || "./index.html",
+        researchMode: researchMode,
+        researchCandidate: researchMode && firmware === "13.02" ? "Celsius / ffs_mountfs" : "",
+        candidateStatus: researchMode && firmware === "13.02" ? "research" : "",
+        isPS4: hardwareDetected,
         launcherReady: canLaunch1200,
         backendEntered: false,
         kernelRW: false
       };
 
+      document.addEventListener("DOMContentLoaded", function () {
+        if (!window.PS4Diag) return;
+        window.PS4Diag.markPage(window.PS4Runtime.pageName, window.PS4Runtime.relativePath);
+        window.PS4Diag.markBackend({ selected: window.PS4Runtime.selectedBackend, entered: false, completed: false, failed: false });
+        if (simulated) {
+          window.PS4Diag.info("SIMULATED-FIRMWARE", "DEVELOPMENT ONLY. NOT HARDWARE VERIFIED.", { category: "FIRMWARE" });
+        }
+      });
+
       runButton.addEventListener("click", function () {
         if (!window.PS4Runtime.launcherReady) return;
         launcherElement.textContent = "Launching";
+        if (window.PS4Diag) {
+          window.PS4Diag.markLaunch({
+            firmware: window.PS4Runtime.firmware,
+            backend: window.PS4Runtime.selectedBackend,
+            pageName: window.PS4Runtime.pageName,
+            message: "Manual runtime launch requested from NEXT home."
+          });
+          window.PS4Diag.markBackend({ selected: window.PS4Runtime.selectedBackend, entered: true, completed: false, failed: false });
+        }
         try {
           sessionStorage.setItem("ps4-webkit-next:last-launch", JSON.stringify({
             firmware: window.PS4Runtime.firmware,

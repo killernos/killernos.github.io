@@ -132,9 +132,15 @@
       margin-top: 18px;
     }
 
+    .stack {
+      display: grid;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
     .stats {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 12px;
     }
 
@@ -168,6 +174,13 @@
       margin-top: 18px;
     }
 
+    .subgrid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 18px;
+    }
+
     button,
     .link-button {
       appearance: none;
@@ -184,6 +197,12 @@
       background: linear-gradient(135deg, var(--accent), #96f0db);
       color: #072018;
       font-weight: 700;
+    }
+
+    button[disabled] {
+      opacity: 0.42;
+      cursor: not-allowed;
+      transform: none;
     }
 
     .link-button {
@@ -228,8 +247,116 @@
       margin-bottom: 6px;
     }
 
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+      padding: 14px;
+      border-radius: 18px;
+      background: var(--panel-strong);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .field label,
+    .field .field-label {
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .field input,
+    .field textarea,
+    .field select {
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      padding: 12px 13px;
+      font: inherit;
+    }
+
+    .field textarea {
+      min-height: 128px;
+      resize: vertical;
+    }
+
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 14px 0 16px;
+    }
+
+    .filter-button {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 10px 14px;
+    }
+
+    .filter-button.is-active {
+      background: linear-gradient(135deg, rgba(121, 224, 195, 0.2), rgba(116, 169, 255, 0.22));
+      border-color: rgba(121, 224, 195, 0.46);
+    }
+
+    .summary-box,
+    .report-meta,
+    .submission-status {
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: var(--panel-strong);
+      line-height: 1.6;
+    }
+
+    .submission-status.ok {
+      border-color: rgba(121, 224, 195, 0.36);
+      color: #dffff6;
+    }
+
+    .submission-status.warn {
+      border-color: rgba(255, 210, 122, 0.28);
+      color: #fff0c8;
+    }
+
+    .submission-status.bad {
+      border-color: rgba(255, 159, 159, 0.28);
+      color: #ffe0e0;
+    }
+
+    .inline-check {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-top: 12px;
+      color: #dce9ff;
+      line-height: 1.5;
+    }
+
+    .inline-check input {
+      margin-top: 4px;
+    }
+
+    .mono {
+      font-family: Consolas, "Courier New", monospace;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
     @media (max-width: 900px) {
       .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .subgrid,
+      .field-grid {
         grid-template-columns: 1fr;
       }
     }
@@ -263,34 +390,84 @@
     <section class="hero">
       <span class="eyebrow">Diagnostics Console</span>
       <h1>PS4 WebKit Next Diagnostics</h1>
-      <p class="lead">Current browser routing, stage history, and log export in the same visual language as the landing page, without changing the underlying diagnostic behavior.</p>
-      <p class="summary">This page reports stock-browser detection state and diagnostic events for the current session. It does not widen the validated runtime boundary beyond the existing 12.00 path.</p>
+      <p class="lead">Universal telemetry, previous-session recovery, and opt-in community reporting across the current NEXT surfaces, while keeping exploit behavior unchanged.</p>
+      <p class="summary">Diagnostics observe firmware, routing, cache, storage, resource failures, JavaScript failures, payload flow, and previous incomplete sessions. Community submission remains opt-in and shows the exact JSON before anything is sent.</p>
       <div class="actions">
         <button id="reset-log" type="button">Reset Log</button>
         <button id="export-log" type="button">Export Log</button>
+        <button id="download-report" type="button">Download Community Report</button>
+        <button id="copy-summary" type="button">Copy Summary</button>
         <a class="link-button" href="./index.html">Back To Home</a>
       </div>
     </section>
 
     <section class="grid">
       <div class="panel">
-        <h2>Runtime Snapshot</h2>
+        <h2>Current Session</h2>
         <div class="stats">
           <div class="stat">
             <span class="stat-label">Firmware</span>
             <span class="stat-value" id="diag-firmware">Unknown</span>
           </div>
           <div class="stat">
+            <span class="stat-label">Firmware Source</span>
+            <span class="stat-value" id="diag-firmware-source">unknown</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Hardware Detected</span>
+            <span class="stat-value" id="diag-hardware-detected">No</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Simulated</span>
+            <span class="stat-value" id="diag-simulated">No</span>
+          </div>
+          <div class="stat">
             <span class="stat-label">Selected Backend</span>
             <span class="stat-value" id="diag-backend">None</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Payload</span>
+            <span class="stat-value" id="diag-payload">Unknown</span>
           </div>
           <div class="stat">
             <span class="stat-label">Build</span>
             <span class="stat-value" id="diag-build" data-build-id>1200-next-manual-0001</span>
           </div>
           <div class="stat">
+            <span class="stat-label">Cache Revision</span>
+            <span class="stat-value" id="diag-cache-revision">Unknown</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Online State</span>
+            <span class="stat-value" id="diag-online">unknown</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Page</span>
+            <span class="stat-value" id="diag-page">UNKNOWN</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Path</span>
+            <span class="stat-value" id="diag-page-path">./</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Session ID</span>
+            <span class="stat-value" id="diag-session-id">Unknown</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Session Start</span>
+            <span class="stat-value" id="diag-session-start">Unknown</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Elapsed</span>
+            <span class="stat-value" id="diag-elapsed">0 ms</span>
+          </div>
+          <div class="stat">
             <span class="stat-label">Last Stage</span>
             <span class="stat-value" id="diag-last-stage">Not reported</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Normalized Stage</span>
+            <span class="stat-value" id="diag-normalized-stage">Not reported</span>
           </div>
           <div class="stat">
             <span class="stat-label">Attempts</span>
@@ -305,6 +482,34 @@
             <span class="stat-value" id="diag-failures">0</span>
           </div>
           <div class="stat">
+            <span class="stat-label">Cache State</span>
+            <span class="stat-value" id="diag-cache-state">CACHE-UNKNOWN</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Local Storage</span>
+            <span class="stat-value" id="diag-storage-local">unknown</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Session Storage</span>
+            <span class="stat-value" id="diag-storage-session">unknown</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">JavaScript Errors</span>
+            <span class="stat-value" id="diag-js-errors">0</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Resource Errors</span>
+            <span class="stat-value" id="diag-resource-errors">0</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Console Model</span>
+            <span class="stat-value" id="diag-console-model">Unknown</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Diagnostics Schema</span>
+            <span class="stat-value" id="diag-schema">next-diagnostics-2</span>
+          </div>
+          <div class="stat">
             <span class="stat-label">User Agent</span>
             <span class="stat-value" id="diag-user-agent">Loading...</span>
           </div>
@@ -312,28 +517,119 @@
       </div>
 
       <div class="panel">
-        <h2>Session Notes</h2>
+        <h2>Previous Session</h2>
         <div class="list">
           <div class="item">
-            <strong>Signal Source</strong>
-            The counters and last-stage field are driven by the existing browser-side diagnostics script.
+            <strong>Completion State</strong>
+            <span id="diag-previous-completion">Complete</span>
           </div>
           <div class="item">
-            <strong>Export</strong>
-            Export Log downloads the in-memory session records as JSON using the current build ID.
+            <strong>Previous Session</strong>
+            <span id="diag-previous-status">None</span>
           </div>
           <div class="item">
-            <strong>Scope</strong>
-            This is a display and logging surface only. It does not change exploit timing, offsets, payloads, or runtime wiring.
+            <strong>Previous Last Stage</strong>
+            <span id="diag-previous-stage">None</span>
+          </div>
+          <div class="item">
+            <strong>Previous Normalized Stage</strong>
+            <span id="diag-previous-normalized-stage">None</span>
           </div>
         </div>
+        <div class="summary-box" style="margin-top: 18px;">
+          Unexpected termination is reported only as suspected when the prior session lacks a normal completion marker. Diagnostics do not automatically label the cause as a kernel panic.
+        </div>
+      </div>
+    </section>
+
+    <section class="subgrid">
+      <div class="panel">
+        <h2>Summary</h2>
+        <pre id="diag-summary" class="log mono">Loading summary...</pre>
+      </div>
+
+      <div class="panel">
+        <h2>Community Report Setup</h2>
+        <div class="field-grid">
+          <div class="field">
+            <label for="console-model">Console Model</label>
+            <select id="console-model">
+              <option value="Original">Original</option>
+              <option value="Slim">Slim</option>
+              <option value="Pro">Pro</option>
+              <option value="Unknown" selected>Unknown</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="tester-outcome">Tester Outcome</label>
+            <select id="tester-outcome">
+              <option value="">Select an outcome</option>
+              <option>Worked successfully</option>
+              <option>No crash / returned normally</option>
+              <option>Exploit did not start</option>
+              <option>Exploit stalled</option>
+              <option>Browser crash</option>
+              <option>Application crash</option>
+              <option>PS4 froze</option>
+              <option>PS4 rebooted</option>
+              <option>Possible kernel panic</option>
+              <option>Payload failed to load</option>
+              <option>GoldHEN did not appear</option>
+              <option>GoldHEN loaded successfully</option>
+              <option>Cache problem</option>
+              <option>Offline problem</option>
+              <option>Repeated failure</option>
+              <option>Stage progressed farther than previous test</option>
+              <option>Different behavior than previous build</option>
+              <option>13.02 environment probe succeeded</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="tester-alias">Tester Alias</label>
+            <input id="tester-alias" type="text" maxlength="80" placeholder="Optional alias">
+          </div>
+          <div class="field">
+            <span class="field-label">Submission Target</span>
+            <div id="report-target">Checking...</div>
+            <div id="report-warning" class="subtle">Loading report target details.</div>
+          </div>
+        </div>
+        <div class="field" style="margin-top: 12px;">
+          <label for="tester-notes">Tester Notes</label>
+          <textarea id="tester-notes" maxlength="2000" placeholder="Optional notes. Example: Worked after second attempt. PS4 rebooted when KEX started."></textarea>
+        </div>
+        <label class="inline-check"><input id="include-user-agent" type="checkbox"> Include User-Agent in the report preview and export. Leave unchecked to keep User-Agent local only.</label>
       </div>
     </section>
 
     <section class="panel" style="margin-top: 18px;">
       <h2>Diagnostic Log</h2>
-      <p class="subtle">Session events are appended below as the page initializes and as future diagnostic hooks emit stage records.</p>
+      <p class="subtle">Filter the persisted ring buffer without deleting entries. Records keep their session ID so previous-session recovery and current-session flow can be compared locally.</p>
+      <div class="filter-bar">
+        <button type="button" class="filter-button is-active" data-filter="all" aria-pressed="true">All</button>
+        <button type="button" class="filter-button" data-filter="errors" aria-pressed="false">Errors</button>
+        <button type="button" class="filter-button" data-filter="failures" aria-pressed="false">Failures</button>
+        <button type="button" class="filter-button" data-filter="webkit" aria-pressed="false">WebKit</button>
+        <button type="button" class="filter-button" data-filter="kernel" aria-pressed="false">Kernel</button>
+        <button type="button" class="filter-button" data-filter="payload" aria-pressed="false">Payload</button>
+        <button type="button" class="filter-button" data-filter="cache" aria-pressed="false">Cache</button>
+        <button type="button" class="filter-button" data-filter="previous" aria-pressed="false">Previous Session</button>
+        <button type="button" class="filter-button" data-filter="research1302" aria-pressed="false">13.02 Research</button>
+      </div>
       <pre id="log" class="log">No diagnostic records.</pre>
+    </section>
+
+    <section class="panel" style="margin-top: 18px;">
+      <h2>Community Test Report</h2>
+      <p class="subtle">Reports are never sent automatically. Review the JSON below, confirm explicitly, and then choose submission. If no private endpoint is configured, the fallback opens a public GitHub issue draft.</p>
+      <div class="report-meta">Only non-sensitive fields are included by design: firmware, backend, payload metadata, stage flow, cache/storage status, tester-supplied notes, and optional User-Agent when you choose to include it.</div>
+      <label class="inline-check"><input id="report-review-confirm" type="checkbox"> I reviewed this diagnostic report and want to submit it.</label>
+      <div class="actions">
+        <button id="submit-report" type="button" disabled>Submit Report</button>
+      </div>
+      <div id="submission-status" class="submission-status">Submission is idle.</div>
+      <pre id="report-preview" class="log mono">Loading report preview...</pre>
     </section>
   </div>
 </body>
