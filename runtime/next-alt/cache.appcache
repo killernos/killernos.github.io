@@ -1,0 +1,24 @@
+CACHE MANIFEST
+# build 1200-next-alt-goldhen-selector-0002
+run_lapse.html
+../zrm/chain_lapse.js
+../zrm/core.js
+../zrm/mem.js
+../zrm/int64.js
+../zrm/ps4_offsets.js
+../zrm/rpc_worker.js
+../next/next_icon.jpg
+../../payloads/catalog.js
+../../js/payload-loader.js
+../../payloads/goldhen/goldhen-2.4b18.5.bin
+../../payloads/goldhen/goldhen-2.4b18.6.bin
+../../payloads/goldhen/goldhen-2.4b18.7.bin
+../../payloads/goldhen/goldhen-2.4b18.8.bin
+../../payloads/goldhen/goldhen-2.4b18.9.bin
+../../payloads/goldhen/goldhen-2.4b18.10.bin
+../zrm/payload.bin
+../zrm/patches/1200.bin
+../zrm/core.js?v=10
+
+NETWORK:
+*

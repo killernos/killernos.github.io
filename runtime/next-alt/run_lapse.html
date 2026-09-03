@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" manifest="cache.appcache">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PS4 WebKit Next</title>
+<style>
+  html, body { margin:0; padding:0; background:#0b0d10; color:#c8ced8;
+               font:15px/1.45 "Segoe UI", Arial, sans-serif; }
+  #wrap { padding:0 18px 16px; }
+  #brand { height:86px; display:flex; align-items:center; justify-content:center;
+           border-bottom:1px solid #39414d; background:#11151b; }
+  #brand img { width:64px; height:64px; border-radius:50%; object-fit:cover;
+               margin-right:16px; border:1px solid #38414c; }
+  #brand span { font-size:28px; font-weight:700; color:#f0f2f5; letter-spacing:.2px; }
+  #state { font-size:22px; font-weight:700; margin:12px 0 10px; color:#7fd06a; }
+  #out { white-space:pre-wrap; font:12px/1.45 Consolas, "Courier New", monospace;
+         background:#11151b; border:1px solid #39414d; border-radius:5px;
+         padding:10px 12px; height:calc(100vh - 155px); overflow-y:auto; }
+  .ok { color:#7fd0a0; } .bad { color:#d08a7f; } .warn { color:#d8c07f; }
+</style>
+</head>
+<body>
+<div id="brand"><img src="../next/next_icon.jpg" alt=""><span>PS4 WebKit Next</span></div>
+<div id="wrap">
+  <div id="state">loading lapse chain...</div>
+  <div id="out"></div>
+</div>
+<script>
+  window.PS4Runtime = window.PS4Runtime || {};
+  window.PS4Runtime.selectedPayloadId = (new URLSearchParams(location.search || "")).get("payloadId") || "";
+  window.PS4Runtime.selectedBackend = window.PS4Runtime.selectedBackend || "Lapse";
+  window.PS4Runtime.backendEntered = true;
+  window.PS4Runtime.pageName = "NEXT-ALT-RUNTIME";
+  window.PS4Runtime.relativePath = location.pathname || "./runtime/next-alt/run_lapse.html";
+</script>
+<script src="../../build.js"></script>
+<script src="../../js/diagnostics.js"></script>
+<script src="../../payloads/catalog.js"></script>
+<script src="../../js/payload-loader.js"></script>
+<script>
+  if (window.PS4Diag) {
+    window.PS4Diag.markPage("NEXT-ALT-RUNTIME", location.pathname || "./runtime/next-alt/run_lapse.html");
+    window.PS4Diag.markBackend({ selected: window.PS4Runtime.selectedBackend, entered: true, completed: false, failed: false });
+  }
+</script>
+<script type="module">import "../zrm/chain_lapse.js";</script>
+</body>
+</html>
