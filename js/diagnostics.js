@@ -44,7 +44,13 @@
       displayName: "Unknown",
       version: "Unknown",
       path: "",
-      verificationStatus: "unknown"
+      verificationStatus: "unknown",
+      byteSize: 0,
+      sha256: "",
+      firmwareCompatible: false,
+      recommended: false,
+      actualSize: 0,
+      actualSha256: ""
     },
     backend: {
       selected: "Unknown",
@@ -242,7 +248,7 @@
     if (/^CACHE-(INIT|CHECK|UPDATE-AVAILABLE|UPDATE-FAIL|RESOURCE-MISSING|UNKNOWN)$/.test(stage)) return "CACHE-CHECK";
     if (/^CACHE-READY$/.test(stage)) return "CACHE-READY";
     if (/^PAGE-ENTER$/.test(stage)) {
-      return /NEXT-(12XX|ZRM)-RUNTIME|NEXT-1302-RESEARCH/.test(pageName) ? "RUNTIME-ENTER" : "BOOT";
+      return /NEXT-(12XX|ALT)-RUNTIME|NEXT-1302-RESEARCH/.test(pageName) ? "RUNTIME-ENTER" : "BOOT";
     }
     if (/^ATTEMPT-(START|BEGIN)$|^AUTO-RETRY-|^CORE-GIVE-UP$|^SETUP-THREW$|^REFUSING-TO-ARM$/.test(stage)) return "WK-BEGIN";
     if (/^ARMED$|^RACE-|^RECLAIM-FAILED$|^PRECOMMIT-|^WIN-EVIDENCE$/.test(stage)) return "WK-TRIGGER";
@@ -591,7 +597,13 @@
         displayName: partial.payload.displayName || state.payload.displayName,
         version: partial.payload.version || state.payload.version,
         path: partial.payload.path || state.payload.path,
-        verificationStatus: partial.payload.verificationStatus || state.payload.verificationStatus
+        verificationStatus: partial.payload.verificationStatus || state.payload.verificationStatus,
+        byteSize: partial.payload.byteSize || state.payload.byteSize,
+        sha256: partial.payload.sha256 || state.payload.sha256,
+        firmwareCompatible: partial.payload.firmwareCompatible !== undefined ? !!partial.payload.firmwareCompatible : state.payload.firmwareCompatible,
+        recommended: partial.payload.recommended !== undefined ? !!partial.payload.recommended : state.payload.recommended,
+        actualSize: partial.payload.actualSize || state.payload.actualSize,
+        actualSha256: partial.payload.actualSha256 || state.payload.actualSha256
       };
     }
     persistSession();
@@ -639,7 +651,13 @@
         displayName: state.payload.displayName,
         version: state.payload.version,
         path: state.payload.path,
-        verificationStatus: state.payload.verificationStatus
+        verificationStatus: state.payload.verificationStatus,
+        byteSize: state.payload.byteSize,
+        sha256: state.payload.sha256,
+        firmwareCompatible: state.payload.firmwareCompatible,
+        recommended: state.payload.recommended,
+        actualSize: state.payload.actualSize,
+        actualSha256: state.payload.actualSha256
       },
       details: details || {}
     };
@@ -868,7 +886,13 @@
         payloadDisplayName: state.payload.displayName,
         payloadVersion: state.payload.version,
         payloadPath: state.payload.path,
-        payloadVerificationStatus: state.payload.verificationStatus
+        payloadVerificationStatus: state.payload.verificationStatus,
+        payloadExpectedSize: state.payload.byteSize,
+        payloadExpectedSha256: state.payload.sha256,
+        payloadFirmwareCompatible: state.payload.firmwareCompatible,
+        payloadRecommended: state.payload.recommended,
+        payloadActualSize: state.payload.actualSize,
+        payloadActualSha256: state.payload.actualSha256
       },
       attemptCount: state.attempts,
       passCount: state.passes,
@@ -1125,7 +1149,13 @@
       displayName: payload && payload.displayName ? payload.displayName : state.payload.displayName,
       version: payload && payload.version ? payload.version : state.payload.version,
       path: payload && payload.path ? payload.path : state.payload.path,
-      verificationStatus: payload && payload.verificationStatus ? payload.verificationStatus : state.payload.verificationStatus
+      verificationStatus: payload && payload.verificationStatus ? payload.verificationStatus : state.payload.verificationStatus,
+      byteSize: payload && payload.byteSize ? payload.byteSize : state.payload.byteSize,
+      sha256: payload && payload.sha256 ? payload.sha256 : state.payload.sha256,
+      firmwareCompatible: payload && payload.firmwareCompatible !== undefined ? !!payload.firmwareCompatible : state.payload.firmwareCompatible,
+      recommended: payload && payload.recommended !== undefined ? !!payload.recommended : state.payload.recommended,
+      actualSize: payload && payload.actualSize ? payload.actualSize : state.payload.actualSize,
+      actualSha256: payload && payload.actualSha256 ? payload.actualSha256 : state.payload.actualSha256
     };
     persistSession();
     emit("INFO", "PAYLOAD-SELECTED", state.payload.displayName || "Unknown payload", { category: "PAYLOAD" });
@@ -1306,6 +1336,12 @@
       state.payload.id = "runtime-payload";
       state.payload.path = "payload.bin";
       state.payload.verificationStatus = "unknown";
+      state.payload.byteSize = 0;
+      state.payload.sha256 = "";
+      state.payload.firmwareCompatible = false;
+      state.payload.recommended = false;
+      state.payload.actualSize = 0;
+      state.payload.actualSha256 = "";
     }
     if (/PAYLOAD-FETCH-FAILED/.test(stageName)) {
       emit("FAIL", "PAYLOAD-LOAD-FAIL", sanitizeText(detail, 240), { category: "PAYLOAD", sourceStage: stageName, attempt: extra && extra.attempt });

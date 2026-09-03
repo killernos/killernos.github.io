@@ -246,8 +246,10 @@ function makeRpc(worker) {
 
         let payload = null;
         try {
-            const prsp = await fetch("payload.bin");
-            if (prsp.ok) payload = new Uint8Array(await prsp.arrayBuffer());
+            if (!window.PS4PayloadLoader || typeof window.PS4PayloadLoader.loadSelectedPayload !== "function") {
+                throw new Error("Payload loader is unavailable");
+            }
+            payload = await window.PS4PayloadLoader.loadSelectedPayload({ search: location.search });
         } catch (e) {
             mark("PAYLOAD-FETCH-FAILED", (e && e.message) ? e.message : String(e));
         }

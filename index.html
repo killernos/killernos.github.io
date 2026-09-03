@@ -145,6 +145,14 @@
       letter-spacing: 0.03em;
     }
 
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
     .stats {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -292,8 +300,127 @@
       line-height: 1.6;
     }
 
+    .selector-panel {
+      margin-top: 18px;
+    }
+
+    .preview-banner {
+      margin: 0 0 16px;
+      padding: 14px 16px;
+      border: 1px solid rgba(255, 210, 122, 0.28);
+      border-radius: 18px;
+      background: rgba(255, 210, 122, 0.1);
+      color: #fff0c8;
+      line-height: 1.6;
+    }
+
+    .selector-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .payload-card {
+      width: 100%;
+      text-align: left;
+      padding: 18px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: var(--panel-strong);
+      color: var(--text);
+    }
+
+    .payload-card.is-selected {
+      border-color: rgba(121, 224, 195, 0.52);
+      box-shadow: 0 0 0 1px rgba(121, 224, 195, 0.2) inset;
+      background: linear-gradient(145deg, rgba(18, 37, 64, 0.96), rgba(7, 18, 33, 0.95));
+    }
+
+    .payload-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .payload-card-title {
+      margin: 0;
+      font-size: 1.18rem;
+      line-height: 1.25;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .badge.recommended {
+      color: #072018;
+      background: linear-gradient(135deg, var(--accent), #96f0db);
+      border-color: transparent;
+    }
+
+    .badge.compatible {
+      color: var(--accent);
+      border-color: rgba(121, 224, 195, 0.32);
+    }
+
+    .badge.incompatible {
+      color: var(--bad);
+      border-color: rgba(255, 159, 159, 0.32);
+    }
+
+    .payload-card dl {
+      display: grid;
+      grid-template-columns: 130px 1fr;
+      gap: 8px 12px;
+      margin: 16px 0 0;
+    }
+
+    .payload-card dt {
+      color: var(--muted);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .payload-card dd {
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .selector-status {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: var(--panel-strong);
+      color: #dce9ff;
+      line-height: 1.6;
+    }
+
     @media (max-width: 900px) {
       .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .selector-grid {
         grid-template-columns: 1fr;
       }
     }
@@ -317,10 +444,16 @@
       .support-row {
         grid-template-columns: 1fr;
       }
+
+      .payload-card dl {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
   <script src="./build.js" defer></script>
   <script src="./js/diagnostics.js" defer></script>
+  <script src="./payloads/catalog.js?v=1200-next-manual-0001" defer></script>
+  <script src="./js/payload-loader.js?v=1200-next-manual-0001" defer></script>
 </head>
 <body>
   <div class="shell">
@@ -398,6 +531,7 @@
         <p class="routing-copy">Automatic launch is intentionally disabled here. Open NEXT manually so the console always retains a recovery path back to the normal PS4 shell.</p>
         <div class="actions">
           <button id="run-1200" type="button" disabled>Run 12.00 Runtime</button>
+          <button id="run-next-alt" type="button" disabled>Run NEXT Runtime</button>
           <a class="link-button" href="./diagnostics.html">Open Diagnostics</a>
         </div>
       </div>
@@ -424,9 +558,20 @@
         <p class="footnote">This panel is reference-only. It reflects what the upstream router advertises, not what this workspace validates or launches locally. The current local execution path remains limited to the 12.00 stock-browser target.</p>
       </div>
     </section>
+
+    <section class="panel selector-panel">
+      <div class="panel-header">
+        <h2>Choose GoldHEN Version</h2>
+        <button id="restore-recommended" type="button">Restore Recommended</button>
+      </div>
+      <div id="preview-banner" class="preview-banner" hidden>PREVIEW MODE - EXPLOIT DISABLED</div>
+      <div id="payload-choices" class="selector-grid" aria-live="polite"></div>
+      <div id="payload-selection-status" class="selector-status">Loading payload catalog...</div>
+    </section>
   </div>
   <script>
-    (function () {
+    document.addEventListener("DOMContentLoaded", function () {
+      var SELECTION_KEY = "ps4next.payload.selected.12.00";
       var firmwareElement = document.getElementById("firmware");
       var backendElement = document.getElementById("backend");
       var launcherElement = document.getElementById("launcher-state");
@@ -434,7 +579,16 @@
       var statusElement = document.getElementById("routing-status");
       var simulationNotice = document.getElementById("simulation-notice");
       var runButton = document.getElementById("run-1200");
+      var nextAltButton = document.getElementById("run-next-alt");
       var backendStateElement = document.getElementById("backend-state");
+      var payloadStateElement = document.getElementById("payload-state");
+      var payloadChoicesElement = document.getElementById("payload-choices");
+      var payloadSelectionStatus = document.getElementById("payload-selection-status");
+      var restoreRecommendedButton = document.getElementById("restore-recommended");
+      var previewBanner = document.getElementById("preview-banner");
+      var payloadCatalog = [];
+      var selectedPayloadId = "";
+      var selectedPayload = null;
       var match = /PlayStation\s+4[\/ ](\d+)\.(\d+)/.exec(navigator.userAgent);
       var firmware = null;
       var firmwareSource = "desktop";
@@ -444,6 +598,9 @@
       var forcedBackend = null;
       var forcedFirmware = null;
       var researchMode = false;
+      var previewMode = false;
+      var backend = "None";
+      var baseStatusText = "";
 
       function parseQuery(name) {
         var parts;
@@ -460,6 +617,9 @@
       }
 
       function normalizeFirmware(value) {
+        if (window.PS4PayloadLoader && typeof window.PS4PayloadLoader.normalizeFirmware === "function") {
+          return window.PS4PayloadLoader.normalizeFirmware(value);
+        }
         var clean = String(value || "").replace(/\s+/g, "").trim();
         var parsed = /^(\d+)(?:\.(\d{1,2}))?$/.exec(clean);
         var minor;
@@ -469,13 +629,232 @@
         return parsed[1] + "." + minor;
       }
 
+      function recommendedForFirmware(firmwareValue) {
+        return window.PS4PayloadLoader ? window.PS4PayloadLoader.getRecommendedForFirmware(firmwareValue) : null;
+      }
+
+      function compatiblePayloadsFor(firmwareValue) {
+        var result = [];
+        var index;
+        for (index = 0; index < payloadCatalog.length; index++) {
+          if (window.PS4PayloadLoader.isCompatible(payloadCatalog[index], firmwareValue)) result.push(payloadCatalog[index]);
+        }
+        return result;
+      }
+
+      function isRecommended(payload) {
+        return !!(window.PS4PayloadLoader && payload && window.PS4PayloadLoader.isRecommended(payload, firmware));
+      }
+
+      function setStoredSelection(payloadId) {
+        try {
+          localStorage.setItem(SELECTION_KEY, payloadId);
+          return true;
+        } catch (error) {
+          return false;
+        }
+      }
+
+      function getStoredSelection() {
+        try {
+          return String(localStorage.getItem(SELECTION_KEY) || "");
+        } catch (error) {
+          return "";
+        }
+      }
+
+      function clearStoredSelection() {
+        try {
+          localStorage.removeItem(SELECTION_KEY);
+        } catch (error) { }
+      }
+
+      function updatePayloadState(restored) {
+        var compatible = !!(selectedPayload && window.PS4PayloadLoader.isCompatible(selectedPayload, firmware));
+        if (!selectedPayload) {
+          payloadStateElement.textContent = "Selection required";
+          return;
+        }
+        payloadStateElement.textContent = selectedPayload.displayName + (compatible ? (isRecommended(selectedPayload) ? " (recommended)" : "") : " (incompatible)");
+        if (window.PS4Diag) {
+          window.PS4Diag.markPayload({
+            id: selectedPayload.id,
+            displayName: selectedPayload.displayName,
+            version: selectedPayload.version,
+            path: selectedPayload.file,
+            verificationStatus: selectedPayload.verification,
+            byteSize: selectedPayload.byteSize,
+            sha256: selectedPayload.sha256,
+            firmwareCompatible: compatible,
+            recommended: isRecommended(selectedPayload)
+          });
+          if (restored) {
+            window.PS4Diag.info("PAYLOAD-SELECTION-RESTORED", selectedPayload.displayName + " restored from local storage.", {
+              category: "PAYLOAD",
+              payloadId: selectedPayload.id,
+              payloadVersion: selectedPayload.version,
+              payloadFilename: selectedPayload.file,
+              payloadExpectedSize: selectedPayload.byteSize,
+              payloadExpectedSha256: selectedPayload.sha256,
+              payloadFirmwareCompatible: compatible,
+              payloadRecommended: isRecommended(selectedPayload),
+              payloadVerification: selectedPayload.verification
+            });
+          }
+        }
+      }
+
+      function launchReady() {
+        var payloadCompatible = !!(selectedPayload && window.PS4PayloadLoader.isCompatible(selectedPayload, firmware));
+        return firmware === "12.00" && backend === "Lapse" && !simulated && payloadCompatible;
+      }
+
+      function updateLaunchState() {
+        var ready = launchReady();
+        launcherElement.textContent = ready ? "Ready" : "Unavailable";
+        launcherElement.className = "status-pill " + (ready ? "status-ready" : "status-bad");
+        runButton.disabled = !ready;
+        nextAltButton.disabled = !ready;
+        if (backendStateElement) {
+          backendStateElement.textContent = researchMode && firmware === "13.02"
+            ? "Research only"
+            : ready ? "Ready for manual launch" : previewMode ? "Preview only" : "Observation only";
+        }
+        statusElement.textContent = baseStatusText;
+        if (previewBanner) previewBanner.hidden = !previewMode;
+        if (!selectedPayload) {
+          payloadSelectionStatus.textContent = firmware === "Unknown"
+            ? "GoldHEN choices appear when firmware 12.00 is detected, or in preview mode with ?preview=1&fw=12.00."
+            : "Select a compatible GoldHEN payload to enable launch on 12.00.";
+        } else if (!window.PS4PayloadLoader.isCompatible(selectedPayload, firmware)) {
+          payloadSelectionStatus.textContent = selectedPayload.displayName + " is not compatible with firmware " + firmware + ".";
+        } else {
+          payloadSelectionStatus.textContent = selectedPayload.displayName + " selected for firmware " + firmware + ".";
+        }
+        window.PS4Runtime.launcherReady = ready;
+        window.PS4Runtime.payloadId = selectedPayload ? selectedPayload.id : "";
+        window.PS4Runtime.payloadVersion = selectedPayload ? selectedPayload.version : "Unknown";
+      }
+
+      function renderPayloadChoices() {
+        var displayCatalog = firmware === "12.00" ? compatiblePayloadsFor("12.00") : previewMode ? compatiblePayloadsFor(firmware) : [];
+        var html = [];
+        var index;
+        if (!displayCatalog.length) {
+          payloadChoicesElement.innerHTML = "";
+          selectedPayload = null;
+          selectedPayloadId = "";
+          payloadStateElement.textContent = firmware === "Unknown" ? "Selection unavailable" : "Selection required";
+          updateLaunchState();
+          return;
+        }
+        for (index = 0; index < displayCatalog.length; index++) {
+          var payload = displayCatalog[index];
+          var compatible = window.PS4PayloadLoader.isCompatible(payload, firmware);
+          var recommended = isRecommended(payload);
+          html.push(
+            '<button type="button" class="payload-card' + (payload.id === selectedPayloadId ? ' is-selected' : '') + '" data-payload-id="' + payload.id + '">' +
+              '<div class="payload-card-header">' +
+                '<div>' +
+                  '<h3 class="payload-card-title">' + payload.displayName + (recommended ? ' - Recommended' : '') + '</h3>' +
+                  '<div class="badge-row">' +
+                    '<span class="badge">Beta</span>' +
+                    '<span class="badge ' + (compatible ? 'compatible' : 'incompatible') + '">' + (compatible ? 'Compatible' : 'Incompatible') + '</span>' +
+                    (recommended ? '<span class="badge recommended">Recommended</span>' : '') +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+              '<dl>' +
+                '<dt>Version</dt><dd>' + payload.version + '</dd>' +
+                '<dt>Compatibility</dt><dd>' + (payload.supportedFirmwares || []).join(', ') + '</dd>' +
+                '<dt>File Size</dt><dd>' + payload.byteSize + ' bytes</dd>' +
+                '<dt>Verification</dt><dd>' + payload.verification + '</dd>' +
+              '</dl>' +
+            '</button>'
+          );
+        }
+        payloadChoicesElement.innerHTML = html.join("");
+        updateLaunchState();
+      }
+
+      function selectPayload(payloadId, restored) {
+        var payload = window.PS4PayloadLoader.getById(payloadId);
+        if (!payload || !window.PS4PayloadLoader.isCompatible(payload, firmware)) {
+          selectedPayload = null;
+          selectedPayloadId = "";
+          clearStoredSelection();
+          updatePayloadState(false);
+          renderPayloadChoices();
+          return false;
+        }
+        selectedPayload = payload;
+        selectedPayloadId = payload.id;
+        setStoredSelection(payload.id);
+        updatePayloadState(restored);
+        renderPayloadChoices();
+        return true;
+      }
+
+      function restoreSelection() {
+        var savedId = getStoredSelection();
+        var saved = savedId ? window.PS4PayloadLoader.getById(savedId) : null;
+        var recommended = recommendedForFirmware("12.00");
+        if (saved && window.PS4PayloadLoader.isCompatible(saved, firmware || "12.00")) {
+          selectedPayload = saved;
+          selectedPayloadId = saved.id;
+          updatePayloadState(true);
+          return;
+        }
+        if (savedId && !saved) clearStoredSelection();
+        if (recommended && window.PS4PayloadLoader.isCompatible(recommended, firmware || "12.00")) {
+          selectedPayload = recommended;
+          selectedPayloadId = recommended.id;
+          setStoredSelection(recommended.id);
+          updatePayloadState(false);
+          return;
+        }
+        selectedPayload = null;
+        selectedPayloadId = "";
+      }
+
+      function navigateToRuntime(relativeRuntimePath) {
+        var href;
+        if (!launchReady() || !selectedPayload || previewMode) return;
+        launcherElement.textContent = "Launching";
+        if (window.PS4Diag) {
+          window.PS4Diag.markLaunch({
+            firmware: window.PS4Runtime.firmware,
+            backend: window.PS4Runtime.selectedBackend,
+            pageName: window.PS4Runtime.pageName,
+            payloadId: selectedPayload.id,
+            payloadVersion: selectedPayload.version,
+            message: "Manual runtime launch requested from NEXT home."
+          });
+          window.PS4Diag.markBackend({ selected: window.PS4Runtime.selectedBackend, entered: true, completed: false, failed: false });
+        }
+        try {
+          sessionStorage.setItem("ps4-webkit-next:last-launch", JSON.stringify({
+            firmware: window.PS4Runtime.firmware,
+            backend: window.PS4Runtime.selectedBackend,
+            buildId: window.PS4_WEBKIT_BUILD ? window.PS4_WEBKIT_BUILD.buildId : "Unknown",
+            cacheRevision: window.PS4_WEBKIT_BUILD ? window.PS4_WEBKIT_BUILD.cacheRevision : "Unknown",
+            payloadId: selectedPayload.id,
+            payloadVersion: selectedPayload.version,
+            timestamp: new Date().toISOString()
+          }));
+        } catch (error) { }
+        href = window.PS4PayloadLoader.runtimeQuery(relativeRuntimePath, { payloadId: selectedPayload.id });
+        location.href = href;
+      }
+
       try {
         forcedBackend = parseQuery("bug");
+        previewMode = parseQuery("preview") === "1";
         forcedFirmware = normalizeFirmware(parseQuery("fw"));
         researchMode = parseQuery("research") === "1";
-      } catch (e) { }
+      } catch (error) { }
 
-      if (forcedFirmware) {
+      if (forcedFirmware && (previewMode || researchMode)) {
         firmware = forcedFirmware;
         firmwareNumber = parseInt(forcedFirmware.split(".")[0], 10) * 100 + parseInt(forcedFirmware.split(".")[1], 10);
         firmwareSource = "query";
@@ -490,42 +869,42 @@
         hardwareDetected = true;
       }
 
-      var backend = "None";
-      var explanation = "User agent is not a PlayStation 4.";
-      if (researchMode && firmware === "13.02") {
+      if (previewMode && firmware === "12.00") {
+        backend = "Lapse";
+        baseStatusText = "12.00 preview mode selected. Preview shows payload selection only and never launches WebKit or Lapse. PREVIEW MODE - EXPLOIT DISABLED.";
+      } else if (researchMode && firmware === "13.02") {
         backend = "NEXT 13.02 Research";
-        explanation = "13.02 research mode selected. Celsius / ffs_mountfs remains research-only and is not launched by this host.";
+        baseStatusText = "13.02 research mode selected. Celsius / ffs_mountfs remains research-only and is not launched by this host. SIMULATED FIRMWARE. DEVELOPMENT ONLY. NOT HARDWARE VERIFIED.";
       } else if (forcedBackend === "lapse" || forcedBackend === "poops") {
         backend = forcedBackend === "lapse" ? "Lapse" : "Poops";
-        explanation = "Selected via ?bug=" + forcedBackend + ".";
+        baseStatusText = "Selected via ?bug=" + forcedBackend + ".";
       } else if (firmwareNumber !== null && firmwareNumber <= 1202) {
         backend = "Lapse";
-        explanation = firmware + " is within the Lapse routing range.";
+        baseStatusText = firmware + " is within the Lapse routing range.";
       } else if (firmwareNumber !== null && firmwareNumber >= 1250) {
         backend = "Poops";
-        explanation = firmware + " is within the Poops routing range.";
+        baseStatusText = firmware + " is within the Poops routing range.";
       } else if (firmwareNumber !== null) {
-        explanation = firmware + " has no matching backend from 12.03 through 12.49.";
+        baseStatusText = firmware + " has no matching backend from 12.03 through 12.49.";
+      } else {
+        baseStatusText = "User agent is not a PlayStation 4.";
       }
 
-      var upstreamSupported = backend !== "None";
-      var canLaunch1200 = firmware === "12.00" && backend === "Lapse" && !simulated;
+      if (!previewMode && simulated) {
+        baseStatusText += " SIMULATED FIRMWARE. DEVELOPMENT ONLY. NOT HARDWARE VERIFIED.";
+      }
+      if (!previewMode && !(firmware === "12.00" && backend === "Lapse" && !simulated)) {
+        baseStatusText += " Upstream support does not automatically imply a validated local launch path here.";
+      }
+      if (!previewMode && firmware === "12.00" && backend === "Lapse" && !simulated) {
+        baseStatusText += " Existing 12.00 runtime is ready for manual launch.";
+      }
+
       firmwareElement.textContent = firmware || "Unknown";
       backendElement.textContent = backend;
-      launcherElement.textContent = canLaunch1200 ? "Ready" : "Unavailable";
-      launcherElement.className = "status-pill " + (canLaunch1200 ? "status-ready" : "status-bad");
-      upstreamElement.textContent = upstreamSupported ? "Supported Upstream" : "Unsupported Upstream";
-      upstreamElement.className = "status-pill " + (upstreamSupported ? "status-ready" : "status-bad");
+      upstreamElement.textContent = backend !== "None" ? "Supported Upstream" : "Unsupported Upstream";
+      upstreamElement.className = "status-pill " + (backend !== "None" ? "status-ready" : "status-bad");
       if (simulationNotice) simulationNotice.hidden = !simulated;
-      if (backendStateElement) {
-        backendStateElement.textContent = researchMode && firmware === "13.02"
-          ? "Research only"
-          : canLaunch1200 ? "Ready for manual launch" : "Observation only";
-      }
-      statusElement.textContent = explanation
-        + (simulated ? " SIMULATED FIRMWARE. DEVELOPMENT ONLY. NOT HARDWARE VERIFIED." : "")
-        + (canLaunch1200 ? " Existing 12.00 runtime is ready for manual launch." : " Upstream support does not automatically imply a validated local launch path here.");
-      runButton.disabled = !canLaunch1200;
 
       window.PS4Runtime = {
         firmware: firmware || "Unknown",
@@ -537,50 +916,51 @@
         selectedBackend: backend,
         buildId: window.PS4_WEBKIT_BUILD ? window.PS4_WEBKIT_BUILD.buildId : "Unknown",
         cacheRevision: window.PS4_WEBKIT_BUILD ? window.PS4_WEBKIT_BUILD.cacheRevision : "Unknown",
-        pageName: researchMode && firmware === "13.02" ? "NEXT-1302-RESEARCH" : "NEXT-HOME",
+        pageName: previewMode ? "NEXT-1200-PREVIEW" : (researchMode && firmware === "13.02" ? "NEXT-1302-RESEARCH" : "NEXT-HOME"),
         relativePath: location.pathname || "./index.html",
         researchMode: researchMode,
         researchCandidate: researchMode && firmware === "13.02" ? "Celsius / ffs_mountfs" : "",
         candidateStatus: researchMode && firmware === "13.02" ? "research" : "",
         isPS4: hardwareDetected,
-        launcherReady: canLaunch1200,
+        launcherReady: false,
         backendEntered: false,
-        kernelRW: false
+        kernelRW: false,
+        payloadId: "",
+        payloadVersion: "Unknown"
       };
 
-      document.addEventListener("DOMContentLoaded", function () {
-        if (!window.PS4Diag) return;
+      payloadCatalog = window.PS4PayloadLoader ? window.PS4PayloadLoader.getCatalog() : [];
+      restoreSelection();
+      renderPayloadChoices();
+      updateLaunchState();
+
+      payloadChoicesElement.addEventListener("click", function (event) {
+        var target = event.target;
+        while (target && target !== payloadChoicesElement && !target.getAttribute("data-payload-id")) target = target.parentNode;
+        if (!target || target === payloadChoicesElement) return;
+        selectPayload(target.getAttribute("data-payload-id"), false);
+      });
+
+      restoreRecommendedButton.addEventListener("click", function () {
+        var recommended = recommendedForFirmware("12.00");
+        if (recommended) selectPayload(recommended.id, false);
+      });
+
+      if (window.PS4Diag) {
         window.PS4Diag.markPage(window.PS4Runtime.pageName, window.PS4Runtime.relativePath);
         window.PS4Diag.markBackend({ selected: window.PS4Runtime.selectedBackend, entered: false, completed: false, failed: false });
         if (simulated) {
           window.PS4Diag.info("SIMULATED-FIRMWARE", "DEVELOPMENT ONLY. NOT HARDWARE VERIFIED.", { category: "FIRMWARE" });
         }
-      });
+      }
 
       runButton.addEventListener("click", function () {
-        if (!window.PS4Runtime.launcherReady) return;
-        launcherElement.textContent = "Launching";
-        if (window.PS4Diag) {
-          window.PS4Diag.markLaunch({
-            firmware: window.PS4Runtime.firmware,
-            backend: window.PS4Runtime.selectedBackend,
-            pageName: window.PS4Runtime.pageName,
-            message: "Manual runtime launch requested from NEXT home."
-          });
-          window.PS4Diag.markBackend({ selected: window.PS4Runtime.selectedBackend, entered: true, completed: false, failed: false });
-        }
-        try {
-          sessionStorage.setItem("ps4-webkit-next:last-launch", JSON.stringify({
-            firmware: window.PS4Runtime.firmware,
-            backend: window.PS4Runtime.selectedBackend,
-            buildId: window.PS4_WEBKIT_BUILD ? window.PS4_WEBKIT_BUILD.buildId : "Unknown",
-            cacheRevision: window.PS4_WEBKIT_BUILD ? window.PS4_WEBKIT_BUILD.cacheRevision : "Unknown",
-            timestamp: new Date().toISOString()
-          }));
-        } catch (e) { }
-        location.href = "./runtime/next/run_lapse.html";
+        navigateToRuntime("./runtime/next/run_lapse.html");
       });
-    })();
+      nextAltButton.addEventListener("click", function () {
+        navigateToRuntime("./runtime/zrm/run_lapse.html");
+      });
+    });
   </script>
 </body>
 </html>

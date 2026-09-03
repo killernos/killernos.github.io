@@ -1,13 +1,21 @@
 CACHE MANIFEST
-# build 1200-zrm-link-0001
-run_lapse.html #6061b29c8c2af1d3c6c6e2843ab0dc15fef70a19d6ad94c70a3b19d70896546f
-chain_lapse.js #fd0cc044e03be88d1c89089a7d8dbb2d2c9ea2f3a485f0ab9089bb36d92d1a34
+# build 1200-next-alt-goldhen-selector-0001
+run_lapse.html #3b1ccc506f0b2abb0eb4e2f2dd219f60754fda5a0121d82efd4a0ffa963b4d96
+chain_lapse.js #e533394ee5a339e46f102931e5201908f661fd9ddd2fbb57a8329a762219f03a
 core.js #3acf7e09988f10f800ca22bac1d4965b89ebb5ce2da4850089918fd1a457df4e
 mem.js #4a1b688e8061372bc8400e911c8e191b7e19e4b6286dcdeb3eef4971c5168a22
 int64.js #a79a3334a3f2c75b9a238ab1093796e326251c97ac5d02663eae5b14bf80f652
 ps4_offsets.js #1edbbc68e5b37de8d18755c9250736c0db9524bccda87f226f738c4f0daa8fcb
 rpc_worker.js #483925eafec03037596a71b95f046ba0ed1ab9018300ffd5ff718e2ce8c181dd
 logo_raw.png #23cdc5f24ffd3508d2ca7c71fcdae5bd7fbe2718dad9393964957a930f3f02a5
+../../payloads/catalog.js #e6deda8bc548195f8461d37f0bcabe0cacc0417e979f74ed6994f56da30c91bd
+../../js/payload-loader.js #c258955a3da8b17dd26c02c964430555736e3d6ac56b8f91ff9942b2a93828a8
+../../payloads/goldhen/goldhen-2.4b18.5.bin #5655cb4a1d709ebd0b21f151deb1e262a0968d75688af77d09e662203552432e
+../../payloads/goldhen/goldhen-2.4b18.6.bin #da8310e8e8f1fa6d68f42274043fef67326370c5affa4b316961be73bd97d10e
+../../payloads/goldhen/goldhen-2.4b18.7.bin #0f4f68084b56724b00418b30f494bb2737ee9bc263def9e3cbf042eabdbbbae3
+../../payloads/goldhen/goldhen-2.4b18.8.bin #45e3c003cc1e61ce6b63cb68a9bc626330394fe564155a05f2a9307de27bf068
+../../payloads/goldhen/goldhen-2.4b18.9.bin #ab1849d66816a9f4a3d155b06b51cdc5eb07a7fc5bd4333c90e3af74f802b2b2
+../../payloads/goldhen/goldhen-2.4b18.10.bin #c6329401d1810e16c84e6474ac30977dbdc951987c10cdb559370de7d59db0b0
 payload.bin #c6329401d1810e16c84e6474ac30977dbdc951987c10cdb559370de7d59db0b0
 patches/1200.bin #87f1d40aea8fbf3adee7b8b5599d90c9d868436c15a498f2dce6bf5d96ae4d27
 core.js?v=10 #3acf7e09988f10f800ca22bac1d4965b89ebb5ce2da4850089918fd1a457df4e

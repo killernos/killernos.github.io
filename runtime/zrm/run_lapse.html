@@ -29,16 +29,19 @@
 </div>
 <script>
   window.PS4Runtime = window.PS4Runtime || {};
+  window.PS4Runtime.selectedPayloadId = (new URLSearchParams(location.search || "")).get("payloadId") || "";
   window.PS4Runtime.selectedBackend = window.PS4Runtime.selectedBackend || "Lapse";
   window.PS4Runtime.backendEntered = true;
-  window.PS4Runtime.pageName = "NEXT-ZRM-RUNTIME";
+  window.PS4Runtime.pageName = "NEXT-ALT-RUNTIME";
   window.PS4Runtime.relativePath = location.pathname || "./runtime/zrm/run_lapse.html";
 </script>
 <script src="../../build.js"></script>
 <script src="../../js/diagnostics.js"></script>
+<script src="../../payloads/catalog.js"></script>
+<script src="../../js/payload-loader.js"></script>
 <script>
   if (window.PS4Diag) {
-    window.PS4Diag.markPage("NEXT-ZRM-RUNTIME", location.pathname || "./runtime/zrm/run_lapse.html");
+    window.PS4Diag.markPage("NEXT-ALT-RUNTIME", location.pathname || "./runtime/zrm/run_lapse.html");
     window.PS4Diag.markBackend({ selected: window.PS4Runtime.selectedBackend, entered: true, completed: false, failed: false });
   }
 </script>
