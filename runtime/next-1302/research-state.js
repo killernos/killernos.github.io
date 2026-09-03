@@ -1,4 +1,4 @@
-export const BUILD_ID = "1302-next-slopkit-probe-0003";
+export const BUILD_ID = "next-universal-1302-research-0004";
 export const BACKEND_NAME = "NEXT 13.02 Research";
 export const CANDIDATE_NAME = "SlopKit Userland";
 export const KERNEL_CANDIDATE_NAME = "Celsius / ffs_mountfs";

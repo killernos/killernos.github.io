@@ -102,9 +102,12 @@
     },
     onlineState: "unknown",
     consoleModel: "Unknown",
+    testerEntrypoint: "Unknown",
+    testerCandidate: "None",
     testerOutcome: "",
     testerAlias: "",
     testerNotes: "",
+    includeDiagnostics: true,
     includeUserAgent: false,
     resourceErrors: 0,
     jsErrors: 0,
@@ -589,9 +592,12 @@
     var loaded = safeJsonParse(store.getItem(SETTINGS_KEY), null);
     if (!loaded || typeof loaded !== "object") return;
     if (allowedConsoleModels[loaded.consoleModel]) state.consoleModel = loaded.consoleModel;
+    state.testerEntrypoint = sanitizeText(loaded.testerEntrypoint || state.testerEntrypoint, 80) || "Unknown";
+    state.testerCandidate = sanitizeText(loaded.testerCandidate || state.testerCandidate, 120) || "None";
     state.testerAlias = sanitizeText(loaded.testerAlias || "", 80);
     state.testerNotes = sanitizeText(loaded.testerNotes || "", 2000);
     state.testerOutcome = sanitizeText(loaded.testerOutcome || "", 80);
+    state.includeDiagnostics = loaded.includeDiagnostics !== undefined ? !!loaded.includeDiagnostics : state.includeDiagnostics;
     state.includeUserAgent = !!loaded.includeUserAgent;
   }
 
@@ -601,9 +607,12 @@
     try {
       store.setItem(SETTINGS_KEY, JSON.stringify({
         consoleModel: state.consoleModel,
+        testerEntrypoint: state.testerEntrypoint,
+        testerCandidate: state.testerCandidate,
         testerAlias: state.testerAlias,
         testerNotes: state.testerNotes,
         testerOutcome: state.testerOutcome,
+        includeDiagnostics: state.includeDiagnostics,
         includeUserAgent: state.includeUserAgent
       }));
     } catch (error) { }
@@ -744,6 +753,15 @@
     if (element) element.checked = !!value;
   }
 
+  function firstElementById() {
+    var index;
+    for (index = 0; index < arguments.length; index++) {
+      var element = document.getElementById(arguments[index]);
+      if (element) return element;
+    }
+    return null;
+  }
+
   function formatBoolLabel(value, trueText, falseText) {
     return value ? trueText : falseText;
   }
@@ -837,7 +855,7 @@
   }
 
   function buildSummaryText() {
-    var entrypoint = state.page.pageName === "NEXT-1302-RESEARCH" ? "SlopKit" : (state.backend.selected || "Unknown");
+    var entrypoint = state.testerEntrypoint || (state.page.pageName === "NEXT-1302-RESEARCH" ? "SlopKit" : (state.backend.selected || "Unknown"));
     var kernelRW = state.research.kernelRead && state.research.kernelWrite ? "VERIFIED" : "NOT VERIFIED";
     var userlandArw = /USERLAND-ARW-VERIFIED/.test(state.lastStage) ? "VERIFIED" : "NOT VERIFIED";
     var lines = [
@@ -848,6 +866,7 @@
       "Build: " + state.buildId,
       "Backend: " + state.backend.selected,
       "Entrypoint: " + entrypoint,
+      "Candidate: " + (state.testerCandidate || state.research.candidate || "None"),
       "Selected HEN: " + (state.hen.displayName || "No HEN"),
       "HEN Load Status: " + (state.hen.status || "SKIPPED"),
       "Last Stage: " + state.lastStage,
@@ -951,7 +970,9 @@
     }
     lines.push("", "Full diagnostic log was not included because browser URL length is limited.");
     lines.push("Use the downloaded JSON report for complete diagnostics.");
-    return lines.join("\n");
+    var text = lines.join("\n");
+    if (text.length > 2500) text = text.slice(0, 2470) + "\n[summary truncated]";
+    return text;
   }
 
   function buildSnapshot() {
@@ -1016,7 +1037,8 @@
         pageName: state.page.pageName,
         relativePath: state.page.relativePath
       },
-      entrypoint: state.page.pageName === "NEXT-1302-RESEARCH" ? "SlopKit" : (state.backend.selected || "Unknown"),
+      entrypoint: state.testerEntrypoint || (state.page.pageName === "NEXT-1302-RESEARCH" ? "SlopKit" : (state.backend.selected || "Unknown")),
+      candidate: state.testerCandidate || state.research.candidate || "None",
       backend: {
         backendSelected: state.backend.selected,
         backendEntered: state.backend.entered,
@@ -1083,6 +1105,8 @@
       testerSelectedOutcome: state.testerOutcome,
       testerAlias: state.testerAlias,
       testerNotes: state.testerNotes,
+      includeDiagnostics: state.includeDiagnostics,
+      consentConfirmed: !!(firstElementById("community-consent", "report-review-confirm") && firstElementById("community-consent", "report-review-confirm").checked),
       evidence: {
         previousSessionIncomplete: !state.previousSessionCompleted ? "OBSERVED" : "OBSERVED",
         testerSelectedOutcome: state.testerOutcome ? "TESTER-REPORTED" : "OBSERVED"
@@ -1115,17 +1139,23 @@
       }
     };
     if (state.includeUserAgent) report.userAgent = navigator.userAgent || "";
-    report.diagnosticRecords = sessionRecords;
+    report.diagnosticRecords = state.includeDiagnostics ? sessionRecords : [];
     return report;
   }
 
   function downloadJson(filename, value) {
+    if (typeof Blob === "undefined" || !window.URL || typeof window.URL.createObjectURL !== "function") {
+      emit("FAIL", "DOWNLOAD-UNAVAILABLE", "Blob download is unavailable on this browser.", { category: "COMMUNITY" });
+      setSubmissionStatus("JSON download is unavailable on this browser.", "bad");
+      return false;
+    }
     var blob = new Blob([JSON.stringify(value, null, 2)], { type: "application/json" });
     var link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = filename;
     link.click();
     URL.revokeObjectURL(link.href);
+    return true;
   }
 
   function exportLog() {
@@ -1146,7 +1176,7 @@
     var element = document.getElementById("submission-status");
     if (!element) return;
     element.textContent = message || "";
-    element.className = kind ? "submission-status " + kind : "submission-status";
+    element.className = kind ? "status-box " + kind : "status-box";
   }
 
   function reportEndpoint() {
@@ -1185,7 +1215,7 @@
   }
 
   function submitCommunityReport() {
-    var confirmBox = document.getElementById("report-review-confirm");
+    var confirmBox = firstElementById("community-consent", "report-review-confirm");
     var endpoint = reportEndpoint();
     var report;
     if (!confirmBox || !confirmBox.checked) {
@@ -1259,8 +1289,8 @@
     var endpoint = reportEndpoint();
     var target = document.getElementById("report-target");
     var warning = document.getElementById("report-warning");
-    var submitButton = document.getElementById("submit-report");
-    var confirmBox = document.getElementById("report-review-confirm");
+    var submitButton = firstElementById("community-submit", "submit-report");
+    var confirmBox = firstElementById("community-consent", "report-review-confirm");
     var reportPreview = document.getElementById("report-preview");
     if (reportPreview) reportPreview.textContent = JSON.stringify(buildCommunityReport(), null, 2);
     var summary = document.getElementById("diag-summary");
@@ -1294,6 +1324,10 @@
     setText("diag-backend", state.backend.selected || "Unknown");
     setText("diag-payload", state.payload.displayName || "Unknown");
     setText("diag-build", state.buildId || "Unknown");
+    setText("diag-next-access", state.runtime.nextAccess || "UNSUPPORTED");
+    setText("diag-runtime-status", state.runtime.runtimeMode === "runtime" ? "CONFIGURED RUNTIME" : (state.runtime.runtimeMode ? String(state.runtime.runtimeMode).toUpperCase().replace(/_/g, " ") : "UNSUPPORTED"));
+    setText("diag-hardware-verification", state.runtime.hardwareVerification || "UNVERIFIED");
+    setText("diag-hen", state.hen.displayName || "No HEN");
     setText("diag-cache-revision", state.cacheRevision || "Unknown");
     setText("diag-online", state.onlineState || "unknown");
     setText("diag-page", state.page.pageName || "UNKNOWN");
@@ -1318,14 +1352,22 @@
     setText("diag-previous-completion", state.previousSessionCompleted ? "Complete" : "Incomplete");
     setText("diag-user-agent", navigator.userAgent || "Unavailable");
     setText("diag-schema", DIAG_SCHEMA);
-    setValue("console-model", state.consoleModel);
-    setValue("tester-outcome", state.testerOutcome);
-    setValue("tester-alias", state.testerAlias);
-    setValue("tester-notes", state.testerNotes);
-    setChecked("include-user-agent", state.includeUserAgent);
+    setValue("community-console-model", state.consoleModel);
+    setValue("community-entrypoint", state.testerEntrypoint || "Unknown");
+    setValue("community-candidate", state.testerCandidate || "None");
+    setValue("community-outcome", state.testerOutcome);
+    setValue("community-alias", state.testerAlias);
+    setValue("community-notes", state.testerNotes);
+    setChecked("community-include-log", state.includeDiagnostics);
+    setChecked("community-include-ua", state.includeUserAgent);
+    setText("diag-js-state", "LOADED");
     renderFilters();
     renderLog();
     renderReportPreview();
+  }
+
+  function beginAttempt(message, details) {
+    return emit("INFO", "ATTEMPT-BEGIN", message || "Attempt started.", details || { category: "ROUTING" });
   }
 
   function reset() {
@@ -1653,17 +1695,21 @@
   function bindDiagnosticsUi() {
     var resetButton = document.getElementById("reset-log");
     var exportButton = document.getElementById("export-log");
-    var downloadButton = document.getElementById("download-report");
+    var downloadButton = firstElementById("community-download", "download-report");
     var copyButton = document.getElementById("copy-summary");
-    var retryButton = document.getElementById("retry-report-submit");
+    var selfTestButton = document.getElementById("run-self-test");
+    var retryButton = firstElementById("retry-report-submit");
     var githubButton = document.getElementById("open-github-short-report");
-    var consoleModel = document.getElementById("console-model");
-    var testerOutcome = document.getElementById("tester-outcome");
-    var testerAlias = document.getElementById("tester-alias");
-    var testerNotes = document.getElementById("tester-notes");
-    var includeUserAgent = document.getElementById("include-user-agent");
-    var submitButton = document.getElementById("submit-report");
-    var confirmBox = document.getElementById("report-review-confirm");
+    var consoleModel = firstElementById("community-console-model", "console-model");
+    var testerEntrypoint = document.getElementById("community-entrypoint");
+    var testerCandidate = document.getElementById("community-candidate");
+    var testerOutcome = firstElementById("community-outcome", "tester-outcome");
+    var testerAlias = firstElementById("community-alias", "tester-alias");
+    var testerNotes = firstElementById("community-notes", "tester-notes");
+    var includeDiagnostics = document.getElementById("community-include-log");
+    var includeUserAgent = firstElementById("community-include-ua", "include-user-agent");
+    var submitButton = firstElementById("community-submit", "submit-report");
+    var confirmBox = firstElementById("community-consent", "report-review-confirm");
     var filterButtons = document.querySelectorAll("[data-filter]");
     var index;
 
@@ -1673,6 +1719,7 @@
     if (copyButton) copyButton.addEventListener("click", copySummary);
     if (submitButton) submitButton.addEventListener("click", submitCommunityReport);
     if (retryButton) retryButton.addEventListener("click", submitCommunityReport);
+    if (selfTestButton) selfTestButton.addEventListener("click", selfTest);
     if (githubButton) githubButton.addEventListener("click", function () {
       openGithubShortReport(buildCommunityReport());
     });
@@ -1682,6 +1729,20 @@
         state.consoleModel = allowedConsoleModels[consoleModel.value] ? consoleModel.value : "Unknown";
         persistSettings();
         render();
+      });
+    }
+    if (testerEntrypoint) {
+      testerEntrypoint.addEventListener("change", function () {
+        state.testerEntrypoint = sanitizeText(testerEntrypoint.value, 80) || "Unknown";
+        persistSettings();
+        renderReportPreview();
+      });
+    }
+    if (testerCandidate) {
+      testerCandidate.addEventListener("change", function () {
+        state.testerCandidate = sanitizeText(testerCandidate.value, 120) || "None";
+        persistSettings();
+        renderReportPreview();
       });
     }
     if (testerOutcome) {
@@ -1708,6 +1769,13 @@
     if (includeUserAgent) {
       includeUserAgent.addEventListener("change", function () {
         state.includeUserAgent = !!includeUserAgent.checked;
+        persistSettings();
+        renderReportPreview();
+      });
+    }
+    if (includeDiagnostics) {
+      includeDiagnostics.addEventListener("change", function () {
+        state.includeDiagnostics = !!includeDiagnostics.checked;
         persistSettings();
         renderReportPreview();
       });
@@ -1781,25 +1849,51 @@
     try {
       query = location.search || "";
     } catch (error) { }
-    if (!/[?&]diagSelfTest=1(?:&|$)/.test(query)) return false;
-    if (/PlayStation\s+4/i.test(navigator.userAgent || "")) return false;
-    emit("INFO", "TEST-INFO", "Development diagnostics self-test started.", { category: "COMMUNITY" });
-    emit("PASS", "TEST-PASS", "Self-test PASS event.", { category: "COMMUNITY" });
-    emit("FAIL", "TEST-FAIL", "Self-test FAIL event.", { category: "COMMUNITY" });
-    emit("FAIL", "TEST-JS-ERROR", "Simulated JS error event.", { category: "ERROR" });
-    emit("FAIL", "TEST-RESOURCE-ERROR", "Simulated resource error event.", { category: "RESOURCE" });
+    var output = document.getElementById("diag-self-test-results");
+    var results = [];
+    function pushResult(name, status, detail) {
+      results.push(name + ": " + status + (detail ? " - " + detail : ""));
+    }
+    function testFeature(name, fn) {
+      try {
+        pushResult(name, fn() ? "PASS" : "FAIL", "");
+      } catch (error) {
+        pushResult(name, "UNAVAILABLE", sanitizeText(error && error.message ? error.message : String(error), 120));
+      }
+    }
+    if (!/[?&]diagSelfTest=1(?:&|$)/.test(query) && !output) return false;
+    emit("INFO", "TEST-INFO", "Diagnostics self-test started.", { category: "COMMUNITY" });
+    testFeature("JavaScript executing", function () { return true; });
+    testFeature("DOM access", function () { return !!document.getElementById("diag-firmware"); });
+    testFeature("localStorage", function () { return storageAvailable("localStorage"); });
+    testFeature("sessionStorage", function () { return storageAvailable("sessionStorage"); });
+    testFeature("JSON", function () { return !!(window.JSON && typeof JSON.stringify === "function" && typeof JSON.parse === "function"); });
+    testFeature("Blob availability", function () { return typeof Blob !== "undefined"; });
+    testFeature("URL.createObjectURL availability", function () { return !!(window.URL && typeof window.URL.createObjectURL === "function"); });
+    testFeature("fetch availability", function () { return typeof window.fetch === "function"; });
+    testFeature("navigator.onLine", function () { return typeof navigator.onLine !== "undefined"; });
+    if (output) output.textContent = results.join("\n");
+    emit("PASS", "TEST-PASS", "Diagnostics self-test completed.", { category: "COMMUNITY", results: results });
     return true;
   }
 
-  loadSettings();
-  beginSession();
-  installErrorCapture();
-  installResourceCapture();
-  installLifecycleCapture();
-  installNavigationHandoff();
-  installOnlineCapture();
-  captureStorageState();
-  captureCacheState();
+  function safeCall(fn) {
+    try {
+      return fn();
+    } catch (error) {
+      return null;
+    }
+  }
+
+  safeCall(loadSettings);
+  safeCall(beginSession);
+  safeCall(installErrorCapture);
+  safeCall(installResourceCapture);
+  safeCall(installLifecycleCapture);
+  safeCall(installNavigationHandoff);
+  safeCall(installOnlineCapture);
+  safeCall(captureStorageState);
+  safeCall(captureCacheState);
 
   window.PS4Diag = {
     stage: function (name, details, extra) { return emit("STAGE", name, details, extra); },
@@ -1812,6 +1906,7 @@
     downloadCommunityReport: downloadCommunityReport,
     submitCommunityReport: submitCommunityReport,
     openGithubShortReport: openGithubShortReport,
+    beginAttempt: beginAttempt,
     beginSession: beginSession,
     endSession: endSession,
     markLaunch: markLaunch,
@@ -1830,11 +1925,19 @@
   };
 
   document.addEventListener("DOMContentLoaded", function () {
-    bindDiagnosticsUi();
-    if (!currentPageRecordExists(state.page.pageName, state.page.relativePath)) {
-      markPage(state.page.pageName, state.page.relativePath);
-    }
-    render();
-    selfTest();
+    safeCall(function () {
+      bindDiagnosticsUi();
+    });
+    safeCall(function () {
+      if (!currentPageRecordExists(state.page.pageName, state.page.relativePath)) {
+        markPage(state.page.pageName, state.page.relativePath);
+      }
+    });
+    safeCall(function () {
+      render();
+    });
+    safeCall(function () {
+      selfTest();
+    });
   });
 })();

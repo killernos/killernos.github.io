@@ -1,9 +1,9 @@
 ﻿"use strict";
 
 window.PS4_WEBKIT_BUILD = {
-  firmwareTarget: "12.00",
-  buildId: "1200-next-manual-0001",
-  cacheRevision: "1200-next-manual-0001",
+  firmwareTarget: "multi-firmware",
+  buildId: "next-universal-1302-research-0004",
+  cacheRevision: "next-universal-1302-research-0004",
   diagnosticsSchema: "next-diagnostics-2",
   researchBuildId: ""
 };

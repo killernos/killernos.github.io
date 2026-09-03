@@ -28,6 +28,7 @@
       margin: 0;
       min-height: 100vh;
       font-family: Georgia, "Times New Roman", serif;
+      font-size: 16px;
       color: var(--text);
       background:
         radial-gradient(circle at top left, rgba(116, 169, 255, 0.18), transparent 32%),
@@ -50,7 +51,7 @@
     }
 
     .shell {
-      width: min(1100px, calc(100% - 32px));
+      width: min(92vw, 1180px);
       margin: 0 auto;
       padding: 28px 0 56px;
     }
@@ -89,7 +90,7 @@
 
     h1 {
       margin: 16px 0 10px;
-      font-size: clamp(2.2rem, 5vw, 4.6rem);
+      font-size: 3.1rem;
       line-height: 0.95;
       letter-spacing: 0.02em;
     }
@@ -98,7 +99,7 @@
       max-width: 760px;
       margin: 0;
       color: var(--muted);
-      font-size: 1.06rem;
+      font-size: 1.12rem;
       line-height: 1.6;
     }
 
@@ -169,7 +170,7 @@
     .stat-label {
       display: block;
       color: var(--muted);
-      font-size: 0.78rem;
+      font-size: 0.9rem;
       text-transform: uppercase;
       letter-spacing: 0.08em;
     }
@@ -177,7 +178,7 @@
     .stat-value {
       display: block;
       margin-top: 8px;
-      font-size: 1.1rem;
+      font-size: 1.18rem;
       font-weight: 700;
     }
 
@@ -238,8 +239,9 @@
       appearance: none;
       border: 0;
       border-radius: 999px;
-      padding: 13px 18px;
+      padding: 14px 20px;
       font: inherit;
+      font-size: 1.08rem;
       text-decoration: none;
       cursor: pointer;
       transition: transform 160ms ease, opacity 160ms ease, background 160ms ease;
@@ -404,18 +406,18 @@
 
     }
   </style>
-  <script src="./build.js" defer></script>
-  <script src="./js/diagnostics.js" defer></script>
-  <script src="./payloads/catalog.js?v=1200-next-manual-0001" defer></script>
-  <script src="./js/payload-loader.js?v=1200-next-manual-0001" defer></script>
-  <script type="module" src="./js/next-firmware-capability.js"></script>
+  <script src="./build.js?v=next-universal-1302-research-0004" defer></script>
+  <script src="./js/diagnostics.js?v=next-universal-1302-research-0004" defer></script>
+  <script src="./payloads/catalog.js?v=next-universal-1302-research-0004" defer></script>
+  <script src="./js/payload-loader.js?v=next-universal-1302-research-0004" defer></script>
+  <script src="./js/next-firmware-capability.js?v=next-universal-1302-research-0004" defer></script>
 </head>
 <body>
   <div class="shell">
     <section class="hero">
       <span class="eyebrow">Private Development Host</span>
       <h1>PS4 WebKit Next</h1>
-      <p class="lead">Stock-browser routing, diagnostics, and reference tracking for the current 12.00 hardware target, with upstream firmware coverage shown separately from what this workspace actually launches.</p>
+      <p class="lead">PS4 WebKit NEXT detects the console firmware and selects a configured runtime, compatibility test, or isolated research environment. KillerNoS currently performs local hardware validation on firmware 12.00. Other supported firmware results may come from upstream or community testing.</p>
 
       <div class="notice-row">
         <div class="notice">
@@ -483,14 +485,14 @@
           </div>
           <div class="stat">
             <span class="stat-label">Build</span>
-            <span class="stat-value" data-build-id>1200-next-manual-0001</span>
+            <span class="stat-value" data-build-id>next-universal-1302-research-0004</span>
           </div>
         </div>
         <p id="routing-status" class="routing-copy">Inspecting the PS4 browser user agent.</p>
         <p class="routing-copy">Automatic launch is intentionally disabled here. Open NEXT manually so the console always retains a recovery path back to the normal PS4 shell.</p>
         <div class="actions">
           <button id="run-next" type="button" disabled>Run NEXT Runtime</button>
-          <a class="link-button" href="./diagnostics.html">Open Diagnostics</a>
+          <a class="link-button" href="./diagnostics.html?v=next-universal-1302-research-0004">Open Diagnostics</a>
         </div>
       </div>
 
@@ -513,7 +515,7 @@
             <small>Advertised by the upstream NEXT router as the supported high range.</small>
           </div>
         </div>
-        <p class="footnote">This panel is reference-only. It reflects what the upstream router advertises, not what this workspace validates or launches locally. Local hardware verification remains limited to the 12.00 stock-browser target.</p>
+        <p class="footnote">This panel is reference-only. It reflects what the upstream router advertises, not what this workspace validates or launches locally. 12.00 is still the only locally hardware-testable console in this workspace, but firmware routing is broader than that local validation boundary.</p>
       </div>
     </section>
 
@@ -586,7 +588,7 @@
       }
 
       function capabilityStatusClass(value) {
-        if (value === "AVAILABLE" || value === "CONFIGURED") return "status-ready";
+        if (value === "AVAILABLE" || value === "CONFIGURED RUNTIME") return "status-ready";
         if (value === "RESEARCH" || value === "COMPATIBILITY TEST") return "status-warn";
         return "status-bad";
       }
@@ -603,9 +605,10 @@
         var url;
         if (!value || !value.target) return "";
         if (value.mode === "runtime") {
-          return window.PS4PayloadLoader.runtimeQuery(value.target, { payloadId: runtimePayloadId() });
+          return window.PS4PayloadLoader.runtimeQuery(value.target, { payloadId: runtimePayloadId(), v: window.PS4_WEBKIT_BUILD ? window.PS4_WEBKIT_BUILD.buildId : "" });
         }
         url = new URL(value.target, location.href);
+        if (window.PS4_WEBKIT_BUILD && window.PS4_WEBKIT_BUILD.buildId) url.searchParams.set("v", window.PS4_WEBKIT_BUILD.buildId);
         if (previewMode && firmware) url.searchParams.set("fw", firmware);
         if (previewMode) url.searchParams.set("preview", "1");
         if (value.mode === "research") url.searchParams.set("research", "1");
@@ -915,6 +918,14 @@
         if (!launchReady() || !capability || !capability.target) return;
         nextAccessElement.textContent = capability.mode === "research" ? "RESEARCH" : "AVAILABLE";
         if (window.PS4Diag) {
+          if (typeof window.PS4Diag.beginAttempt === "function") {
+            window.PS4Diag.beginAttempt("Manual NEXT launch initiated.", {
+              category: "ROUTING",
+              runtimeMode: capability.mode,
+              runtimeTarget: capability.target,
+              firmware: firmware || "Unknown"
+            });
+          }
           window.PS4Diag.info("FW-CAPABILITY-CHECK", "Firmware capability evaluated for NEXT launch routing.", {
             category: "ROUTING",
             firmware: firmware || "Unknown",

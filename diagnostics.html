@@ -5,164 +5,76 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>PS4 WebKit Next Diagnostics</title>
   <style>
-    :root {
-      --bg: #07111f;
-      --bg-2: #0d1d33;
-      --panel: rgba(10, 21, 40, 0.88);
-      --panel-strong: rgba(6, 15, 28, 0.94);
-      --line: rgba(152, 186, 255, 0.2);
-      --text: #eef4ff;
-      --muted: #97accf;
-      --accent: #79e0c3;
-      --accent-2: #74a9ff;
-      --warn: #ffd27a;
-      --bad: #ff9f9f;
-      --shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
     body {
       margin: 0;
-      min-height: 100vh;
+      background: #08111b;
+      color: #eef4ff;
       font-family: Georgia, "Times New Roman", serif;
-      color: var(--text);
-      background:
-        radial-gradient(circle at top left, rgba(116, 169, 255, 0.18), transparent 32%),
-        radial-gradient(circle at top right, rgba(121, 224, 195, 0.16), transparent 28%),
-        linear-gradient(160deg, var(--bg), var(--bg-2) 58%, #050b14);
-    }
-
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-      background-size: 24px 24px;
-      mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.55), transparent 88%);
+      font-size: 16px;
+      line-height: 1.5;
     }
 
     a {
-      color: #cce1ff;
+      color: #d6e8ff;
     }
 
     .shell {
-      width: min(1100px, calc(100% - 32px));
+      width: 92vw;
+      max-width: 1180px;
       margin: 0 auto;
-      padding: 28px 0 56px;
+      padding: 20px 0 40px;
     }
 
-    .hero,
     .panel {
-      position: relative;
-      overflow: hidden;
-      padding: 28px;
-      border: 1px solid var(--line);
-      border-radius: 28px;
-      background: linear-gradient(145deg, rgba(12, 25, 46, 0.94), rgba(5, 14, 28, 0.92));
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
-    }
-
-    .hero::after,
-    .panel::after {
-      content: "";
-      position: absolute;
-      inset: auto -80px -80px auto;
-      width: 220px;
-      height: 220px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(121, 224, 195, 0.18), transparent 68%);
-      pointer-events: none;
-    }
-
-    .eyebrow {
-      display: inline-block;
-      padding: 7px 12px;
-      border-radius: 999px;
-      border: 1px solid rgba(121, 224, 195, 0.35);
-      color: var(--accent);
-      font-size: 12px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
+      margin-bottom: 18px;
+      padding: 18px;
+      border: 1px solid #35506e;
+      background: #0d1b2d;
     }
 
     h1 {
-      margin: 16px 0 10px;
-      font-size: clamp(2rem, 4vw, 4rem);
-      line-height: 0.96;
-      letter-spacing: 0.02em;
+      margin: 0 0 12px;
+      font-size: 34px;
+      line-height: 1.1;
     }
 
     h2 {
-      margin: 0 0 14px;
-      font-size: 1.15rem;
-      letter-spacing: 0.03em;
+      margin: 0 0 12px;
+      font-size: 24px;
+      line-height: 1.2;
     }
 
-    .lead,
-    .subtle,
-    .summary {
-      color: var(--muted);
-      line-height: 1.6;
+    p {
+      margin: 0 0 12px;
     }
 
-    .lead {
-      max-width: 760px;
-      margin: 0;
-      font-size: 1.04rem;
-    }
-
-    .summary {
-      margin-top: 18px;
-      padding: 14px 16px;
-      border-left: 3px solid var(--accent-2);
-      border-radius: 0 14px 14px 0;
-      background: rgba(116, 169, 255, 0.08);
-      color: #dce9ff;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 1.1fr 0.9fr;
-      gap: 18px;
-      margin-top: 18px;
-    }
-
-    .stack {
-      display: grid;
-      gap: 18px;
-      margin-top: 18px;
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+    .row {
+      display: flex;
+      flex-wrap: wrap;
       gap: 12px;
+      margin-bottom: 12px;
     }
 
-    .stat {
-      padding: 14px;
-      border-radius: 18px;
-      background: var(--panel-strong);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-    }
-
-    .stat-label {
+    .card {
       display: block;
-      color: var(--muted);
-      font-size: 0.78rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
+      width: 100%;
+      min-width: 220px;
+      padding: 12px 14px;
+      border: 1px solid #35506e;
+      background: #102238;
+      flex: 1 1 220px;
     }
 
-    .stat-value {
+    .label {
       display: block;
-      margin-top: 8px;
-      font-size: 1.05rem;
+      margin-bottom: 6px;
+      color: #9fb5d7;
+      font-size: 16px;
+    }
+
+    .value {
+      display: block;
+      font-size: 20px;
       font-weight: 700;
       word-break: break-word;
     }
@@ -171,412 +83,236 @@
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
-      margin-top: 18px;
-    }
-
-    .subgrid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 18px;
-      margin-top: 18px;
+      margin-top: 12px;
     }
 
     button,
-    .link-button {
-      appearance: none;
-      border: 0;
-      border-radius: 999px;
-      padding: 13px 18px;
+    .button-link {
+      display: inline-block;
+      min-width: 180px;
+      padding: 12px 16px;
+      border: 1px solid #79e0c3;
+      background: #79e0c3;
+      color: #072018;
       font: inherit;
+      font-size: 18px;
+      font-weight: 700;
       text-decoration: none;
+      text-align: center;
       cursor: pointer;
-      transition: transform 160ms ease, opacity 160ms ease, background 160ms ease;
     }
 
-    button {
-      background: linear-gradient(135deg, var(--accent), #96f0db);
-      color: #072018;
-      font-weight: 700;
+    button.secondary,
+    .button-link.secondary {
+      background: #173149;
+      border-color: #35506e;
+      color: #eef4ff;
     }
 
     button[disabled] {
-      opacity: 0.42;
+      opacity: 0.55;
       cursor: not-allowed;
-      transform: none;
     }
 
-    .link-button {
-      background: rgba(255, 255, 255, 0.06);
-      color: var(--text);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+    .warning,
+    .summary,
+    .status-box,
+    .footer-box {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border: 1px solid #35506e;
+      background: #102238;
     }
 
-    button:hover,
-    .link-button:hover {
-      transform: translateY(-1px);
-    }
-
-    .log {
-      margin: 0;
-      min-height: 320px;
-      padding: 18px;
-      border-radius: 20px;
-      background: #04101f;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      color: #d7ecff;
-      font: 0.95rem/1.55 Consolas, "Courier New", monospace;
-      overflow: auto;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
-    .list {
-      display: grid;
-      gap: 12px;
-    }
-
-    .item {
-      padding: 14px;
-      border-radius: 18px;
-      background: var(--panel-strong);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-    }
-
-    .item strong {
-      display: block;
-      margin-bottom: 6px;
-    }
-
-    .field-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .field {
-      display: grid;
-      gap: 8px;
-      padding: 14px;
-      border-radius: 18px;
-      background: var(--panel-strong);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-    }
-
-    .field label,
-    .field .field-label {
-      color: var(--muted);
-      font-size: 0.78rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .field input,
-    .field textarea,
-    .field select {
-      width: 100%;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 14px;
-      background: rgba(255, 255, 255, 0.04);
-      color: var(--text);
-      padding: 12px 13px;
-      font: inherit;
-    }
-
-      .field select {
-        color-scheme: dark;
-      }
-
-      .field select option,
-      .field select optgroup {
-        color: #07111f;
-        background: #eef4ff;
-      }
-
-    .field textarea {
-      min-height: 128px;
-      resize: vertical;
-    }
-
-    .filter-bar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin: 14px 0 16px;
-    }
-
-    .filter-button {
-      background: rgba(255, 255, 255, 0.06);
-      color: var(--text);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      padding: 10px 14px;
-    }
-
-    .filter-button.is-active {
-      background: linear-gradient(135deg, rgba(121, 224, 195, 0.2), rgba(116, 169, 255, 0.22));
-      border-color: rgba(121, 224, 195, 0.46);
-    }
-
-    .summary-box,
-    .report-meta,
-    .submission-status {
-      padding: 14px 16px;
-      border-radius: 18px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      background: var(--panel-strong);
-      line-height: 1.6;
-    }
-
-    .submission-status.ok {
-      border-color: rgba(121, 224, 195, 0.36);
-      color: #dffff6;
-    }
-
-    .submission-status.warn {
-      border-color: rgba(255, 210, 122, 0.28);
+    .warning {
+      display: none;
+      border-color: #ffd27a;
+      background: #2e2614;
       color: #fff0c8;
     }
 
-    .submission-status.bad {
-      border-color: rgba(255, 159, 159, 0.28);
-      color: #ffe0e0;
+    .status-box.ok {
+      color: #8be0c8;
     }
 
-    .inline-check {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      margin-top: 12px;
-      color: #dce9ff;
+    .status-box.bad {
+      color: #ffb0b0;
+    }
+
+    .status-box.warn {
+      color: #fff0c8;
+    }
+
+    .log {
+      min-height: 260px;
+      padding: 14px;
+      border: 1px solid #35506e;
+      background: #03101d;
+      color: #d7ecff;
+      font-family: "Courier New", monospace;
+      font-size: 15px;
       line-height: 1.5;
-    }
-
-    .inline-check input {
-      margin-top: 4px;
-    }
-
-    .mono {
-      font-family: Consolas, "Courier New", monospace;
       white-space: pre-wrap;
       word-break: break-word;
+      overflow: auto;
     }
 
-    @media (max-width: 900px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
-
-      .subgrid,
-      .field-grid {
-        grid-template-columns: 1fr;
-      }
+    .field {
+      display: block;
+      width: 100%;
+      margin-bottom: 12px;
     }
 
-    @media (max-width: 640px) {
-      .shell {
-        width: min(100% - 20px, 1100px);
-        padding-top: 18px;
+    .field label {
+      display: block;
+      margin-bottom: 6px;
+      color: #9fb5d7;
+      font-size: 16px;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #35506e;
+      background: #f4f8ff;
+      color: #07111f;
+      font: inherit;
+      font-size: 17px;
+      box-sizing: border-box;
+    }
+
+    .field textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .check {
+      display: block;
+      margin: 10px 0;
+    }
+
+    .footer-box {
+      font-size: 17px;
+    }
+
+    @media (max-width: 800px) {
+      h1 {
+        font-size: 28px;
       }
 
-      .hero,
-      .panel {
-        padding: 20px;
-        border-radius: 22px;
+      h2 {
+        font-size: 22px;
       }
 
-      .stats {
-        grid-template-columns: 1fr;
-      }
-
-      .log {
-        min-height: 260px;
+      button,
+      .button-link {
+        width: 100%;
       }
     }
   </style>
-  <script src="./build.js" defer></script>
-  <script src="./js/diagnostics.js" defer></script>
+  <script src="./build.js?v=next-universal-1302-research-0004" defer></script>
+  <script src="./js/diagnostics.js?v=next-universal-1302-research-0004" defer></script>
 </head>
 <body>
   <div class="shell">
-    <section class="hero">
-      <span class="eyebrow">Diagnostics Console</span>
+    <div class="panel">
       <h1>PS4 WebKit Next Diagnostics</h1>
-      <p class="lead">Universal telemetry, previous-session recovery, and opt-in community reporting across the current NEXT surfaces, while keeping exploit behavior unchanged.</p>
-      <p class="summary">Diagnostics observe firmware, routing, cache, storage, resource failures, JavaScript failures, payload flow, and previous incomplete sessions. Community submission remains opt-in and shows the exact JSON before anything is sent.</p>
+      <p>Diagnostics records browser, firmware, runtime, exploit-stage and payload/HEN observations across NEXT.</p>
+      <p>A runtime being available does not mean it has been locally hardware verified by KillerNoS.</p>
+      <div id="diag-script-warning" class="warning">Diagnostics JavaScript is still loading.</div>
       <div class="actions">
         <button id="reset-log" type="button">Reset Log</button>
-        <button id="export-log" type="button">Export Log</button>
-        <button id="download-report" type="button">Download Full Report</button>
-        <button id="copy-summary" type="button">Copy Short Summary</button>
-        <a class="link-button" href="./index.html">Back To Home</a>
+        <button id="export-log" type="button" class="secondary">Export Log</button>
+        <button id="run-self-test" type="button" class="secondary">Run Diagnostics Self-Test</button>
+        <a class="button-link secondary" href="./index.html?v=next-universal-1302-research-0004">Back To NEXT</a>
       </div>
-    </section>
+    </div>
 
-    <section class="grid">
-      <div class="panel">
-        <h2>Current Session</h2>
-        <div class="stats">
-          <div class="stat">
-            <span class="stat-label">Firmware</span>
-            <span class="stat-value" id="diag-firmware">Unknown</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Firmware Source</span>
-            <span class="stat-value" id="diag-firmware-source">unknown</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Hardware Detected</span>
-            <span class="stat-value" id="diag-hardware-detected">No</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Simulated</span>
-            <span class="stat-value" id="diag-simulated">No</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Selected Backend</span>
-            <span class="stat-value" id="diag-backend">None</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Payload</span>
-            <span class="stat-value" id="diag-payload">Unknown</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Selected HEN</span>
-            <span class="stat-value" id="diag-hen">No HEN</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Build</span>
-            <span class="stat-value" id="diag-build" data-build-id>1200-next-manual-0001</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Cache Revision</span>
-            <span class="stat-value" id="diag-cache-revision">Unknown</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Online State</span>
-            <span class="stat-value" id="diag-online">unknown</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Page</span>
-            <span class="stat-value" id="diag-page">UNKNOWN</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Path</span>
-            <span class="stat-value" id="diag-page-path">./</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Session ID</span>
-            <span class="stat-value" id="diag-session-id">Unknown</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Session Start</span>
-            <span class="stat-value" id="diag-session-start">Unknown</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Elapsed</span>
-            <span class="stat-value" id="diag-elapsed">0 ms</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Last Stage</span>
-            <span class="stat-value" id="diag-last-stage">Not reported</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Normalized Stage</span>
-            <span class="stat-value" id="diag-normalized-stage">Not reported</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Attempts</span>
-            <span class="stat-value" id="diag-attempts">0</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Passes</span>
-            <span class="stat-value" id="diag-passes">0</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Failures</span>
-            <span class="stat-value" id="diag-failures">0</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Cache State</span>
-            <span class="stat-value" id="diag-cache-state">CACHE-UNKNOWN</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Local Storage</span>
-            <span class="stat-value" id="diag-storage-local">unknown</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Session Storage</span>
-            <span class="stat-value" id="diag-storage-session">unknown</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">JavaScript Errors</span>
-            <span class="stat-value" id="diag-js-errors">0</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Resource Errors</span>
-            <span class="stat-value" id="diag-resource-errors">0</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Console Model</span>
-            <span class="stat-value" id="diag-console-model">Unknown</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Diagnostics Schema</span>
-            <span class="stat-value" id="diag-schema">next-diagnostics-2</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">User Agent</span>
-            <span class="stat-value" id="diag-user-agent">Loading...</span>
-          </div>
-        </div>
+    <div class="panel">
+      <h2>Runtime Snapshot</h2>
+      <div class="row">
+        <div class="card"><span class="label">Firmware</span><span class="value" id="diag-firmware">Unknown</span></div>
+        <div class="card"><span class="label">Selected Backend</span><span class="value" id="diag-backend">Unknown</span></div>
+        <div class="card"><span class="label">Build</span><span class="value" id="diag-build" data-build-id>next-universal-1302-research-0004</span></div>
+        <div class="card"><span class="label">Last Stage</span><span class="value" id="diag-last-stage">Not reported</span></div>
+        <div class="card"><span class="label">Attempts</span><span class="value" id="diag-attempts">0</span></div>
+        <div class="card"><span class="label">Passes</span><span class="value" id="diag-passes">0</span></div>
+        <div class="card"><span class="label">Failures</span><span class="value" id="diag-failures">0</span></div>
+        <div class="card"><span class="label">NEXT Access</span><span class="value" id="diag-next-access">UNSUPPORTED</span></div>
+        <div class="card"><span class="label">Runtime Status</span><span class="value" id="diag-runtime-status">UNSUPPORTED</span></div>
+        <div class="card"><span class="label">Hardware Verification</span><span class="value" id="diag-hardware-verification">UNVERIFIED</span></div>
+        <div class="card"><span class="label">Selected HEN</span><span class="value" id="diag-hen">No HEN</span></div>
+        <div class="card"><span class="label">User Agent</span><span class="value" id="diag-user-agent">Loading...</span></div>
       </div>
+      <div class="summary" id="diag-summary">Loading summary...</div>
+    </div>
 
-      <div class="panel">
-        <h2>Previous Session</h2>
-        <div class="list">
-          <div class="item">
-            <strong>Completion State</strong>
-            <span id="diag-previous-completion">Complete</span>
-          </div>
-          <div class="item">
-            <strong>Previous Session</strong>
-            <span id="diag-previous-status">None</span>
-          </div>
-          <div class="item">
-            <strong>Previous Last Stage</strong>
-            <span id="diag-previous-stage">None</span>
-          </div>
-          <div class="item">
-            <strong>Previous Normalized Stage</strong>
-            <span id="diag-previous-normalized-stage">None</span>
-          </div>
-        </div>
-        <div class="summary-box" style="margin-top: 18px;">
-          Unexpected termination is reported only as suspected when the prior session lacks a normal completion marker. Diagnostics do not automatically label the cause as a kernel panic.
-        </div>
+    <div class="panel">
+      <h2>Diagnostic Log</h2>
+      <div class="actions">
+        <button type="button" class="secondary" data-filter="all">All</button>
+        <button type="button" class="secondary" data-filter="errors">Errors</button>
+        <button type="button" class="secondary" data-filter="failures">Failures</button>
+        <button type="button" class="secondary" data-filter="webkit">WebKit</button>
+        <button type="button" class="secondary" data-filter="kernel">Kernel</button>
+        <button type="button" class="secondary" data-filter="payload">Payload</button>
+        <button type="button" class="secondary" data-filter="cache">Cache</button>
+        <button type="button" class="secondary" data-filter="previous">Previous Session</button>
+        <button type="button" class="secondary" data-filter="research1302">13.02 Research</button>
       </div>
-    </section>
+      <div id="log" class="log">No diagnostic records.</div>
+    </div>
 
-    <section class="subgrid">
-      <div class="panel">
-        <h2>Summary</h2>
-        <pre id="diag-summary" class="log mono">Loading summary...</pre>
+    <div class="panel">
+      <h2>Community Test Report</h2>
+      <div class="field">
+        <label for="community-alias">Tester Alias</label>
+        <input id="community-alias" type="text" maxlength="80" placeholder="Optional alias">
       </div>
-
-      <div class="panel">
-        <h2>Community Report Setup</h2>
-        <div class="field-grid">
+      <div class="row">
+        <div class="card">
           <div class="field">
-            <label for="console-model">Console Model</label>
-            <select id="console-model">
+            <label for="community-console-model">Console Model</label>
+            <select id="community-console-model">
+              <option value="Unknown" selected>Unknown</option>
               <option value="Original">Original</option>
               <option value="Slim">Slim</option>
               <option value="Pro">Pro</option>
-              <option value="Unknown" selected>Unknown</option>
             </select>
           </div>
+        </div>
+        <div class="card">
           <div class="field">
-            <label for="tester-outcome">Tester Outcome</label>
-            <select id="tester-outcome">
+            <label for="community-entrypoint">Entrypoint</label>
+            <select id="community-entrypoint">
+              <option value="Unknown" selected>Unknown</option>
+              <option value="WebKit">WebKit</option>
+              <option value="SlopKit">SlopKit</option>
+              <option value="BD-J">BD-J</option>
+              <option value="Vue">Vue</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="card">
+          <div class="field">
+            <label for="community-candidate">Candidate</label>
+            <select id="community-candidate">
+              <option value="None" selected>None</option>
+              <option value="SlopKit">SlopKit</option>
+              <option value="Celsius / ffs_mountfs">Celsius / ffs_mountfs</option>
+              <option value="Netctrl reference">Netctrl reference</option>
+              <option value="CSSFontFace research">CSSFontFace research</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="card">
+          <div class="field">
+            <label for="community-outcome">Observed Outcome</label>
+            <select id="community-outcome">
               <option value="">Select an outcome</option>
               <option>Worked successfully</option>
               <option>No crash / returned normally</option>
@@ -599,55 +335,50 @@
               <option>Other</option>
             </select>
           </div>
-          <div class="field">
-            <label for="tester-alias">Tester Alias</label>
-            <input id="tester-alias" type="text" maxlength="80" placeholder="Optional alias">
-          </div>
-          <div class="field">
-            <span class="field-label">Submission Target</span>
-            <div id="report-target">Checking...</div>
-            <div id="report-warning" class="subtle">Loading report target details.</div>
-          </div>
         </div>
-        <div class="field" style="margin-top: 12px;">
-          <label for="tester-notes">Tester Notes</label>
-          <textarea id="tester-notes" maxlength="2000" placeholder="Optional notes. Example: Worked after second attempt. PS4 rebooted when KEX started."></textarea>
-        </div>
-        <label class="inline-check"><input id="include-user-agent" type="checkbox"> Include User-Agent in the report preview and export. Leave unchecked to keep User-Agent local only.</label>
       </div>
-    </section>
-
-    <section class="panel" style="margin-top: 18px;">
-      <h2>Diagnostic Log</h2>
-      <p class="subtle">Filter the persisted ring buffer without deleting entries. Records keep their session ID so previous-session recovery and current-session flow can be compared locally.</p>
-      <div class="filter-bar">
-        <button type="button" class="filter-button is-active" data-filter="all" aria-pressed="true">All</button>
-        <button type="button" class="filter-button" data-filter="errors" aria-pressed="false">Errors</button>
-        <button type="button" class="filter-button" data-filter="failures" aria-pressed="false">Failures</button>
-        <button type="button" class="filter-button" data-filter="webkit" aria-pressed="false">WebKit</button>
-        <button type="button" class="filter-button" data-filter="kernel" aria-pressed="false">Kernel</button>
-        <button type="button" class="filter-button" data-filter="payload" aria-pressed="false">Payload</button>
-        <button type="button" class="filter-button" data-filter="cache" aria-pressed="false">Cache</button>
-        <button type="button" class="filter-button" data-filter="previous" aria-pressed="false">Previous Session</button>
-        <button type="button" class="filter-button" data-filter="research1302" aria-pressed="false">13.02 Research</button>
+      <div class="field">
+        <label for="community-notes">Tester Notes</label>
+        <textarea id="community-notes" maxlength="2000" placeholder="Optional notes."></textarea>
       </div>
-      <pre id="log" class="log">No diagnostic records.</pre>
-    </section>
-
-    <section class="panel" style="margin-top: 18px;">
-      <h2>Community Test Report</h2>
-      <p class="subtle">Reports are never sent automatically. Review the JSON below, confirm explicitly, and then choose submission. If no private endpoint is configured, the fallback uses a short GitHub summary only.</p>
-      <div class="report-meta">Only non-sensitive fields are included by design: firmware, backend, payload metadata, stage flow, cache/storage status, tester-supplied notes, and optional User-Agent when you choose to include it.</div>
-      <label class="inline-check"><input id="report-review-confirm" type="checkbox"> I reviewed this diagnostic report and want to submit it.</label>
+      <label class="check"><input id="community-include-log" type="checkbox" checked> Include diagnostics in the full report export and submission.</label>
+      <label class="check"><input id="community-include-ua" type="checkbox"> Include User-Agent in the report preview and export.</label>
+      <label class="check"><input id="community-consent" type="checkbox"> I reviewed this diagnostic report and want to submit it.</label>
+      <div id="report-target" class="status-box">Checking report target...</div>
+      <div id="report-warning" class="status-box">Loading report target details.</div>
+      <div id="submission-status" class="status-box">Submission is idle.</div>
       <div class="actions">
-        <button id="submit-report" type="button" disabled>Submit Report</button>
-        <button id="retry-report-submit" type="button">Try Report Endpoint Again</button>
-        <button id="open-github-short-report" type="button">Open GitHub Short Report</button>
+        <button id="community-download" type="button">Download Full Report</button>
+        <button id="copy-summary" type="button" class="secondary">Copy Short Summary</button>
+        <button id="community-submit" type="button" class="secondary" disabled>Submit Report To KillerNoS</button>
+        <button id="open-github-short-report" type="button" class="secondary">Open GitHub Short Report</button>
       </div>
-      <div id="submission-status" class="submission-status">Submission is idle.</div>
-      <pre id="report-preview" class="log mono">Loading report preview...</pre>
-    </section>
+      <div id="report-preview" class="log">Loading report preview...</div>
+    </div>
+
+    <div class="panel">
+      <h2>Diagnostics Self-Test</h2>
+      <div id="diag-self-test-results" class="log">Self-test not run.</div>
+    </div>
+
+    <div class="panel footer-box">
+      <div>NEXT UI Build: <strong data-build-id>next-universal-1302-research-0004</strong></div>
+      <div>Diagnostics JS: <strong id="diag-js-state">LOADING</strong></div>
+    </div>
   </div>
+  <script>
+    setTimeout(function () {
+      if (!window.PS4Diag) {
+        var warning = document.getElementById("diag-script-warning");
+        var jsState = document.getElementById("diag-js-state");
+        if (warning) {
+          warning.style.display = "block";
+          warning.innerHTML = "Diagnostics JavaScript failed to initialize. Static diagnostics controls remain available.";
+        }
+        if (jsState) jsState.innerHTML = "FAILED";
+      }
+    }, 1500);
+  </script>
 </body>
 </html>
 
