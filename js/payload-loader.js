@@ -229,6 +229,9 @@
     for (index = 0; index < catalog.length; index++) {
       if (catalog[index] && catalog[index].defaultSelection === true) return catalog[index].id;
     }
+    for (index = catalog.length - 1; index >= 0; index--) {
+      if (catalog[index] && catalog[index].enabled === true) return catalog[index].id;
+    }
     return NO_HEN_ID;
   }
 

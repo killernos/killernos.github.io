@@ -88,6 +88,7 @@ window.PS4PayloadCatalog = [
     sha256: "c6329401d1810e16c84e6474ac30977dbdc951987c10cdb559370de7d59db0b0",
     supportedFirmwares: ["12.00", "12.02", "12.50", "12.52", "13.00"],
     enabled: true,
+    defaultSelection: true,
     recommendedFor: ["12.00"],
     verification: "source-confirmed"
   }

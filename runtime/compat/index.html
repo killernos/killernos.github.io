@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PS4 WebKit NEXT Compatibility Test</title>
+  <style>
+    :root {
+      --bg: #08111b;
+      --panel: rgba(12, 23, 38, 0.92);
+      --panel-2: rgba(8, 16, 29, 0.96);
+      --line: rgba(151, 188, 255, 0.2);
+      --text: #eef4ff;
+      --muted: #9fb5d7;
+      --accent: #8be0c8;
+      --warn: #ffd27a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(116, 169, 255, 0.2), transparent 28%),
+        radial-gradient(circle at top right, rgba(139, 224, 200, 0.15), transparent 26%),
+        linear-gradient(160deg, #07101a, var(--bg) 62%, #040a10);
+    }
+    .shell { width: min(980px, calc(100% - 28px)); margin: 0 auto; padding: 28px 0 48px; }
+    .hero, .panel { border: 1px solid var(--line); border-radius: 24px; background: var(--panel); }
+    .hero { padding: 28px; background: linear-gradient(145deg, rgba(13, 27, 48, 0.96), rgba(6, 14, 26, 0.94)); }
+    .eyebrow { display: inline-block; padding: 7px 12px; border-radius: 999px; border: 1px solid rgba(139, 224, 200, 0.32); color: var(--accent); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; }
+    h1 { margin: 16px 0 10px; font-size: clamp(2rem, 4.8vw, 4rem); line-height: 1; }
+    .lead { margin: 0; color: var(--muted); line-height: 1.6; max-width: 760px; }
+    .layout { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 18px; margin-top: 18px; }
+    .panel { padding: 24px; background: var(--panel-2); }
+    .facts { display: grid; gap: 10px; }
+    .fact { display: grid; grid-template-columns: 1.1fr 1fr; gap: 12px; padding: 12px 14px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.06); background: rgba(255, 255, 255, 0.03); }
+    .fact span { color: var(--muted); text-align: right; word-break: break-word; }
+    .status-copy { margin-top: 16px; padding: 14px 16px; border-radius: 18px; background: rgba(255, 210, 122, 0.1); border: 1px solid rgba(255, 210, 122, 0.25); color: #fff0c8; line-height: 1.6; }
+    .actions { display: grid; gap: 12px; }
+    button, a.action-link { appearance: none; width: 100%; border: 0; border-radius: 999px; padding: 13px 18px; font: inherit; text-decoration: none; text-align: center; }
+    button { background: linear-gradient(135deg, var(--accent), #98eed9); color: #072018; font-weight: 700; }
+    a.action-link { background: rgba(255,255,255,0.08); color: var(--text); border: 1px solid rgba(255,255,255,0.1); }
+    .log { margin-top: 18px; min-height: 200px; max-height: 420px; overflow: auto; padding: 16px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.26); font-family: "Courier New", monospace; font-size: 0.9rem; line-height: 1.5; white-space: pre-wrap; }
+    @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+    @media (max-width: 640px) { .shell { width: min(100% - 18px, 980px); padding-top: 18px; } .hero, .panel { padding: 20px; border-radius: 20px; } .fact { grid-template-columns: 1fr; } .fact span { text-align: left; } }
+  </style>
+  <script src="../../build.js" defer></script>
+  <script src="../../js/diagnostics.js" defer></script>
+  <script src="../../payloads/catalog.js" defer></script>
+  <script src="../../js/payload-loader.js" defer></script>
+  <script src="./probe.js" defer></script>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <span class="eyebrow">NEXT Compatibility Test</span>
+      <h1>NEXT Compatibility Test</h1>
+      <p class="lead">This path is for firmware below 13.02 that does not have an exact configured NEXT runtime. It records browser environment and diagnostics only. No guessed offsets, kernel exploit, or HEN execution will run here.</p>
+    </section>
+    <section class="layout">
+      <div class="panel">
+        <h2>Compatibility Status</h2>
+        <div class="facts">
+          <div class="fact"><strong>Firmware</strong><span id="field-firmware">Detecting...</span></div>
+          <div class="fact"><strong>Exact runtime</strong><span id="field-runtime">NOT CURRENTLY CONFIGURED</span></div>
+          <div class="fact"><strong>WebKit compatibility</strong><span id="field-webkit">TESTING</span></div>
+          <div class="fact"><strong>Kernel exploit</strong><span id="field-kernel">NOT STARTED</span></div>
+          <div class="fact"><strong>HEN</strong><span id="field-hen">LOCKED</span></div>
+          <div class="fact"><strong>Storage / Cache</strong><span id="field-storage">TESTING</span></div>
+        </div>
+        <div id="status-copy" class="status-copy">Recording safe compatibility information only.</div>
+        <div id="log" class="log">Waiting for diagnostics...</div>
+      </div>
+      <div class="panel">
+        <h2>Actions</h2>
+        <div class="actions">
+          <button id="run-probe" type="button">Run Compatibility Probe</button>
+          <a class="action-link" href="../../diagnostics.html">Open Diagnostics</a>
+          <a class="action-link" href="../../index.html">Return To NEXT</a>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

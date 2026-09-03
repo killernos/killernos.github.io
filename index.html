@@ -408,6 +408,7 @@
   <script src="./js/diagnostics.js" defer></script>
   <script src="./payloads/catalog.js?v=1200-next-manual-0001" defer></script>
   <script src="./js/payload-loader.js?v=1200-next-manual-0001" defer></script>
+  <script type="module" src="./js/next-firmware-capability.js"></script>
 </head>
 <body>
   <div class="shell">
@@ -445,16 +446,20 @@
             <span class="stat-value" id="firmware">Detecting...</span>
           </div>
           <div class="stat">
+            <span class="stat-label">NEXT Access</span>
+            <span class="stat-value"><span id="next-access" class="status-pill status-warn">Checking</span></span>
+          </div>
+          <div class="stat">
             <span class="stat-label">Selected Backend</span>
             <span class="stat-value" id="backend">Detecting...</span>
           </div>
           <div class="stat">
-            <span class="stat-label">Upstream Coverage</span>
-            <span class="stat-value"><span id="upstream-state" class="status-pill status-warn">Checking</span></span>
+            <span class="stat-label">Runtime Status</span>
+            <span class="stat-value"><span id="runtime-status" class="status-pill status-warn">Waiting</span></span>
           </div>
           <div class="stat">
-            <span class="stat-label">Local Launcher</span>
-            <span class="stat-value"><span id="launcher-state" class="status-pill status-warn">Waiting</span></span>
+            <span class="stat-label">Hardware Verification</span>
+            <span class="stat-value" id="hardware-verification">Checking</span>
           </div>
           <div class="stat">
             <span class="stat-label">Launch Mode</span>
@@ -484,8 +489,7 @@
         <p id="routing-status" class="routing-copy">Inspecting the PS4 browser user agent.</p>
         <p class="routing-copy">Automatic launch is intentionally disabled here. Open NEXT manually so the console always retains a recovery path back to the normal PS4 shell.</p>
         <div class="actions">
-          <button id="run-1200" type="button" disabled>Run 12.00 Runtime</button>
-          <button id="run-next-alt" type="button" disabled>Run NEXT Runtime</button>
+          <button id="run-next" type="button" disabled>Run NEXT Runtime</button>
           <a class="link-button" href="./diagnostics.html">Open Diagnostics</a>
         </div>
       </div>
@@ -509,7 +513,7 @@
             <small>Advertised by the upstream NEXT router as the supported high range.</small>
           </div>
         </div>
-        <p class="footnote">This panel is reference-only. It reflects what the upstream router advertises, not what this workspace validates or launches locally. The current local execution path remains limited to the 12.00 stock-browser target.</p>
+        <p class="footnote">This panel is reference-only. It reflects what the upstream router advertises, not what this workspace validates or launches locally. Local hardware verification remains limited to the 12.00 stock-browser target.</p>
       </div>
     </section>
 
@@ -533,12 +537,12 @@
       var SELECTION_KEY = "ps4-webkit-next:selected-hen";
       var firmwareElement = document.getElementById("firmware");
       var backendElement = document.getElementById("backend");
-      var launcherElement = document.getElementById("launcher-state");
-      var upstreamElement = document.getElementById("upstream-state");
+      var nextAccessElement = document.getElementById("next-access");
+      var runtimeStatusElement = document.getElementById("runtime-status");
+      var hardwareVerificationElement = document.getElementById("hardware-verification");
       var statusElement = document.getElementById("routing-status");
       var simulationNotice = document.getElementById("simulation-notice");
-      var runButton = document.getElementById("run-1200");
-      var nextAltButton = document.getElementById("run-next-alt");
+      var runButton = document.getElementById("run-next");
       var backendStateElement = document.getElementById("backend-state");
       var payloadStateElement = document.getElementById("payload-state");
       var payloadChoicesElement = document.getElementById("payload-choices");
@@ -557,9 +561,56 @@
       var forcedFirmware = null;
       var researchMode = false;
       var previewMode = false;
-      var backend = "None";
-      var nextRuntimeTarget = "./runtime/next-alt/run_lapse.html";
+      var backend = "Unsupported";
+      var capability = null;
       var baseStatusText = "";
+
+      function currentCapability() {
+        if (window.NEXTFirmwareCapability && typeof window.NEXTFirmwareCapability.getNextFirmwareCapability === "function") {
+          return window.NEXTFirmwareCapability.getNextFirmwareCapability(firmware || "Unknown");
+        }
+        return {
+          firmware: firmware || "Unknown",
+          buttonAllowed: false,
+          mode: "unsupported",
+          backend: "Unsupported",
+          target: "",
+          runtimeConfigured: false,
+          research: false,
+          nextAccess: "UNSUPPORTED",
+          runtimeStatus: "UNSUPPORTED",
+          hardwareVerification: "UNVERIFIED",
+          researchCandidate: "",
+          candidateStatus: ""
+        };
+      }
+
+      function capabilityStatusClass(value) {
+        if (value === "AVAILABLE" || value === "CONFIGURED") return "status-ready";
+        if (value === "RESEARCH" || value === "COMPATIBILITY TEST") return "status-warn";
+        return "status-bad";
+      }
+
+      function runtimeButtonLabel(value) {
+        if (!value) return "NEXT Runtime Unsupported";
+        if (value.mode === "research") return "Run NEXT 13.02 Research";
+        if (value.mode === "compatibility") return "Run NEXT Compatibility Test";
+        if (value.mode === "runtime") return "Run NEXT Runtime";
+        return "NEXT Runtime Unsupported";
+      }
+
+      function runtimeTargetHref(value) {
+        var url;
+        if (!value || !value.target) return "";
+        if (value.mode === "runtime") {
+          return window.PS4PayloadLoader.runtimeQuery(value.target, { payloadId: runtimePayloadId() });
+        }
+        url = new URL(value.target, location.href);
+        if (previewMode && firmware) url.searchParams.set("fw", firmware);
+        if (previewMode) url.searchParams.set("preview", "1");
+        if (value.mode === "research") url.searchParams.set("research", "1");
+        return url.pathname + url.search;
+      }
 
       function parseQuery(name) {
         var parts;
@@ -609,6 +660,14 @@
         if (!payload) return "Selected: No HEN";
         if (isNoHenSelected()) return "Selected: No HEN";
         return "Selected: " + payload.displayName + " | State: " + state + (payload.version ? " | Version: " + payload.version : "") + (payload.payloadPath ? " | Payload: " + payload.payloadPath : "");
+      }
+
+      function runtimePayloadId() {
+        var state = compatibilityState(selectedPayload);
+        if (!capability || capability.mode !== "runtime") return "none";
+        if (!selectedPayload || isNoHenSelected()) return "none";
+        if (state === "COMPATIBLE") return selectedPayload.id;
+        return "none";
       }
 
       function setStoredSelection(payloadId) {
@@ -720,27 +779,28 @@
       }
 
       function launchReady() {
-        var state = compatibilityState(selectedPayload);
-        var payloadCompatible = isNoHenSelected() || state === "COMPATIBLE";
-        return firmware === "12.00" && backend === "Lapse" && !simulated && !!selectedPayload && payloadCompatible;
-      }
-
-      function nextRuntimeReady() {
-        return firmware === "13.02" ? true : launchReady();
+        capability = currentCapability();
+        if (!capability || !capability.buttonAllowed) return false;
+        return true;
       }
 
       function updateLaunchState() {
         var ready = launchReady();
-        var nextReady = nextRuntimeReady();
-        launcherElement.textContent = ready || nextReady ? "Ready" : "Unavailable";
-        launcherElement.className = "status-pill " + (ready || nextReady ? "status-ready" : "status-bad");
+        capability = currentCapability();
+        nextAccessElement.textContent = capability.nextAccess;
+        nextAccessElement.className = "status-pill " + capabilityStatusClass(capability.nextAccess);
+        runtimeStatusElement.textContent = capability.runtimeStatus;
+        runtimeStatusElement.className = "status-pill " + capabilityStatusClass(capability.runtimeStatus);
         runButton.disabled = !ready;
-        nextAltButton.disabled = !nextReady;
-        nextAltButton.textContent = firmware === "13.02" ? "Run NEXT 13.02 Research" : "Run NEXT Runtime";
+        runButton.textContent = runtimeButtonLabel(capability);
+        backendElement.textContent = capability.backend;
+        if (hardwareVerificationElement) hardwareVerificationElement.textContent = capability.hardwareVerification;
         if (backendStateElement) {
-          backendStateElement.textContent = researchMode && firmware === "13.02"
+          backendStateElement.textContent = capability.mode === "research"
             ? "Research only"
-            : ready ? "Ready for manual launch" : previewMode ? "Preview only" : "Observation only";
+            : capability.mode === "compatibility"
+              ? "Compatibility observation"
+              : ready ? "Ready for manual launch" : previewMode ? "Preview only" : "Observation only";
         }
         statusElement.textContent = baseStatusText;
         if (previewBanner) previewBanner.hidden = !previewMode;
@@ -752,16 +812,24 @@
           payloadSelectionStatus.textContent = "HEN loading is locked during the 13.02 userland research test.";
         } else if (isNoHenSelected()) {
           payloadSelectionStatus.textContent = "No HEN selected. Runtime launch will skip HEN loading entirely.";
+        } else if (capability && capability.mode === "runtime" && compatibilityState(selectedPayload) !== "COMPATIBLE") {
+          payloadSelectionStatus.textContent = compatibilityMessage(selectedPayload) + " Runtime launch remains available, but HEN loading will be skipped for this selection.";
         } else {
           payloadSelectionStatus.textContent = firmware === "13.02"
             ? "HEN loading is locked during the 13.02 userland research test."
             : compatibilityMessage(selectedPayload);
         }
-        window.PS4Runtime.launcherReady = ready || nextReady;
-        window.PS4Runtime.payloadId = selectedPayload ? selectedPayload.id : "";
-        window.PS4Runtime.payloadVersion = selectedPayload ? selectedPayload.version : "Unknown";
+        window.PS4Runtime.launcherReady = ready;
+        window.PS4Runtime.payloadId = runtimePayloadId();
+        window.PS4Runtime.payloadVersion = runtimePayloadId() === "none" ? "none" : (selectedPayload ? selectedPayload.version : "Unknown");
         window.PS4Runtime.henSelection = selectedPayload ? selectedPayload.id : "none";
         window.PS4Runtime.henDisplayName = selectedPayload ? selectedPayload.displayName : "No HEN";
+        window.PS4Runtime.selectedBackend = capability.backend;
+        window.PS4Runtime.runtimeMode = capability.mode;
+        window.PS4Runtime.runtimeTarget = capability.target;
+        window.PS4Runtime.runtimeConfigured = capability.runtimeConfigured;
+        window.PS4Runtime.nextAccess = capability.nextAccess;
+        window.PS4Runtime.hardwareVerification = capability.hardwareVerification;
       }
 
       function renderPayloadChoices() {
@@ -834,24 +902,55 @@
           updatePayloadState(true);
           return;
         }
-        selectedPayload = window.PS4PayloadLoader.getSelectionById("none");
+        selectedPayload = window.PS4PayloadLoader.getSelectionById(window.PS4PayloadLoader.defaultSelectionId());
+        if (!selectedPayload) selectedPayload = window.PS4PayloadLoader.getSelectionById("none");
         selectedPayloadId = selectedPayload.id;
         setStoredSelection(selectedPayload.id);
         updatePayloadState(false);
       }
 
-      function navigateToRuntime(relativeRuntimePath) {
+      function navigateToRuntime() {
         var href;
-        if (!launchReady() || !selectedPayload || previewMode) return;
-        launcherElement.textContent = "Launching";
+        capability = currentCapability();
+        if (!launchReady() || !capability || !capability.target) return;
+        nextAccessElement.textContent = capability.mode === "research" ? "RESEARCH" : "AVAILABLE";
         if (window.PS4Diag) {
+          window.PS4Diag.info("FW-CAPABILITY-CHECK", "Firmware capability evaluated for NEXT launch routing.", {
+            category: "ROUTING",
+            firmware: firmware || "Unknown",
+            capabilityMode: capability.mode,
+            runtimeConfigured: capability.runtimeConfigured,
+            runtimeTarget: capability.target,
+            backend: capability.backend,
+            researchMode: capability.research,
+            selectedHen: selectedPayload ? selectedPayload.id : "none"
+          });
+          window.PS4Diag.info(capability.mode === "research" ? "RUNTIME-RESEARCH" : capability.mode === "compatibility" ? "RUNTIME-COMPATIBILITY" : "RUNTIME-AVAILABLE", "NEXT launch path selected.", {
+            category: "ROUTING",
+            firmware: firmware || "Unknown",
+            capabilityMode: capability.mode,
+            runtimeConfigured: capability.runtimeConfigured,
+            runtimeTarget: capability.target,
+            backend: capability.backend,
+            researchMode: capability.research,
+            selectedHen: selectedPayload ? selectedPayload.id : "none"
+          });
           window.PS4Diag.markLaunch({
             firmware: window.PS4Runtime.firmware,
-            backend: window.PS4Runtime.selectedBackend,
+            backend: capability.backend,
             pageName: window.PS4Runtime.pageName,
-            payloadId: selectedPayload.id,
-            payloadVersion: selectedPayload.version,
-            message: "Manual runtime launch requested from NEXT home."
+            payloadId: runtimePayloadId(),
+            payloadVersion: runtimePayloadId() === "none" ? "none" : selectedPayload.version,
+            message: "Manual runtime launch requested from NEXT home.",
+            runtime: {
+              firmwareCapability: capability.firmware,
+              runtimeConfigured: capability.runtimeConfigured,
+              runtimeMode: capability.mode,
+              runtimeBackend: capability.backend,
+              runtimeTarget: capability.target,
+              nextAccess: capability.nextAccess,
+              hardwareVerification: capability.hardwareVerification
+            }
           });
           window.PS4Diag.markHen({
             selection: selectedPayload.id,
@@ -863,25 +962,25 @@
             loaderReference: selectedPayload.loaderReference || selectedPayload.loader || "skip",
             evidence: selectedPayload.evidence || selectedPayload.verification || "unknown",
             compatibility: firmware === "13.02" ? "LOCKED" : (isNoHenSelected() ? "AVAILABLE" : compatibilityState(selectedPayload)),
-            requested: firmware === "13.02" ? false : !isNoHenSelected(),
-            attempted: firmware === "13.02" ? false : !isNoHenSelected(),
-            status: firmware === "13.02" ? "LOCKED" : (isNoHenSelected() ? "SKIPPED" : "LOAD-REQUESTED"),
-            error: ""
+            requested: firmware === "13.02" ? false : runtimePayloadId() !== "none",
+            attempted: firmware === "13.02" ? false : runtimePayloadId() !== "none",
+            status: firmware === "13.02" ? "LOCKED" : (runtimePayloadId() === "none" ? "SKIPPED" : "LOAD-REQUESTED"),
+            error: runtimePayloadId() === "none" && !isNoHenSelected() ? "Selected HEN was not requested because compatibility is not verified for this firmware." : ""
           });
-          window.PS4Diag.markBackend({ selected: window.PS4Runtime.selectedBackend, entered: true, completed: false, failed: false });
+          window.PS4Diag.markBackend({ selected: capability.backend, entered: true, completed: false, failed: false });
         }
         try {
           sessionStorage.setItem("ps4-webkit-next:last-launch", JSON.stringify({
             firmware: window.PS4Runtime.firmware,
-            backend: window.PS4Runtime.selectedBackend,
+            backend: capability.backend,
             buildId: window.PS4_WEBKIT_BUILD ? window.PS4_WEBKIT_BUILD.buildId : "Unknown",
             cacheRevision: window.PS4_WEBKIT_BUILD ? window.PS4_WEBKIT_BUILD.cacheRevision : "Unknown",
-            payloadId: selectedPayload.id,
-            payloadVersion: selectedPayload.version,
+            payloadId: runtimePayloadId(),
+            payloadVersion: runtimePayloadId() === "none" ? "none" : selectedPayload.version,
             timestamp: new Date().toISOString()
           }));
         } catch (error) { }
-        href = window.PS4PayloadLoader.runtimeQuery(relativeRuntimePath, { payloadId: selectedPayload.id });
+        href = runtimeTargetHref(capability);
         location.href = href;
       }
 
@@ -892,7 +991,7 @@
         researchMode = parseQuery("research") === "1";
       } catch (error) { }
 
-      if (forcedFirmware && (previewMode || researchMode)) {
+      if (forcedFirmware) {
         firmware = forcedFirmware;
         firmwareNumber = parseInt(forcedFirmware.split(".")[0], 10) * 100 + parseInt(forcedFirmware.split(".")[1], 10);
         firmwareSource = "query";
@@ -907,44 +1006,24 @@
         hardwareDetected = true;
       }
 
-      if (previewMode && firmware === "12.00") {
-        backend = "Lapse";
-        baseStatusText = "12.00 preview mode selected. Preview shows payload selection only and never launches WebKit or Lapse. PREVIEW MODE - EXPLOIT DISABLED.";
-      } else if (firmware === "13.02") {
-        backend = "NEXT 13.02 Research";
-        nextRuntimeTarget = "./runtime/next-1302/index.html";
+      capability = currentCapability();
+      backend = capability.backend;
+      if (capability.mode === "research") {
         baseStatusText = simulated
           ? "13.02 research mode selected. HEN loading is locked during the 13.02 userland research test. Celsius / ffs_mountfs remains research-only and is not launched by this host. SIMULATED FIRMWARE. DEVELOPMENT ONLY. NOT HARDWARE VERIFIED."
           : "13.02 routes only to the isolated SlopKit userland research probe. HEN loading is locked during the 13.02 userland research test. Celsius / ffs_mountfs remains locked and is not launched by this host.";
-      } else if (forcedBackend === "lapse" || forcedBackend === "poops") {
-        backend = forcedBackend === "lapse" ? "Lapse" : "Poops";
-        baseStatusText = "Selected via ?bug=" + forcedBackend + ".";
-      } else if (firmwareNumber !== null && firmwareNumber <= 1202) {
-        backend = "Lapse";
-        baseStatusText = firmware + " is within the Lapse routing range.";
-      } else if (firmwareNumber !== null && firmwareNumber >= 1250) {
-        backend = "Poops";
-        baseStatusText = firmware + " is within the Poops routing range.";
-      } else if (firmwareNumber !== null) {
-        baseStatusText = firmware + " has no matching backend from 12.03 through 12.49.";
+      } else if (capability.mode === "runtime") {
+        baseStatusText = firmware + " has an exact configured NEXT runtime in this repository. Existing exploit code remains unchanged and HEN stays optional after exploit completion.";
+      } else if (capability.mode === "compatibility") {
+        baseStatusText = firmware + " is below 13.02 but has no exact configured NEXT runtime here. The main button opens a safe compatibility test and does not guess offsets, run a kernel chain, or load HEN.";
+      } else if (firmware && firmware !== "Unknown") {
+        baseStatusText = firmware + " is above the current launcher boundary. NEXT runtime remains disabled until a separate explicit research/runtime definition is added.";
       } else {
         baseStatusText = "User agent is not a PlayStation 4.";
       }
 
-      if (!previewMode && simulated) {
-        baseStatusText += " SIMULATED FIRMWARE. DEVELOPMENT ONLY. NOT HARDWARE VERIFIED.";
-      }
-      if (!previewMode && !(firmware === "12.00" && backend === "Lapse" && !simulated)) {
-        baseStatusText += " Upstream support does not automatically imply a validated local launch path here.";
-      }
-      if (!previewMode && firmware === "12.00" && backend === "Lapse" && !simulated) {
-        baseStatusText += " Existing 12.00 runtime is ready for manual launch.";
-      }
-
       firmwareElement.textContent = firmware || "Unknown";
       backendElement.textContent = backend;
-      upstreamElement.textContent = backend !== "None" ? "Supported Upstream" : "Unsupported Upstream";
-      upstreamElement.className = "status-pill " + (backend !== "None" ? "status-ready" : "status-bad");
       if (simulationNotice) simulationNotice.hidden = !simulated;
 
       window.PS4Runtime = {
@@ -957,11 +1036,11 @@
         selectedBackend: backend,
         buildId: window.PS4_WEBKIT_BUILD ? window.PS4_WEBKIT_BUILD.buildId : "Unknown",
         cacheRevision: window.PS4_WEBKIT_BUILD ? window.PS4_WEBKIT_BUILD.cacheRevision : "Unknown",
-        pageName: previewMode ? "NEXT-1200-PREVIEW" : (firmware === "13.02" ? "NEXT-1302-RESEARCH" : "NEXT-HOME"),
+        pageName: previewMode ? "NEXT-PREVIEW" : (capability.mode === "research" ? "NEXT-1302-RESEARCH" : "NEXT-HOME"),
         relativePath: location.pathname || "./index.html",
-        researchMode: researchMode,
-        researchCandidate: firmware === "13.02" ? "Celsius / ffs_mountfs" : "",
-        candidateStatus: firmware === "13.02" ? "research" : "",
+        researchMode: capability.research,
+        researchCandidate: capability.mode === "research" ? "Celsius / ffs_mountfs" : capability.researchCandidate,
+        candidateStatus: capability.candidateStatus,
         isPS4: hardwareDetected,
         launcherReady: false,
         backendEntered: false,
@@ -969,7 +1048,12 @@
         payloadId: "",
         payloadVersion: "Unknown",
         henSelection: "none",
-        henDisplayName: "No HEN"
+        henDisplayName: "No HEN",
+        runtimeMode: capability.mode,
+        runtimeTarget: capability.target,
+        runtimeConfigured: capability.runtimeConfigured,
+        nextAccess: capability.nextAccess,
+        hardwareVerification: capability.hardwareVerification
       };
 
       restoreSelection();
@@ -983,21 +1067,34 @@
       }
       if (window.PS4Diag) {
         window.PS4Diag.markPage(window.PS4Runtime.pageName, window.PS4Runtime.relativePath);
-        window.PS4Diag.markBackend({ selected: window.PS4Runtime.selectedBackend, entered: false, completed: false, failed: false });
+        window.PS4Diag.markBackend({ selected: capability.backend, entered: false, completed: false, failed: false });
+        window.PS4Diag.info("FW-CAPABILITY-CHECK", "Firmware capability evaluated for NEXT home.", {
+          category: "ROUTING",
+          firmware: firmware || "Unknown",
+          capabilityMode: capability.mode,
+          runtimeConfigured: capability.runtimeConfigured,
+          runtimeTarget: capability.target,
+          backend: capability.backend,
+          researchMode: capability.research,
+          selectedHen: selectedPayload ? selectedPayload.id : window.PS4PayloadLoader.defaultSelectionId()
+        });
+        window.PS4Diag.info(capability.mode === "research" ? "RUNTIME-RESEARCH" : capability.mode === "compatibility" ? "RUNTIME-COMPATIBILITY" : capability.mode === "runtime" ? "RUNTIME-AVAILABLE" : "RUNTIME-UNSUPPORTED", "Firmware routing decision recorded.", {
+          category: "ROUTING",
+          firmware: firmware || "Unknown",
+          capabilityMode: capability.mode,
+          runtimeConfigured: capability.runtimeConfigured,
+          runtimeTarget: capability.target,
+          backend: capability.backend,
+          researchMode: capability.research,
+          selectedHen: selectedPayload ? selectedPayload.id : window.PS4PayloadLoader.defaultSelectionId()
+        });
         if (simulated) {
           window.PS4Diag.info("SIMULATED-FIRMWARE", "DEVELOPMENT ONLY. NOT HARDWARE VERIFIED.", { category: "FIRMWARE" });
         }
       }
 
       runButton.addEventListener("click", function () {
-        navigateToRuntime("./runtime/next/run_lapse.html");
-      });
-      nextAltButton.addEventListener("click", function () {
-        if (firmware === "13.02") {
-          location.href = nextRuntimeTarget;
-          return;
-        }
-        navigateToRuntime(nextRuntimeTarget);
+        navigateToRuntime();
       });
     });
   </script>

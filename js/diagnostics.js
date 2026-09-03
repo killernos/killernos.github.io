@@ -75,6 +75,15 @@
       completed: false,
       failed: false
     },
+    runtime: {
+      firmwareCapability: "unknown",
+      runtimeConfigured: false,
+      runtimeMode: "unsupported",
+      runtimeBackend: "Unknown",
+      runtimeTarget: "",
+      nextAccess: "UNSUPPORTED",
+      hardwareVerification: "UNVERIFIED"
+    },
     cache: {
       status: "CACHE-UNKNOWN",
       revision: "Unknown",
@@ -316,6 +325,7 @@
       lastNormalizedStage: state.lastNormalizedStage,
       firmware: state.firmware,
       backend: state.backend,
+      runtime: state.runtime,
       payload: state.payload,
       hen: state.hen,
       buildId: state.buildId,
@@ -325,7 +335,8 @@
       page: state.page,
       onlineState: state.onlineState,
       consoleModel: state.consoleModel,
-      research: state.research
+      research: state.research,
+      runtime: state.runtime
     };
   }
 
@@ -611,6 +622,17 @@
       };
     }
     if (partial.backend) state.backend.selected = partial.backend;
+    if (partial.runtime && typeof partial.runtime === "object") {
+      state.runtime = {
+        firmwareCapability: partial.runtime.firmwareCapability !== undefined ? partial.runtime.firmwareCapability : state.runtime.firmwareCapability,
+        runtimeConfigured: partial.runtime.runtimeConfigured !== undefined ? !!partial.runtime.runtimeConfigured : state.runtime.runtimeConfigured,
+        runtimeMode: partial.runtime.runtimeMode || state.runtime.runtimeMode,
+        runtimeBackend: partial.runtime.runtimeBackend || state.runtime.runtimeBackend,
+        runtimeTarget: partial.runtime.runtimeTarget !== undefined ? partial.runtime.runtimeTarget : state.runtime.runtimeTarget,
+        nextAccess: partial.runtime.nextAccess || state.runtime.nextAccess,
+        hardwareVerification: partial.runtime.hardwareVerification || state.runtime.hardwareVerification
+      };
+    }
     if (partial.buildId) state.buildId = partial.buildId;
     if (partial.cacheRevision) state.cacheRevision = partial.cacheRevision;
     if (partial.pageName) state.page.pageName = partial.pageName;
@@ -677,6 +699,7 @@
       sessionId: state.sessionId,
       normalizedStage: normalizedStage,
       evidence: evidenceFor(stage, status),
+      runtime: state.runtime,
       payload: {
         id: state.payload.id,
         displayName: state.payload.displayName,
@@ -945,6 +968,7 @@
       failures: state.failures,
       firmware: state.firmware,
       backend: state.backend,
+      runtime: state.runtime,
       payload: state.payload,
       hen: state.hen,
       cache: state.cache,
@@ -998,6 +1022,15 @@
         backendEntered: state.backend.entered,
         backendCompleted: state.backend.completed,
         backendFailed: state.backend.failed
+      },
+      runtime: {
+        firmwareCapability: state.runtime.firmwareCapability,
+        runtimeConfigured: state.runtime.runtimeConfigured,
+        runtimeMode: state.runtime.runtimeMode,
+        runtimeBackend: state.runtime.runtimeBackend,
+        runtimeTarget: state.runtime.runtimeTarget,
+        nextAccess: state.runtime.nextAccess,
+        hardwareVerification: state.runtime.hardwareVerification
       },
       payload: {
         payloadId: state.payload.id,
@@ -1333,6 +1366,7 @@
 
   function markLaunch(info) {
     info = info || {};
+    if (info.runtime) updateRuntimeState({ runtime: info.runtime, backend: info.runtime.runtimeBackend || info.backend || state.backend.selected });
     emit("INFO", "LAUNCH-MARKED", info.message || "Launch requested.", { category: "ROUTING", launch: info });
   }
 
