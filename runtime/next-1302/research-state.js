@@ -1,4 +1,4 @@
-export const BUILD_ID = "next-universal-1302-research-0004";
+export const BUILD_ID = "next-universal-1302-research-0005";
 export const BACKEND_NAME = "NEXT 13.02 Research";
 export const CANDIDATE_NAME = "SlopKit Userland";
 export const KERNEL_CANDIDATE_NAME = "Celsius / ffs_mountfs";
@@ -23,6 +23,8 @@ function text(value) {
 export function createResearchState(doc) {
   const fields = {
     firmware: doc.getElementById("field-firmware"),
+    hardwareTest: doc.getElementById("field-hardware-test"),
+    hardwareReason: doc.getElementById("field-hardware-reason"),
     entrypoint: doc.getElementById("field-entrypoint"),
     primitive: doc.getElementById("field-primitive"),
     carrier: doc.getElementById("field-carrier"),
@@ -133,6 +135,10 @@ export function createResearchState(doc) {
     setFirmware(value) {
       snapshot.firmware = text(value) || snapshot.firmware;
       setField("firmware", snapshot.firmware);
+    },
+    setHardwareTest(value, reason) {
+      setField("hardwareTest", value);
+      setField("hardwareReason", reason);
     },
     setRunning(value) {
       snapshot.running = !!value;

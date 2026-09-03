@@ -234,6 +234,21 @@
       margin-top: 20px;
     }
 
+    .action-group {
+      flex: 1 1 240px;
+      min-width: 240px;
+    }
+
+    .action-note {
+      margin: 10px 0 0;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 0.95rem;
+    }
+
     button,
     .link-button {
       appearance: none;
@@ -406,11 +421,11 @@
 
     }
   </style>
-  <script src="./build.js?v=next-universal-1302-research-0004" defer></script>
-  <script src="./js/diagnostics.js?v=next-universal-1302-research-0004" defer></script>
-  <script src="./payloads/catalog.js?v=next-universal-1302-research-0004" defer></script>
-  <script src="./js/payload-loader.js?v=next-universal-1302-research-0004" defer></script>
-  <script src="./js/next-firmware-capability.js?v=next-universal-1302-research-0004" defer></script>
+  <script src="./build.js?v=next-universal-1302-research-0005" defer></script>
+  <script src="./js/diagnostics.js?v=next-universal-1302-research-0005" defer></script>
+  <script src="./payloads/catalog.js?v=next-universal-1302-research-0005" defer></script>
+  <script src="./js/payload-loader.js?v=next-universal-1302-research-0005" defer></script>
+  <script src="./js/next-firmware-capability.js?v=next-universal-1302-research-0005" defer></script>
 </head>
 <body>
   <div class="shell">
@@ -485,14 +500,18 @@
           </div>
           <div class="stat">
             <span class="stat-label">Build</span>
-            <span class="stat-value" data-build-id>next-universal-1302-research-0004</span>
+            <span class="stat-value" data-build-id>next-universal-1302-research-0005</span>
           </div>
         </div>
         <p id="routing-status" class="routing-copy">Inspecting the PS4 browser user agent.</p>
         <p class="routing-copy">Automatic launch is intentionally disabled here. Open NEXT manually so the console always retains a recovery path back to the normal PS4 shell.</p>
         <div class="actions">
           <button id="run-next" type="button" disabled>Run NEXT Runtime</button>
-          <a class="link-button" href="./diagnostics.html?v=next-universal-1302-research-0004">Open Diagnostics</a>
+          <div class="action-group">
+            <button id="run-1302-research" type="button" disabled>Run 13.02 Research</button>
+            <div id="research-1302-status" class="action-note">13.02 Research Lab<br>Checking firmware availability.</div>
+          </div>
+          <a class="link-button" href="./diagnostics.html?v=next-universal-1302-research-0005">Open Diagnostics</a>
         </div>
       </div>
 
@@ -545,6 +564,8 @@
       var statusElement = document.getElementById("routing-status");
       var simulationNotice = document.getElementById("simulation-notice");
       var runButton = document.getElementById("run-next");
+      var research1302Button = document.getElementById("run-1302-research");
+      var research1302Status = document.getElementById("research-1302-status");
       var backendStateElement = document.getElementById("backend-state");
       var payloadStateElement = document.getElementById("payload-state");
       var payloadChoicesElement = document.getElementById("payload-choices");
@@ -613,6 +634,34 @@
         if (previewMode) url.searchParams.set("preview", "1");
         if (value.mode === "research") url.searchParams.set("research", "1");
         return url.pathname + url.search;
+      }
+
+      function research1302TargetHref() {
+        var url = new URL("./runtime/next-1302/index.html", location.href);
+        if (window.PS4_WEBKIT_BUILD && window.PS4_WEBKIT_BUILD.buildId) url.searchParams.set("v", window.PS4_WEBKIT_BUILD.buildId);
+        if (previewMode && firmware) {
+          url.searchParams.set("fw", firmware);
+          url.searchParams.set("preview", "1");
+        }
+        if (previewMode && firmware === "13.02" && researchMode) {
+          url.searchParams.set("research", "1");
+        }
+        return url.pathname + url.search;
+      }
+
+      function updateResearch1302State() {
+        var enabled = firmwareNumber != null && firmwareNumber <= 1302;
+        if (research1302Button) research1302Button.disabled = !enabled;
+        if (!research1302Status) return;
+        if (firmware === "13.02") {
+          research1302Status.innerHTML = "13.02 Research Lab<br>Hardware firmware matches.<br>Manual SlopKit test available.";
+          return;
+        }
+        if (enabled) {
+          research1302Status.innerHTML = "13.02 Research Lab<br>Available for inspection on this firmware.<br>Exploit execution is enabled only on actual 13.02 hardware.";
+          return;
+        }
+        research1302Status.innerHTML = "13.02 Research Lab<br>Unavailable on this firmware.<br>The laboratory page only opens on detected firmware 13.02 or below.";
       }
 
       function parseQuery(name) {
@@ -806,6 +855,7 @@
               : ready ? "Ready for manual launch" : previewMode ? "Preview only" : "Observation only";
         }
         statusElement.textContent = baseStatusText;
+        updateResearch1302State();
         if (previewBanner) previewBanner.hidden = !previewMode;
         if (!selectedPayload) {
           payloadSelectionStatus.textContent = firmware === "13.02"
@@ -1107,6 +1157,13 @@
       runButton.addEventListener("click", function () {
         navigateToRuntime();
       });
+
+      if (research1302Button) {
+        research1302Button.onclick = function () {
+          if (research1302Button.disabled) return;
+          location.href = research1302TargetHref();
+        };
+      }
     });
   </script>
 </body>

@@ -35,7 +35,7 @@ function detectRuntimeContext() {
   }
 
   return {
-    firmware: simulated ? "13.02" : "Unknown",
+    firmware: forcedFirmware || (simulated ? "13.02" : "Unknown"),
     hardwareDetected: false,
     exact1302: false,
     simulated,
@@ -93,13 +93,21 @@ const stopButton = doc.getElementById("stop-test");
 const downloadButton = doc.getElementById("download-report");
 const context = detectRuntimeContext();
 
-state.setFirmware(context.firmware === "Unknown" ? "13.02" : context.firmware);
+state.setFirmware(context.firmware === "Unknown" ? "Unknown" : context.firmware);
 state.setSimulation(context.simulated);
 state.setHardware(context.simulated ? "simulation" : context.exact1302 ? "hardware" : "not-13.02");
 state.setHen("none", "No HEN", "none", null, null, "source-confirmed", false, false, "LOCKED", "HEN loading is locked during the 13.02 userland research test.");
-state.setStatus(context.simulated
-  ? "Simulation mode is enabled for page and diagnostics testing only."
-  : "Awaiting manual start.");
+if (context.simulated) {
+  state.setHardwareTest("READY", "Simulation mode is enabled for UI and diagnostics testing only.");
+  state.setStatus("Simulation mode is enabled for page and diagnostics testing only.");
+} else if (context.exact1302) {
+  state.setHardwareTest("READY", "Hardware firmware matches. Manual SlopKit test available.");
+  state.setStatus("Awaiting manual start.");
+} else {
+  state.setHardwareTest("LOCKED", "This console is not running firmware 13.02.");
+  state.setStatus("NEXT 13.02 Research Laboratory loaded for inspection only. Exploit execution is locked on non-13.02 hardware.", "bad");
+  runButton.disabled = true;
+}
 diagnostics.init();
 
 if (window.PS4Diag && typeof window.PS4Diag.markHen === "function") {
@@ -263,6 +271,8 @@ stopButton.addEventListener("click", function () {
   state.requestStop();
   if (state.snapshot.running) {
     state.setStatus("Stop requested. Waiting for the current SlopKit attempt to return.", "bad");
+  } else if (!context.exact1302 && !context.simulated) {
+    state.setStatus("13.02 hardware test remains locked because this console is not running firmware 13.02.", "bad");
   } else {
     state.setStatus("No active test is running.");
   }
