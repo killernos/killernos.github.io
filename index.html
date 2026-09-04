@@ -423,6 +423,10 @@
   </style>
   <script src="./build.js?v=next-universal-1302-research-0005" defer></script>
   <script src="./js/diagnostics.js?v=next-universal-1302-research-0005" defer></script>
+  <script src="./js/capabilities.js?v=next-universal-1302-research-0005" defer></script>
+  <script src="./js/entrypoints.js?v=next-universal-1302-research-0005" defer></script>
+  <script src="./js/hens.js?v=next-universal-1302-research-0005" defer></script>
+  <script src="./js/payloads.js?v=next-universal-1302-research-0005" defer></script>
   <script src="./payloads/catalog.js?v=next-universal-1302-research-0005" defer></script>
   <script src="./js/payload-loader.js?v=next-universal-1302-research-0005" defer></script>
   <script src="./js/next-firmware-capability.js?v=next-universal-1302-research-0005" defer></script>
@@ -431,8 +435,8 @@
   <div class="shell">
     <section class="hero">
       <span class="eyebrow">Private Development Host</span>
-      <h1>PS4 WebKit Next</h1>
-      <p class="lead">PS4 WebKit NEXT detects the console firmware and selects a configured runtime, compatibility test, or isolated research environment. KillerNoS currently performs local hardware validation on firmware 12.00. Other supported firmware results may come from upstream or community testing.</p>
+      <h1>PS4 WebKit Next<br>Free Community Edition</h1>
+      <p class="lead">Created and maintained by KillerNoS. NEXT is free software built around publicly disclosed PS4 security research and community projects. No payment is required to use this host.</p>
 
       <div class="notice-row">
         <div class="notice">
@@ -440,8 +444,8 @@
           I am not responsible for any damage. Jailbreak at your own risk.
         </div>
         <div class="notice">
-          <strong>Credit</strong>
-          Thank you to Raw Game for their hard work.
+          <strong>Free Means Free</strong>
+          PS4 WebKit NEXT is provided free for the PS4 homebrew and security research community. Third-party authors and licenses remain credited here.
         </div>
         <div class="notice">
           <strong>Local Validation Boundary</strong>
@@ -552,6 +556,44 @@
       <div id="payload-choices" class="selector-status" aria-live="polite">Selected: No HEN</div>
       <div id="payload-selection-status" class="selector-status">Loading payload catalog...</div>
     </section>
+
+    <section class="grid">
+      <div class="panel">
+        <h2>Free Community Edition</h2>
+        <p class="footnote">NEXT integrates only public or redistributable components represented in this repository. Paid backup archives, account/profile data, licensed retail games, and commercial package content are not part of this host.</p>
+        <div class="support-list">
+          <div class="support-row">
+            <strong>Public Sources</strong>
+            <span>Audited</span>
+            <small>See <a href="./credits.html?v=next-universal-1302-research-0005">Credits</a> and the repository notices for authors, licenses, and provenance.</small>
+          </div>
+          <div class="support-row">
+            <strong>13.02 Research</strong>
+            <span>Isolated</span>
+            <small>SlopKit userland research remains separate from configured production runtimes.</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Offline Cache</h2>
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-label">Offline Cache</span>
+            <span class="stat-value" id="cache-state">Checking</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Network State</span>
+            <span class="stat-value" id="cache-network">Checking</span>
+          </div>
+        </div>
+        <p id="cache-copy" class="routing-copy">Checking whether this browser reports offline cache support.</p>
+        <div class="actions">
+          <button id="refresh-next-cache" type="button">Refresh NEXT Cache</button>
+          <a class="link-button" href="./credits.html?v=next-universal-1302-research-0005">Open Credits</a>
+        </div>
+      </div>
+    </section>
   </div>
   <script>
     document.addEventListener("DOMContentLoaded", function () {
@@ -571,6 +613,10 @@
       var payloadChoicesElement = document.getElementById("payload-choices");
       var henSelectElement = document.getElementById("hen-select");
       var payloadSelectionStatus = document.getElementById("payload-selection-status");
+      var cacheStateElement = document.getElementById("cache-state");
+      var cacheNetworkElement = document.getElementById("cache-network");
+      var cacheCopyElement = document.getElementById("cache-copy");
+      var refreshCacheButton = document.getElementById("refresh-next-cache");
       var previewBanner = document.getElementById("preview-banner");
       var selectedPayloadId = "";
       var selectedPayload = null;
@@ -589,8 +635,34 @@
       var baseStatusText = "";
 
       function currentCapability() {
+        var entry;
+        var backendName;
+        var hardwareVerification;
+        var runtimeStatus;
+        var mode;
         if (window.NEXTFirmwareCapability && typeof window.NEXTFirmwareCapability.getNextFirmwareCapability === "function") {
           return window.NEXTFirmwareCapability.getNextFirmwareCapability(firmware || "Unknown");
+        }
+        if (window.NEXTCapabilities && typeof window.NEXTCapabilities.resolve === "function") {
+          entry = window.NEXTCapabilities.resolve(firmware || "Unknown");
+          mode = entry.mode || "unsupported";
+          backendName = entry.kernel === "Netctrl" ? "Poops" : entry.kernel === "Lapse" ? "Lapse" : entry.kernel === "LOCKED" ? "NEXT 13.02 Research" : "Unsupported";
+          hardwareVerification = entry.verifiedByKillerNoS ? "LOCAL" : entry.evidence === "UPSTREAM-VERIFIED" ? "COMMUNITY" : "UNVERIFIED";
+          runtimeStatus = mode === "runtime" ? "CONFIGURED RUNTIME" : mode === "compatibility" ? "COMPATIBILITY TEST" : mode === "research" ? "RESEARCH" : "UNSUPPORTED";
+          return {
+            firmware: entry.firmware || firmware || "Unknown",
+            buttonAllowed: mode !== "unsupported",
+            mode: mode,
+            backend: backendName,
+            target: entry.runtime || "",
+            runtimeConfigured: mode === "runtime",
+            research: !!entry.researchOnly,
+            nextAccess: mode === "unsupported" ? "UNSUPPORTED" : "AVAILABLE",
+            runtimeStatus: runtimeStatus,
+            hardwareVerification: hardwareVerification,
+            researchCandidate: entry.userland || "",
+            candidateStatus: entry.evidence || "UNKNOWN"
+          };
         }
         return {
           firmware: firmware || "Unknown",
@@ -662,6 +734,23 @@
           return;
         }
         research1302Status.innerHTML = "13.02 Research Lab<br>Unavailable on this firmware.<br>The laboratory page only opens on detected firmware 13.02 or below.";
+      }
+
+      function updateCacheStatus() {
+        var state = "FAILED";
+        var copy = "This browser did not report a reusable offline cache surface for this page.";
+        if (cacheNetworkElement) cacheNetworkElement.textContent = navigator.onLine === false ? "Offline" : "Online";
+        if (window.applicationCache) {
+          if (window.applicationCache.status === window.applicationCache.CHECKING || window.applicationCache.status === window.applicationCache.DOWNLOADING) {
+            state = "UPDATING";
+            copy = "The browser is checking or downloading the available NEXT cache manifest data.";
+          } else if (window.applicationCache.status === window.applicationCache.IDLE || window.applicationCache.status === window.applicationCache.UPDATEREADY) {
+            state = "READY";
+            copy = "The browser reports cached application data is available for reuse where supported by the runtime pages.";
+          }
+        }
+        if (cacheStateElement) cacheStateElement.textContent = state;
+        if (cacheCopyElement) cacheCopyElement.textContent = copy;
       }
 
       function parseQuery(name) {
@@ -1120,6 +1209,7 @@
       restoreSelection();
       renderPayloadChoices();
       updateLaunchState();
+      updateCacheStatus();
 
       if (henSelectElement) {
         henSelectElement.addEventListener("change", function () {
@@ -1129,6 +1219,22 @@
       if (window.PS4Diag) {
         window.PS4Diag.markPage(window.PS4Runtime.pageName, window.PS4Runtime.relativePath);
         window.PS4Diag.markBackend({ selected: capability.backend, entered: false, completed: false, failed: false });
+        window.PS4Diag.info("ENTRYPOINT-SELECTED", "Userland entrypoint selected.", {
+          category: "ROUTING",
+          entrypoint: capability.mode === "compatibility" ? "Compatibility Probe" : capability.mode === "research" ? "SlopKit" : "SlopKit",
+          firmware: firmware || "Unknown"
+        });
+        window.PS4Diag.info("EXPLOIT-CHAIN-SELECTED", "Exploit chain resolved from capability registry.", {
+          category: "ROUTING",
+          firmware: firmware || "Unknown",
+          capabilityMode: capability.mode,
+          runtimeTarget: capability.target
+        });
+        window.PS4Diag.info("KERNEL-BACKEND-SELECTED", "Kernel backend resolved from capability registry.", {
+          category: "ROUTING",
+          firmware: firmware || "Unknown",
+          backend: capability.backend
+        });
         window.PS4Diag.info("FW-CAPABILITY-CHECK", "Firmware capability evaluated for NEXT home.", {
           category: "ROUTING",
           firmware: firmware || "Unknown",
@@ -1157,6 +1263,17 @@
       runButton.addEventListener("click", function () {
         navigateToRuntime();
       });
+
+      if (refreshCacheButton) {
+        refreshCacheButton.onclick = function () {
+          if (window.applicationCache && typeof window.applicationCache.update === "function") {
+            try {
+              window.applicationCache.update();
+            } catch (error) { }
+          }
+          location.reload();
+        };
+      }
 
       if (research1302Button) {
         research1302Button.onclick = function () {

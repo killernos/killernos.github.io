@@ -176,9 +176,15 @@
   }
 
   function getCatalog() {
-    var catalog = Array.isArray(window.PS4PayloadCatalog) ? window.PS4PayloadCatalog.slice() : [];
+    var source = Array.isArray(window.NEXTHENRegistry)
+      ? window.NEXTHENRegistry.slice()
+      : (Array.isArray(window.PS4PayloadCatalog) ? window.PS4PayloadCatalog.slice() : []);
+    var catalog = [];
     var index;
-    for (index = 0; index < catalog.length; index++) catalog[index] = toHenEntry(catalog[index]);
+    for (index = 0; index < source.length; index++) {
+      if (isNoHenSelection(source[index])) continue;
+      catalog.push(toHenEntry(source[index]));
+    }
     if (!catalogAnnounced && catalog.length) {
       catalogAnnounced = true;
       emit("PAYLOAD-CATALOG-LOADED", catalog.length + " payload definitions available.", {
@@ -210,12 +216,13 @@
   }
 
   function getHenRegistry() {
-    var catalog = getCatalog();
-    var result = [noHenEntry()];
+    var source = Array.isArray(window.NEXTHENRegistry) ? window.NEXTHENRegistry.slice() : getCatalog();
+    var result = [];
     var index;
-    for (index = 0; index < catalog.length; index++) {
-      if (catalog[index] && catalog[index].enabled === true) result.push(catalog[index]);
+    for (index = 0; index < source.length; index++) {
+      if (source[index] && source[index].enabled === true) result.push(toHenEntry(source[index]));
     }
+    if (!result.length || !isNoHenSelection(result[0])) result.unshift(noHenEntry());
     return result;
   }
 
@@ -224,7 +231,7 @@
   }
 
   function defaultSelectionId() {
-    var catalog = getCatalog();
+    var catalog = getHenRegistry();
     var index;
     for (index = 0; index < catalog.length; index++) {
       if (catalog[index] && catalog[index].defaultSelection === true) return catalog[index].id;
@@ -411,6 +418,7 @@
     }
 
     if (isNoHenSelection(entry)) {
+      emit("ENTRYPOINT-SELECTED", "No HEN selected for this launch.", { category: "ROUTING", entrypoint: "No HEN" });
       markHen(entry, "SKIPPED", "", false, false, true);
       emit("HEN-LOAD-SKIPPED", "No HEN selected. Runtime will continue without loading a HEN payload.", {
         category: "PAYLOAD",
@@ -431,6 +439,11 @@
     }
 
     compatible = isCompatible(entry, firmwareInfo.firmware);
+    emit("ENTRYPOINT-SELECTED", "Payload/HEN entry selected.", {
+      category: "ROUTING",
+      entrypoint: entry.displayName,
+      firmware: firmwareInfo.firmware
+    });
     emit("HEN-COMPATIBILITY-CHECK", compatibilityMessage(entry, firmwareInfo.firmware), {
       category: "PAYLOAD",
       henFamily: entry.family,
@@ -520,6 +533,12 @@
       payloadFirmwareCompatible: true,
       payloadRecommended: isRecommended(resolved.entry, resolved.firmware.firmware),
       payloadVerification: resolved.entry.verification
+    });
+    emit("PAYLOAD-LOAD-BEGIN", "Fetching selected payload binary.", {
+      category: "PAYLOAD",
+      payloadId: resolved.entry.id,
+      payloadVersion: resolved.entry.version,
+      payloadFilename: resolved.entry.file
     });
     emit("PAYLOAD-FETCH-BEGIN", "Fetching selected payload binary.", {
       category: "PAYLOAD",
@@ -650,6 +669,12 @@
             payloadRecommended: isRecommended(resolved.entry, resolved.firmware.firmware),
             payloadVerification: resolved.entry.verification
           });
+          emit("PAYLOAD-LOAD-END", "Payload load completed successfully.", {
+            category: "PAYLOAD",
+            payloadId: resolved.entry.id,
+            payloadVersion: resolved.entry.version,
+            payloadFilename: resolved.entry.file
+          });
           return payload;
         }
         if (actualSha256 !== resolved.entry.sha256) {
@@ -717,6 +742,12 @@
           payloadFirmwareCompatible: true,
           payloadRecommended: isRecommended(resolved.entry, resolved.firmware.firmware),
           payloadVerification: resolved.entry.verification
+        });
+        emit("PAYLOAD-LOAD-END", "Payload load completed successfully.", {
+          category: "PAYLOAD",
+          payloadId: resolved.entry.id,
+          payloadVersion: resolved.entry.version,
+          payloadFilename: resolved.entry.file
         });
         return payload;
       });

@@ -1,0 +1,84 @@
+﻿<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PS4 WebKit Next Credits</title>
+  <style>
+    body {
+      margin: 0;
+      background: #08111b;
+      color: #eef4ff;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    a { color: #d6e8ff; }
+    .shell { width: 92vw; max-width: 1180px; margin: 0 auto; padding: 24px 0 40px; }
+    .panel { margin-bottom: 18px; padding: 18px; border: 1px solid #35506e; background: #0d1b2d; }
+    h1 { margin: 0 0 12px; font-size: 34px; }
+    h2 { margin: 0 0 12px; font-size: 24px; }
+    .grid { display: grid; gap: 12px; }
+    .card { padding: 14px; border: 1px solid #35506e; background: #102238; }
+    .label { color: #9fb5d7; display: block; margin-bottom: 6px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+    .button-link { display: inline-block; min-width: 180px; padding: 12px 16px; border: 1px solid #35506e; background: #173149; color: #eef4ff; text-decoration: none; text-align: center; }
+  </style>
+  <script src="./build.js?v=next-universal-1302-research-0005" defer></script>
+  <script src="./js/capabilities.js?v=next-universal-1302-research-0005" defer></script>
+  <script src="./js/entrypoints.js?v=next-universal-1302-research-0005" defer></script>
+  <script src="./js/hens.js?v=next-universal-1302-research-0005" defer></script>
+</head>
+<body>
+  <div class="shell">
+    <div class="panel">
+      <h1>PS4 WebKit Next Credits</h1>
+      <p>PS4 WebKit NEXT Free Community Edition credits the public research and redistributable components represented in this repository. KillerNoS branding applies to NEXT integration and UI work, not ownership of third-party exploit code.</p>
+      <div class="actions">
+        <a class="button-link" href="./index.html?v=next-universal-1302-research-0005">Back To NEXT</a>
+        <a class="button-link" href="./diagnostics.html?v=next-universal-1302-research-0005">Open Diagnostics</a>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Projects</h2>
+      <div id="credits-projects" class="grid"></div>
+    </div>
+    <div class="panel">
+      <h2>HEN Payloads</h2>
+      <div id="credits-hens" class="grid"></div>
+    </div>
+  </div>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      var projectRoot = document.getElementById("credits-projects");
+      var henRoot = document.getElementById("credits-hens");
+      var projects = [
+        { name: "WebKitty", repo: "https://github.com/ArabPixel/WebKitty", credit: "ArabPixel, anonymous, Al-Azif, Feyzee61, ntfargo, ufm42, Dr.Yenyen, GattoDev", note: "AGPL-3.0-or-later upstream host reference." },
+        { name: "PSFree", repo: "https://github.com/kmeps4/PSFree", credit: "anonymous, abc, Sistro, CTN", note: "AGPL-derived userland and Lapse reference material used in NEXT runtime lineage." },
+        { name: "CSSFontFace", repo: "https://github.com/ntfargo/CSSFontFace-Exploit", credit: "Nathan Fargo, ufm42, Dr.Yenyen", note: "MIT-licensed WebKit research reference." },
+        { name: "SlopKit", repo: "https://github.com/jordyidk/slopkit", credit: "Jordy, Sonic-Iso, Egy, Yenyen, Zeco, Gezine, Echostretch, Ufm42, TheFlow, John Tornblom, Flatz, Idlesauce", note: "Research-only userland laboratory lineage for NEXT 13.02." },
+        { name: "Mira Project", repo: "https://github.com/CrazyVoidProgrammer/mira-project", credit: "OpenOrbis team, CrazyVoidProgrammer, and credited Mira contributors", note: "Reference-only custom firmware and tooling lineage. Historical public references include the PSXHAX MiraHEN 4.55 port post by CrazyVoidProgrammer. No active Mira browser launcher or Mira source import is exposed in NEXT during this pass." },
+        { name: "PS4HEN", repo: "https://github.com/Scene-Collective/ps4-hen", credit: "Scene Collective, EchoStretch, Al-Azif, SiSTR0, Vortex, ChendoChap, qwertyoruiopz, Specter, flat_z, Joonie, zecoxao and other credited PS4HEN contributors", note: "Reference-only public HEN source. README advertises PS4HEN v2.2.0 BETA support through 12.02, while the latest repository history also mentions 13.52 support. NEXT does not expose PS4HEN as a selectable HEN unless matching local files are bundled here." },
+        { name: "henloader_lp", repo: "https://github.com/GoldHEN/henloader_lp", credit: "15432, SiSTRo, TheFlow, abc, Gezine, Kimari, John Tornblom", note: "MIT-licensed Lapse/Poops integration reference and credits source." },
+        { name: "GoldHEN", repo: "https://github.com/GoldHEN/GoldHEN", credit: "SiSTR0, bucanero, kmeps4 and contributors", note: "GoldHEN payload project credited for redistributable local payload binaries present in NEXT." },
+        { name: "ps4-payload-sdk", repo: "https://github.com/ps4-payload-dev/sdk", credit: "John Tornblom, illusionyy, Al-Azif, ItsJokerZz, EchoStretch, DrYenyen", note: "GPLv3+ SDK reference for payload build and loader ecosystem." }
+      ];
+      var hens = window.NEXTHENRegistry || [];
+      var index;
+      function addCard(root, label, body) {
+        var card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = '<span class="label">' + label + '</span>' + body;
+        root.appendChild(card);
+      }
+      for (index = 0; index < projects.length; index++) {
+        addCard(projectRoot, projects[index].name, '<div><a href="' + projects[index].repo + '">' + projects[index].repo + '</a></div><div>' + projects[index].credit + '</div><div>' + projects[index].note + '</div>');
+      }
+      for (index = 0; index < hens.length; index++) {
+        if (hens[index].id === "none") continue;
+        addCard(henRoot, hens[index].displayName, '<div>Family: ' + hens[index].family + '</div><div>Firmware: ' + (hens[index].supportedFirmware || []).join(', ') + '</div><div>Evidence: ' + hens[index].evidence + '</div><div>Path: ' + (hens[index].payloadPath || 'N/A') + '</div>');
+      }
+    });
+  </script>
+</body>
+</html>

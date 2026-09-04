@@ -1,16 +1,8 @@
 (function () {
-  var PS4 = {
-    "11.00": { fw_status: "state=proven bug=lapse" },
-    "11.50": { fw_status: "state=proven bug=lapse" },
-    "12.00": { fw_status: "state=local bug=lapse" },
-    "12.02": { fw_status: "state=research bug=lapse" },
-    "12.50": { fw_status: "state=research bug=poops" },
-    "12.52": { fw_status: "state=research bug=poops alias=12.50" },
-    "13.00": { fw_status: "state=proven bug=poops" }
-  };
-  var CONFIGURED_KEYS = Object.keys(PS4).sort(function (left, right) {
-    return firmwareNumber(left) - firmwareNumber(right);
-  });
+  var capabilityRegistry = window.NEXTCapabilities || null;
+  var CONFIGURED_KEYS = capabilityRegistry && Array.isArray(capabilityRegistry.all)
+    ? capabilityRegistry.all.filter(function (entry) { return entry && entry.mode === "runtime"; }).map(function (entry) { return entry.firmware; })
+    : [];
 
   function firmwareNumber(value) {
     var clean = String(value || "").trim();
@@ -31,16 +23,18 @@
   }
 
   function backendNameFor(entry, firmware) {
-    var status = String(entry && entry.fw_status || "");
-    if (firmware === "13.02") return "NEXT 13.02 Research";
-    if (/bug=poops/i.test(status)) return "Poops";
-    return "Lapse";
+    if (!entry) return "Unsupported";
+    if (entry.backendLabel) return String(entry.backendLabel);
+    if (entry.mode === "research") return "NEXT 13.02 Research";
+    if (/netctrl/i.test(String(entry.kernel || ""))) return "Poops";
+    if (/lapse/i.test(String(entry.kernel || ""))) return "Lapse";
+    return String(entry.kernel || "Unsupported");
   }
 
   function hardwareVerificationFor(entry, firmware) {
-    var status = String(entry && entry.fw_status || "");
-    if (firmware === "12.00") return "LOCAL";
-    if (/state=proven/i.test(status)) return "COMMUNITY";
+    if (!entry) return "UNVERIFIED";
+    if (entry.verifiedByKillerNoS) return "LOCAL";
+    if (entry.evidence === "UPSTREAM-VERIFIED") return "COMMUNITY";
     return "UNVERIFIED";
   }
 
@@ -51,7 +45,7 @@
       buttonAllowed: true,
       mode: "runtime",
       backend: backendNameFor(entry, firmware),
-      target: "./runtime/next/run_lapse.html",
+      target: entry.runtime || "./runtime/next/run_lapse.html",
       runtimeConfigured: true,
       research: false,
       nextAccess: "AVAILABLE",
@@ -85,13 +79,14 @@
   }
 
   function researchCapability() {
+    var entry = capabilityRegistry && typeof capabilityRegistry.findExact === "function" ? capabilityRegistry.findExact("13.02") : null;
     return {
       firmware: "13.02",
       firmwareNumber: 1302,
       buttonAllowed: true,
       mode: "research",
       backend: "NEXT 13.02 Research",
-      target: "./runtime/next-1302/index.html",
+      target: entry && entry.runtime ? entry.runtime : "./runtime/next-1302/index.html",
       runtimeConfigured: false,
       research: true,
       nextAccess: "AVAILABLE",
@@ -126,7 +121,9 @@
 
   function getNextFirmwareCapability(firmware) {
     var normalized = normalizeFirmware(firmware);
-    var exact = normalized ? PS4[normalized] || null : null;
+    var exact = normalized && capabilityRegistry && typeof capabilityRegistry.findExact === "function"
+      ? capabilityRegistry.findExact(normalized)
+      : null;
     if (normalized === "13.02") return researchCapability();
     if (exact) return configuredCapability(normalized, exact);
     if (normalized && firmwareNumber(normalized) < firmwareNumber("13.02")) return compatibilityCapability(normalized);
