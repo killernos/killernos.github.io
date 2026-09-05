@@ -753,6 +753,52 @@
     if (element) element.checked = !!value;
   }
 
+  function isScrolledNearBottom(element) {
+    if (!element) return true;
+    return element.scrollTop + element.clientHeight >= element.scrollHeight - 24;
+  }
+
+  function writeScrollableText(id, text) {
+    var element = document.getElementById(id);
+    var wasNearBottom;
+    var previousTop;
+    if (!element) return;
+    wasNearBottom = isScrolledNearBottom(element);
+    previousTop = element.scrollTop;
+    element.textContent = text;
+    if (wasNearBottom) element.scrollTop = element.scrollHeight;
+    else element.scrollTop = previousTop;
+  }
+
+  function scrollPanelToNewest(id) {
+    var element = document.getElementById(id);
+    if (!element) return false;
+    element.scrollTop = element.scrollHeight;
+    return true;
+  }
+
+  function copyPanelText(id) {
+    var element = document.getElementById(id);
+    if (!element) return false;
+    if (!navigator.clipboard || typeof navigator.clipboard.writeText !== "function") {
+      emit("FAIL", "COPY-VIEW-UNAVAILABLE", "Clipboard API is unavailable on this browser.", { category: "COMMUNITY", panel: id });
+      return false;
+    }
+    navigator.clipboard.writeText(element.textContent || "").then(function () {
+      emit("PASS", "COPY-VIEW", "Panel contents copied to clipboard.", { category: "COMMUNITY", panel: id });
+    }, function () {
+      emit("FAIL", "COPY-VIEW-FAILED", "Clipboard write failed.", { category: "COMMUNITY", panel: id });
+    });
+    return true;
+  }
+
+  function clearPanelView(id) {
+    var element = document.getElementById(id);
+    if (!element) return false;
+    element.textContent = "";
+    return true;
+  }
+
   function firstElementById() {
     var index;
     for (index = 0; index < arguments.length; index++) {
@@ -769,6 +815,14 @@
   function formatPreviousSession() {
     if (!state.previousSession) return "None";
     return state.previousSession.sessionCompleted ? "Complete" : "Incomplete";
+  }
+
+  function researchVerificationState(value) {
+    return value ? "VERIFIED" : "UNVERIFIED";
+  }
+
+  function observedOrUnverified(value) {
+    return value ? "OBSERVED" : "UNVERIFIED";
   }
 
   function applyStoredSession(snapshot, defaults) {
@@ -858,11 +912,15 @@
     var entrypoint = state.testerEntrypoint || (state.page.pageName === "NEXT-1302-RESEARCH" ? "SlopKit" : (state.backend.selected || "Unknown"));
     var kernelRW = state.research.kernelRead && state.research.kernelWrite ? "VERIFIED" : "NOT VERIFIED";
     var userlandArw = /USERLAND-ARW-VERIFIED/.test(state.lastStage) ? "VERIFIED" : "NOT VERIFIED";
+    var previousSessionState = state.previousSession ? (state.previousSessionCompleted ? "Complete (OBSERVED)" : "Incomplete (OBSERVED)") : "None";
+    var testerOutcome = state.testerOutcome ? state.testerOutcome + " (TESTER-REPORTED)" : "Not provided";
+    var reportState = document.getElementById("submission-status");
     var lines = [
       "PS4 WebKit NEXT",
       "Created by KillerNoS",
       "",
       "Firmware: " + (state.firmware ? state.firmware.firmware : "Unknown"),
+      "Hardware Detected: " + (state.firmware && state.firmware.hardwareDetected ? "Yes (OBSERVED)" : (state.firmware && state.firmware.simulated ? "No, simulated (OBSERVED)" : "No")),
       "Build: " + state.buildId,
       "Backend: " + state.backend.selected,
       "Entrypoint: " + entrypoint,
@@ -872,10 +930,25 @@
       "Last Stage: " + state.lastStage,
       "Userland ARW: " + userlandArw,
       "Kernel R/W: " + kernelRW,
-      "Outcome: " + (state.testerOutcome || "Not provided"),
+      "Previous Session: " + previousSessionState,
+      "JavaScript Errors: " + String(state.jsErrors),
+      "Resource Errors: " + String(state.resourceErrors),
+      "Outcome: " + testerOutcome,
+      "Report Submission: " + (reportState ? reportState.textContent : "Submission is idle."),
       "Report ID: " + getOrCreateReportId()
     ];
     return lines.join("\n");
+  }
+
+  function buildResearchSummary() {
+    var lines = [
+      "Kernel fault evidence: " + observedOrUnverified(state.research.kernelFaultObserved),
+      "Kernel read: " + researchVerificationState(state.research.kernelRead),
+      "Kernel write: " + researchVerificationState(state.research.kernelWrite),
+      "Kernel execution: " + researchVerificationState(state.research.kernelExecution),
+      "Freeze, reboot, and incomplete sessions remain visible as tester-reported or inferred outcomes unless kernel evidence is directly observed."
+    ];
+    return lines.join(" ");
   }
 
   function persistReportId() {
@@ -1176,9 +1249,11 @@
 
   function setSubmissionStatus(message, kind) {
     var element = document.getElementById("submission-status");
+    var summary = document.getElementById("diag-submission-state");
     if (!element) return;
     element.textContent = message || "";
     element.className = kind ? "status-box " + kind : "status-box";
+    if (summary) summary.textContent = message || "";
   }
 
   function reportEndpoint() {
@@ -1373,7 +1448,7 @@
     var submitButton = firstElementById("community-submit", "submit-report");
     var confirmBox = firstElementById("community-consent", "report-review-confirm");
     var reportPreview = document.getElementById("report-preview");
-    if (reportPreview) reportPreview.textContent = JSON.stringify(buildCommunityReport(), null, 2);
+    if (reportPreview) writeScrollableText("report-preview", JSON.stringify(buildCommunityReport(), null, 2));
     var summary = document.getElementById("diag-summary");
     if (summary) summary.textContent = buildSummaryText();
     if (target) target.textContent = endpoint ? "Private endpoint configured: " + endpoint : "Private endpoint not configured";
@@ -1385,19 +1460,23 @@
 
   function renderLog() {
     var log = document.getElementById("log");
+    var count = document.getElementById("diag-log-count");
     if (!log) return;
     var filtered = getFilteredRecords();
     var lines = [];
     var index;
+    if (count) count.textContent = "(" + filtered.length + (filtered.length === 1 ? " entry)" : " entries)");
     for (index = 0; index < filtered.length; index++) {
       var record = filtered[index];
-      lines.push("[" + record.timestamp + "] [" + record.sessionId + "] [" + record.category + "] [" + record.status + "] " + record.stage + (record.message ? " " + record.message : ""));
+      lines.push("[" + record.timestamp + "] [" + record.sessionId + "] [" + record.category + "] [" + record.status + "] [" + (record.evidence || "OBSERVED") + "] " + record.stage + (record.message ? " " + record.message : ""));
     }
-    log.textContent = lines.join("\n") || "No diagnostic records.";
+    writeScrollableText("log", lines.join("\n") || "No diagnostic records.");
   }
 
   function render() {
     var firmware = state.firmware || detectFirmware();
+    var entrypoint = state.testerEntrypoint || (state.page.pageName === "NEXT-1302-RESEARCH" ? "SlopKit" : (state.backend.selected || "Unknown"));
+    var userlandArw = /USERLAND-ARW-VERIFIED/.test(state.lastStage) ? "VERIFIED" : "UNVERIFIED";
     setText("diag-firmware", firmware.firmware || "Unknown");
     setText("diag-firmware-source", firmware.firmwareSource || "unknown");
     setText("diag-hardware-detected", formatBoolLabel(!!firmware.hardwareDetected, "Yes", "No"));
@@ -1433,6 +1512,17 @@
     setText("diag-previous-completion", state.previousSessionCompleted ? "Complete" : "Incomplete");
     setText("diag-user-agent", navigator.userAgent || "Unavailable");
     setText("diag-schema", DIAG_SCHEMA);
+    setText("diag-tester-outcome", state.testerOutcome || "Not provided");
+    setText("diag-submission-state", document.getElementById("submission-status") ? document.getElementById("submission-status").textContent : "Submission is idle.");
+    setText("diag-entrypoint", entrypoint);
+    setText("diag-candidate", state.testerCandidate || state.research.candidate || "None");
+    setText("diag-userland-arw", userlandArw);
+    setText("diag-kernel-fault-state", observedOrUnverified(state.research.kernelFaultObserved));
+    setText("diag-kernel-read-state", researchVerificationState(state.research.kernelRead));
+    setText("diag-kernel-write-state", researchVerificationState(state.research.kernelWrite));
+    setText("diag-kernel-execution-state", researchVerificationState(state.research.kernelExecution));
+    setText("diag-research-stage", state.research.lastResearchStage || state.lastStage || "Not reported");
+    setText("diag-research-summary", buildResearchSummary());
     setValue("community-console-model", state.consoleModel);
     setValue("community-entrypoint", state.testerEntrypoint || "Unknown");
     setValue("community-candidate", state.testerCandidate || "None");
@@ -1792,6 +1882,9 @@
     var submitButton = firstElementById("community-submit", "submit-report");
     var confirmBox = firstElementById("community-consent", "report-review-confirm");
     var filterButtons = document.querySelectorAll("[data-filter]");
+    var scrollButtons = document.querySelectorAll("[data-scroll-target]");
+    var copyViewButtons = document.querySelectorAll("[data-copy-target]");
+    var clearViewButtons = document.querySelectorAll("[data-clear-target]");
     var index;
 
     if (resetButton) resetButton.addEventListener("click", reset);
@@ -1869,6 +1962,24 @@
       filterButtons[index].addEventListener("click", function () {
         state.currentFilter = this.getAttribute("data-filter") || "all";
         render();
+      });
+    }
+
+    for (index = 0; index < scrollButtons.length; index++) {
+      scrollButtons[index].addEventListener("click", function () {
+        scrollPanelToNewest(this.getAttribute("data-scroll-target") || "");
+      });
+    }
+
+    for (index = 0; index < copyViewButtons.length; index++) {
+      copyViewButtons[index].addEventListener("click", function () {
+        copyPanelText(this.getAttribute("data-copy-target") || "");
+      });
+    }
+
+    for (index = 0; index < clearViewButtons.length; index++) {
+      clearViewButtons[index].addEventListener("click", function () {
+        clearPanelView(this.getAttribute("data-clear-target") || "");
       });
     }
   }
@@ -1953,7 +2064,7 @@
     testFeature("URL.createObjectURL availability", function () { return !!(window.URL && typeof window.URL.createObjectURL === "function"); });
     testFeature("fetch availability", function () { return typeof window.fetch === "function"; });
     testFeature("navigator.onLine", function () { return typeof navigator.onLine !== "undefined"; });
-    if (output) output.textContent = results.join("\n");
+    if (output) writeScrollableText("diag-self-test-results", results.join("\n"));
     emit("PASS", "TEST-PASS", "Diagnostics self-test completed.", { category: "COMMUNITY", results: results });
     return true;
   }

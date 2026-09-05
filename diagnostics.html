@@ -23,6 +23,7 @@
       max-width: 1180px;
       margin: 0 auto;
       padding: 20px 0 40px;
+      box-sizing: border-box;
     }
 
     .panel {
@@ -30,6 +31,7 @@
       padding: 18px;
       border: 1px solid #35506e;
       background: #0d1b2d;
+      min-width: 0;
     }
 
     h1 {
@@ -44,8 +46,29 @@
       line-height: 1.2;
     }
 
+    h3 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.3;
+    }
+
     p {
       margin: 0 0 12px;
+    }
+
+    .panel-header,
+    .section-heading,
+    .scroll-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      min-width: 0;
+    }
+
+    .section-heading {
+      margin-bottom: 12px;
     }
 
     .row {
@@ -53,6 +76,19 @@
       flex-wrap: wrap;
       gap: 12px;
       margin-bottom: 12px;
+      min-width: 0;
+    }
+
+    .row:last-child {
+      margin-bottom: 0;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+      min-width: 0;
     }
 
     .card {
@@ -63,6 +99,13 @@
       border: 1px solid #35506e;
       background: #102238;
       flex: 1 1 220px;
+      box-sizing: border-box;
+      min-width: 0;
+    }
+
+    .card.compact {
+      min-width: 180px;
+      padding: 10px 12px;
     }
 
     .label {
@@ -79,11 +122,22 @@
       word-break: break-word;
     }
 
+    .value.compact {
+      font-size: 17px;
+      font-weight: 600;
+    }
+
     .actions {
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
       margin-top: 12px;
+      min-width: 0;
+    }
+
+    .actions.compact {
+      gap: 8px;
+      margin-top: 0;
     }
 
     button,
@@ -100,6 +154,7 @@
       text-decoration: none;
       text-align: center;
       cursor: pointer;
+      box-sizing: border-box;
     }
 
     button.secondary,
@@ -114,14 +169,32 @@
       cursor: not-allowed;
     }
 
+    button:focus,
+    .button-link:focus,
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: 3px solid #79e0c3;
+      outline-offset: 2px;
+    }
+
+    button.small,
+    .button-link.small {
+      min-width: 0;
+      padding: 8px 10px;
+      font-size: 15px;
+    }
+
     .warning,
     .summary,
     .status-box,
-    .footer-box {
+    .footer-box,
+    .legend {
       margin-top: 12px;
       padding: 12px 14px;
       border: 1px solid #35506e;
       background: #102238;
+      min-width: 0;
     }
 
     .warning {
@@ -143,24 +216,60 @@
       color: #fff0c8;
     }
 
-    .log {
-      min-height: 260px;
-      padding: 14px;
+    .legend {
+      color: #d7ecff;
+    }
+
+    .legend strong {
+      color: #eef4ff;
+    }
+
+    .scroll-panel {
+      min-width: 0;
+    }
+
+    .diagnostics-scroll-box {
+      box-sizing: border-box;
+      width: 100%;
+      max-width: 100%;
+      max-height: 360px;
+      overflow-y: auto;
+      overflow-x: auto;
+      padding: 12px;
+      border-radius: 8px;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+      word-break: break-word;
+      -webkit-overflow-scrolling: touch;
       border: 1px solid #35506e;
       background: #03101d;
       color: #d7ecff;
       font-family: "Courier New", monospace;
       font-size: 15px;
       line-height: 1.5;
-      white-space: pre-wrap;
-      word-break: break-word;
-      overflow: auto;
+      min-width: 0;
+    }
+
+    .muted {
+      color: #9fb5d7;
+      font-size: 15px;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 4px 8px;
+      border: 1px solid #35506e;
+      background: #102238;
+      color: #d7ecff;
+      font-size: 15px;
+      white-space: nowrap;
     }
 
     .field {
       display: block;
       width: 100%;
       margin-bottom: 12px;
+      min-width: 0;
     }
 
     .field label {
@@ -181,6 +290,7 @@
       font: inherit;
       font-size: 17px;
       box-sizing: border-box;
+      min-width: 0;
     }
 
     .field textarea {
@@ -197,6 +307,12 @@
       font-size: 17px;
     }
 
+    .stack {
+      display: grid;
+      gap: 12px;
+      min-width: 0;
+    }
+
     @media (max-width: 800px) {
       h1 {
         font-size: 28px;
@@ -210,64 +326,141 @@
       .button-link {
         width: 100%;
       }
+
+      .panel-header,
+      .section-heading,
+      .scroll-header {
+        align-items: flex-start;
+      }
+
+      .card,
+      .card.compact {
+        min-width: 0;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .shell {
+        width: auto;
+        margin: 0 10px;
+      }
+
+      .panel {
+        padding: 14px;
+      }
+
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .diagnostics-scroll-box {
+        max-height: 260px;
+      }
     }
   </style>
-  <script src="./build.js?v=next-universal-1302-research-0005" defer></script>
-  <script src="./js/report-config.js?v=next-universal-1302-research-0005" defer></script>
-  <script src="./js/diagnostics.js?v=next-universal-1302-research-0005" defer></script>
+  <script src="./build.js?v=next-universal-1302-research-0006" defer></script>
+  <script src="./js/report-config.js?v=next-universal-1302-research-0006" defer></script>
+  <script src="./js/diagnostics.js?v=next-universal-1302-research-0006" defer></script>
 </head>
 <body>
   <div class="shell">
     <div class="panel">
-      <h1>PS4 WebKit Next Diagnostics</h1>
-      <p>Diagnostics records browser, firmware, runtime, exploit-stage and payload/HEN observations across NEXT.</p>
-      <p>A runtime being available does not mean it has been locally hardware verified by KillerNoS.</p>
+      <div class="panel-header">
+        <div>
+          <h1>PS4 WebKit Next Diagnostics</h1>
+          <p>Diagnostics records browser, firmware, runtime, exploit-stage and payload/HEN observations across NEXT.</p>
+          <p>A runtime being available does not mean it has been locally hardware verified by KillerNoS.</p>
+        </div>
+        <span class="pill">Created by KillerNoS</span>
+      </div>
       <div id="diag-script-warning" class="warning">Diagnostics JavaScript is still loading.</div>
       <div class="actions">
         <button id="reset-log" type="button">Reset Log</button>
         <button id="export-log" type="button" class="secondary">Export Log</button>
         <button id="run-self-test" type="button" class="secondary">Run Diagnostics Self-Test</button>
-        <a class="button-link secondary" href="./index.html?v=next-universal-1302-research-0005">Back To NEXT</a>
+        <a class="button-link secondary" href="./index.html?v=next-universal-1302-research-0006">Back To NEXT</a>
       </div>
     </div>
 
     <div class="panel">
-      <h2>Runtime Snapshot</h2>
-      <div class="row">
-        <div class="card"><span class="label">Firmware</span><span class="value" id="diag-firmware">Unknown</span></div>
-        <div class="card"><span class="label">Selected Backend</span><span class="value" id="diag-backend">Unknown</span></div>
-        <div class="card"><span class="label">Build</span><span class="value" id="diag-build" data-build-id>next-universal-1302-research-0005</span></div>
-        <div class="card"><span class="label">Last Stage</span><span class="value" id="diag-last-stage">Not reported</span></div>
-        <div class="card"><span class="label">Attempts</span><span class="value" id="diag-attempts">0</span></div>
-        <div class="card"><span class="label">Passes</span><span class="value" id="diag-passes">0</span></div>
-        <div class="card"><span class="label">Failures</span><span class="value" id="diag-failures">0</span></div>
-        <div class="card"><span class="label">NEXT Access</span><span class="value" id="diag-next-access">UNSUPPORTED</span></div>
-        <div class="card"><span class="label">Runtime Status</span><span class="value" id="diag-runtime-status">UNSUPPORTED</span></div>
-        <div class="card"><span class="label">Hardware Verification</span><span class="value" id="diag-hardware-verification">UNVERIFIED</span></div>
-        <div class="card"><span class="label">Selected HEN</span><span class="value" id="diag-hen">No HEN</span></div>
-        <div class="card"><span class="label">User Agent</span><span class="value" id="diag-user-agent">Loading...</span></div>
+      <div class="section-heading">
+        <h2>Session Summary</h2>
+        <span class="muted">Key status stays visible above detailed logs.</span>
+      </div>
+      <div class="summary-grid">
+        <div class="card compact"><span class="label">Detected Firmware</span><span class="value compact" id="diag-firmware">Unknown</span></div>
+        <div class="card compact"><span class="label">Hardware Detected</span><span class="value compact" id="diag-hardware-detected">No</span></div>
+        <div class="card compact"><span class="label">Build ID</span><span class="value compact" id="diag-build" data-build-id>next-universal-1302-research-0006</span></div>
+        <div class="card compact"><span class="label">Selected Backend</span><span class="value compact" id="diag-backend">Unknown</span></div>
+        <div class="card compact"><span class="label">Selected HEN</span><span class="value compact" id="diag-hen">No HEN</span></div>
+        <div class="card compact"><span class="label">Last Recorded Stage</span><span class="value compact" id="diag-last-stage">Not reported</span></div>
+        <div class="card compact"><span class="label">Tester Outcome</span><span class="value compact" id="diag-tester-outcome">Not provided</span></div>
+        <div class="card compact"><span class="label">Report Submission Status</span><span class="value compact" id="diag-submission-state">Submission is idle.</span></div>
       </div>
       <div class="summary" id="diag-summary">Loading summary...</div>
-    </div>
-
-    <div class="panel">
-      <h2>Diagnostic Log</h2>
-      <div class="actions">
-        <button type="button" class="secondary" data-filter="all">All</button>
-        <button type="button" class="secondary" data-filter="errors">Errors</button>
-        <button type="button" class="secondary" data-filter="failures">Failures</button>
-        <button type="button" class="secondary" data-filter="webkit">WebKit</button>
-        <button type="button" class="secondary" data-filter="kernel">Kernel</button>
-        <button type="button" class="secondary" data-filter="payload">Payload</button>
-        <button type="button" class="secondary" data-filter="cache">Cache</button>
-        <button type="button" class="secondary" data-filter="previous">Previous Session</button>
-        <button type="button" class="secondary" data-filter="research1302">13.02 Research</button>
+      <div class="legend">
+        <strong>Status language:</strong> OBSERVED means directly recorded. TESTER-REPORTED means selected or entered by the tester. INFERRED means derived from incomplete evidence. UNVERIFIED means not proven.
       </div>
-      <div id="log" class="log">No diagnostic records.</div>
     </div>
 
     <div class="panel">
-      <h2>Community Test Report</h2>
+      <div class="section-heading">
+        <h2>Runtime and Routing</h2>
+        <span class="muted">Runtime state, routing, cache, and prior-session recovery details.</span>
+      </div>
+      <div class="summary-grid">
+        <div class="card compact"><span class="label">Firmware Source</span><span class="value compact" id="diag-firmware-source">unknown</span></div>
+        <div class="card compact"><span class="label">NEXT Access</span><span class="value compact" id="diag-next-access">UNSUPPORTED</span></div>
+        <div class="card compact"><span class="label">Runtime Status</span><span class="value compact" id="diag-runtime-status">UNSUPPORTED</span></div>
+        <div class="card compact"><span class="label">Hardware Verification</span><span class="value compact" id="diag-hardware-verification">UNVERIFIED</span></div>
+        <div class="card compact"><span class="label">Page</span><span class="value compact" id="diag-page">UNKNOWN</span></div>
+        <div class="card compact"><span class="label">Page Path</span><span class="value compact" id="diag-page-path">./</span></div>
+        <div class="card compact"><span class="label">Session ID</span><span class="value compact" id="diag-session-id">Unknown</span></div>
+        <div class="card compact"><span class="label">Session Started</span><span class="value compact" id="diag-session-start">Unknown</span></div>
+        <div class="card compact"><span class="label">Elapsed</span><span class="value compact" id="diag-elapsed">0 ms</span></div>
+        <div class="card compact"><span class="label">Normalized Stage</span><span class="value compact" id="diag-normalized-stage">Not reported</span></div>
+        <div class="card compact"><span class="label">Attempts</span><span class="value compact" id="diag-attempts">0</span></div>
+        <div class="card compact"><span class="label">Passes</span><span class="value compact" id="diag-passes">0</span></div>
+        <div class="card compact"><span class="label">Failures</span><span class="value compact" id="diag-failures">0</span></div>
+        <div class="card compact"><span class="label">Cache Revision</span><span class="value compact" id="diag-cache-revision">Unknown</span></div>
+        <div class="card compact"><span class="label">Cache State</span><span class="value compact" id="diag-cache-state">CACHE-UNKNOWN</span></div>
+        <div class="card compact"><span class="label">Online State</span><span class="value compact" id="diag-online">unknown</span></div>
+        <div class="card compact"><span class="label">Local Storage</span><span class="value compact" id="diag-storage-local">unknown</span></div>
+        <div class="card compact"><span class="label">Session Storage</span><span class="value compact" id="diag-storage-session">unknown</span></div>
+        <div class="card compact"><span class="label">JavaScript Errors</span><span class="value compact" id="diag-js-errors">0</span></div>
+        <div class="card compact"><span class="label">Resource Errors</span><span class="value compact" id="diag-resource-errors">0</span></div>
+        <div class="card compact"><span class="label">Previous Session</span><span class="value compact" id="diag-previous-status">None</span></div>
+        <div class="card compact"><span class="label">Previous Completion</span><span class="value compact" id="diag-previous-completion">Complete</span></div>
+        <div class="card compact"><span class="label">Previous Last Stage</span><span class="value compact" id="diag-previous-stage">None</span></div>
+        <div class="card compact"><span class="label">Previous Normalized Stage</span><span class="value compact" id="diag-previous-normalized-stage">None</span></div>
+        <div class="card compact"><span class="label">Console Model</span><span class="value compact" id="diag-console-model">Unknown</span></div>
+        <div class="card compact"><span class="label">User Agent</span><span class="value compact" id="diag-user-agent">Loading...</span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="section-heading">
+        <h2>Research State</h2>
+        <span class="muted">Only directly observed or tester-reported evidence should imply kernel progress.</span>
+      </div>
+      <div class="summary-grid">
+        <div class="card compact"><span class="label">Entrypoint</span><span class="value compact" id="diag-entrypoint">Unknown</span></div>
+        <div class="card compact"><span class="label">Candidate</span><span class="value compact" id="diag-candidate">None</span></div>
+        <div class="card compact"><span class="label">Userland ARW</span><span class="value compact" id="diag-userland-arw">UNVERIFIED</span></div>
+        <div class="card compact"><span class="label">Kernel Fault Evidence</span><span class="value compact" id="diag-kernel-fault-state">UNVERIFIED</span></div>
+        <div class="card compact"><span class="label">Kernel Read</span><span class="value compact" id="diag-kernel-read-state">UNVERIFIED</span></div>
+        <div class="card compact"><span class="label">Kernel Write</span><span class="value compact" id="diag-kernel-write-state">UNVERIFIED</span></div>
+        <div class="card compact"><span class="label">Kernel Execution</span><span class="value compact" id="diag-kernel-execution-state">UNVERIFIED</span></div>
+        <div class="card compact"><span class="label">Last Research Stage</span><span class="value compact" id="diag-research-stage">Not reported</span></div>
+      </div>
+      <div class="summary" id="diag-research-summary">Research evidence is loading.</div>
+    </div>
+
+    <div class="panel">
+      <div class="section-heading">
+        <h2>Community Report</h2>
+        <span class="muted">Consent and submission remain outside any scrolling data box.</span>
+      </div>
       <div class="field">
         <label for="community-alias">Tester Alias</label>
         <input id="community-alias" type="text" maxlength="80" placeholder="Optional alias">
@@ -355,17 +548,77 @@
         <button id="retry-report-submit" type="button" class="secondary">Try Endpoint Again</button>
         <button id="open-github-short-report" type="button" class="secondary">Open GitHub Short Report</button>
       </div>
-      <div id="report-preview" class="log">Loading report preview...</div>
     </div>
 
     <div class="panel">
-      <h2>Diagnostics Self-Test</h2>
-      <div id="diag-self-test-results" class="log">Self-test not run.</div>
+      <div class="section-heading">
+        <h2>Diagnostic Event Log <span id="diag-log-count">(0 entries)</span></h2>
+        <span class="muted">Filters affect only the current display. Saved records remain intact.</span>
+      </div>
+      <div class="actions compact">
+        <button type="button" class="secondary" data-filter="all">All</button>
+        <button type="button" class="secondary" data-filter="errors">Errors</button>
+        <button type="button" class="secondary" data-filter="failures">Failures</button>
+        <button type="button" class="secondary" data-filter="webkit">WebKit</button>
+        <button type="button" class="secondary" data-filter="kernel">Kernel</button>
+        <button type="button" class="secondary" data-filter="payload">Payload</button>
+        <button type="button" class="secondary" data-filter="cache">Cache</button>
+        <button type="button" class="secondary" data-filter="previous">Previous Session</button>
+        <button type="button" class="secondary" data-filter="research1302">13.02 Research</button>
+      </div>
+      <div class="scroll-panel stack">
+        <div class="scroll-header">
+          <h3>Combined Event Log</h3>
+          <div class="actions compact">
+            <button type="button" class="secondary small" data-scroll-target="log">Scroll To Newest</button>
+            <button type="button" class="secondary small" data-copy-target="log">Copy</button>
+            <button type="button" class="secondary small" data-clear-target="log">Clear View</button>
+          </div>
+        </div>
+        <div id="log" class="diagnostics-scroll-box">No diagnostic records.</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="section-heading">
+        <h2>Raw Report JSON</h2>
+        <span class="muted">Preview only. Submitted field names and schema remain unchanged.</span>
+      </div>
+      <div class="scroll-panel stack">
+        <div class="scroll-header">
+          <h3>Current Community Report Payload</h3>
+          <div class="actions compact">
+            <button type="button" class="secondary small" data-scroll-target="report-preview">Scroll To Newest</button>
+            <button type="button" class="secondary small" data-copy-target="report-preview">Copy</button>
+            <button type="button" class="secondary small" data-clear-target="report-preview">Clear View</button>
+          </div>
+        </div>
+        <div id="report-preview" class="diagnostics-scroll-box">Loading report preview...</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="section-heading">
+        <h2>Diagnostics Self-Test</h2>
+        <span class="muted">Existing self-test output remains available for quick checks.</span>
+      </div>
+      <div class="scroll-panel stack">
+        <div class="scroll-header">
+          <h3>Self-Test Output</h3>
+          <div class="actions compact">
+            <button type="button" class="secondary small" data-scroll-target="diag-self-test-results">Scroll To Newest</button>
+            <button type="button" class="secondary small" data-copy-target="diag-self-test-results">Copy</button>
+            <button type="button" class="secondary small" data-clear-target="diag-self-test-results">Clear View</button>
+          </div>
+        </div>
+        <div id="diag-self-test-results" class="diagnostics-scroll-box">Self-test not run.</div>
+      </div>
     </div>
 
     <div class="panel footer-box">
-      <div>NEXT UI Build: <strong data-build-id>next-universal-1302-research-0005</strong></div>
+      <div>NEXT UI Build: <strong data-build-id>next-universal-1302-research-0006</strong></div>
       <div>Diagnostics JS: <strong id="diag-js-state">LOADING</strong></div>
+      <div>Diagnostics Schema: <strong id="diag-schema">next-diagnostics-2</strong></div>
     </div>
   </div>
   <script>
