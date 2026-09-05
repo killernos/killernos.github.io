@@ -1023,6 +1023,7 @@
       schema: REPORT_SCHEMA,
       reportId: getOrCreateReportId(),
       sessionId: state.sessionId,
+      createdAt: nowIso(),
       timestamp: nowIso(),
       firmware: state.firmware ? state.firmware.firmware : "Unknown",
       firmwareSource: state.firmware ? state.firmware.firmwareSource : "unknown",
@@ -1139,7 +1140,8 @@
       }
     };
     if (state.includeUserAgent) report.userAgent = navigator.userAgent || "";
-    report.diagnosticRecords = state.includeDiagnostics ? sessionRecords : [];
+    report.diagnostics = state.includeDiagnostics ? sessionRecords : [];
+    report.diagnosticRecords = report.diagnostics;
     return report;
   }
 
@@ -1181,6 +1183,63 @@
 
   function reportEndpoint() {
     return sanitizeText(window.NEXT_COMMUNITY_REPORT_ENDPOINT || "", 260);
+  }
+
+  function parseSubmissionResponse(xhr) {
+    var parsed = safeJsonParse(xhr && xhr.responseText ? xhr.responseText : "", null);
+    if (!parsed || typeof parsed !== "object") return null;
+    return parsed;
+  }
+
+  function formatSubmissionSuccess(parsed) {
+    var submissionId = sanitizeText(parsed && parsed.submissionId ? parsed.submissionId : "", 64);
+    var receivedAt = sanitizeText(parsed && parsed.receivedAt ? parsed.receivedAt : "", 64);
+    var message = "REPORT SUBMITTED. Submission ID: " + submissionId + ".";
+    if (receivedAt) message += " Received: " + receivedAt + ".";
+    message += " The report was received by the NEXT private report server.";
+    return message;
+  }
+
+  function setUnavailableSubmissionStatus() {
+    setSubmissionStatus("PRIVATE REPORT SERVER UNAVAILABLE. The report was not submitted. Use Try Again, Download Full Report, or Copy Short Summary.", "bad");
+  }
+
+  function classifySubmissionFailure(xhr) {
+    var response = parseSubmissionResponse(xhr) || {};
+    var httpStatus = xhr ? xhr.status : 0;
+    if (httpStatus === 400) {
+      return {
+        stage: "COMMUNITY-REPORT-SUBMIT-FAIL",
+        message: "REPORT REJECTED. The private report server rejected this report. Your report is still stored locally.",
+        kind: "bad"
+      };
+    }
+    if (httpStatus === 413) {
+      return {
+        stage: "COMMUNITY-REPORT-SUBMIT-FAIL",
+        message: "REPORT TOO LARGE. The report was not submitted. Use Download Full Report or Copy Short Summary.",
+        kind: "bad"
+      };
+    }
+    if (httpStatus === 429 || response.error === "rate-limited") {
+      return {
+        stage: "COMMUNITY-REPORT-RATE-LIMITED",
+        message: "RATE LIMITED. The private report server asked you to retry later. Your report is still stored locally.",
+        kind: "warn"
+      };
+    }
+    if (httpStatus >= 500) {
+      return {
+        stage: "COMMUNITY-REPORT-SUBMIT-FAIL",
+        message: "SERVER ERROR. The report was not submitted. Use Try Again, Download Full Report, or Copy Short Summary.",
+        kind: "bad"
+      };
+    }
+    return {
+      stage: "COMMUNITY-REPORT-SUBMIT-FAIL",
+      message: "SERVER UNREACHABLE OR REPORT FAILED. Your report is still stored locally.",
+      kind: "bad"
+    };
   }
 
   function githubReportUrl(report) {
@@ -1225,28 +1284,50 @@
     }
     report = buildCommunityReport();
     if (!endpoint) {
-      setSubmissionStatus("No private endpoint is configured. Use the short GitHub fallback or download the full JSON report.", "warn");
-      return openGithubShortReport(report);
+      emit("FAIL", "COMMUNITY-REPORT-ENDPOINT-MISSING", "No private report endpoint is configured.", { category: "COMMUNITY" });
+      preserveCurrentReportState();
+      setSubmissionStatus("ENDPOINT NOT CONFIGURED. The report was not submitted. Use Download Full Report, Copy Short Summary, or the optional manual GitHub short report.", "warn");
+      return false;
     }
     try {
       var xhr = new XMLHttpRequest();
+      emit("INFO", "COMMUNITY-REPORT-SUBMIT-BEGIN", "Community report submission started.", { category: "COMMUNITY" });
       xhr.open("POST", endpoint, true);
+      xhr.timeout = 15000;
       xhr.setRequestHeader("Content-Type", "application/json");
       xhr.onreadystatechange = function () {
+        var parsed;
+        var failure;
         if (xhr.readyState !== 4) return;
         if (xhr.status >= 200 && xhr.status < 300) {
-          emit("PASS", "COMMUNITY-REPORT-SUBMITTED", "Community report submitted to the configured endpoint.", { category: "COMMUNITY" });
-          setSubmissionStatus("Community report submitted to the configured endpoint.", "ok");
-          resetReportId();
-          renderReportPreview();
+          parsed = parseSubmissionResponse(xhr);
+          if (!parsed || parsed.ok !== true || !parsed.submissionId) {
+            emit("FAIL", "COMMUNITY-REPORT-SUBMIT-FAIL", "Private report server returned an invalid success response.", { category: "COMMUNITY", httpStatus: xhr.status });
+            preserveCurrentReportState();
+            setSubmissionStatus("SERVER ERROR. The private report server returned an invalid response. Your report is still stored locally.", "bad");
+            return;
+          }
+          emit("PASS", "COMMUNITY-REPORT-SUBMITTED", "Community report submitted to the configured endpoint.", { category: "COMMUNITY", submissionId: sanitizeText(parsed.submissionId, 64) });
+          setSubmissionStatus(formatSubmissionSuccess(parsed), "ok");
           return;
         }
-        emit("FAIL", "COMMUNITY-REPORT-SUBMIT-FAIL", "Community report submission failed.", {
+        failure = classifySubmissionFailure(xhr);
+        emit("FAIL", failure.stage, "Community report submission failed.", {
           category: "COMMUNITY",
           httpStatus: xhr.status
         });
         preserveCurrentReportState();
-        setSubmissionStatus("Report submission failed. Your report is still stored locally.", "bad");
+        setSubmissionStatus(failure.message, failure.kind);
+      };
+      xhr.onerror = function () {
+        emit("FAIL", "COMMUNITY-REPORT-SUBMIT-FAIL", "Private report server was unreachable.", { category: "COMMUNITY" });
+        preserveCurrentReportState();
+        setUnavailableSubmissionStatus();
+      };
+      xhr.ontimeout = function () {
+        emit("FAIL", "COMMUNITY-REPORT-SUBMIT-FAIL", "Private report server timed out.", { category: "COMMUNITY" });
+        preserveCurrentReportState();
+        setUnavailableSubmissionStatus();
       };
       preserveCurrentReportState();
       xhr.send(JSON.stringify(report));
@@ -1295,10 +1376,10 @@
     if (reportPreview) reportPreview.textContent = JSON.stringify(buildCommunityReport(), null, 2);
     var summary = document.getElementById("diag-summary");
     if (summary) summary.textContent = buildSummaryText();
-    if (target) target.textContent = endpoint ? "Private endpoint configured" : "GitHub public issue fallback";
+    if (target) target.textContent = endpoint ? "Private endpoint configured: " + endpoint : "Private endpoint not configured";
     if (warning) warning.textContent = endpoint
       ? "Reports remain opt-in. The preview below is the JSON that will be sent to the configured private endpoint."
-      : "No private endpoint is configured. Submission fallback opens a public GitHub issue draft only after confirmation.";
+      : "ENDPOINT NOT CONFIGURED. Private submission is disabled until window.NEXT_COMMUNITY_REPORT_ENDPOINT is set to a verified HTTPS API URL. GitHub remains manual and short-summary only.";
     if (submitButton) submitButton.disabled = !(confirmBox && confirmBox.checked);
   }
 
