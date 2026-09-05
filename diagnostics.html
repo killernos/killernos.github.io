@@ -230,11 +230,13 @@
 
     .diagnostics-scroll-box {
       box-sizing: border-box;
+      display: block;
       width: 100%;
       max-width: 100%;
+      height: 360px;
       max-height: 360px;
-      overflow-y: auto;
-      overflow-x: auto;
+      overflow-y: scroll;
+      overflow-x: scroll;
       padding: 12px;
       border-radius: 8px;
       white-space: pre-wrap;
@@ -248,6 +250,12 @@
       font-size: 15px;
       line-height: 1.5;
       min-width: 0;
+      position: relative;
+    }
+
+    .scroll-hint {
+      color: #9fb5d7;
+      font-size: 14px;
     }
 
     .muted {
@@ -354,13 +362,14 @@
       }
 
       .diagnostics-scroll-box {
+        height: 260px;
         max-height: 260px;
       }
     }
   </style>
-  <script src="./build.js?v=next-universal-1302-research-0006" defer></script>
-  <script src="./js/report-config.js?v=next-universal-1302-research-0006" defer></script>
-  <script src="./js/diagnostics.js?v=next-universal-1302-research-0006" defer></script>
+  <script src="./build.js?v=next-universal-1302-research-0007" defer></script>
+  <script src="./js/report-config.js?v=next-universal-1302-research-0007" defer></script>
+  <script src="./js/diagnostics.js?v=next-universal-1302-research-0007" defer></script>
 </head>
 <body>
   <div class="shell">
@@ -378,7 +387,7 @@
         <button id="reset-log" type="button">Reset Log</button>
         <button id="export-log" type="button" class="secondary">Export Log</button>
         <button id="run-self-test" type="button" class="secondary">Run Diagnostics Self-Test</button>
-        <a class="button-link secondary" href="./index.html?v=next-universal-1302-research-0006">Back To NEXT</a>
+        <a class="button-link secondary" href="./index.html?v=next-universal-1302-research-0007">Back To NEXT</a>
       </div>
     </div>
 
@@ -390,7 +399,7 @@
       <div class="summary-grid">
         <div class="card compact"><span class="label">Detected Firmware</span><span class="value compact" id="diag-firmware">Unknown</span></div>
         <div class="card compact"><span class="label">Hardware Detected</span><span class="value compact" id="diag-hardware-detected">No</span></div>
-        <div class="card compact"><span class="label">Build ID</span><span class="value compact" id="diag-build" data-build-id>next-universal-1302-research-0006</span></div>
+        <div class="card compact"><span class="label">Build ID</span><span class="value compact" id="diag-build" data-build-id>next-universal-1302-research-0007</span></div>
         <div class="card compact"><span class="label">Selected Backend</span><span class="value compact" id="diag-backend">Unknown</span></div>
         <div class="card compact"><span class="label">Selected HEN</span><span class="value compact" id="diag-hen">No HEN</span></div>
         <div class="card compact"><span class="label">Last Recorded Stage</span><span class="value compact" id="diag-last-stage">Not reported</span></div>
@@ -570,12 +579,13 @@
         <div class="scroll-header">
           <h3>Combined Event Log</h3>
           <div class="actions compact">
+            <span class="scroll-hint">Focus box and scroll for older PS4 browsers.</span>
             <button type="button" class="secondary small" data-scroll-target="log">Scroll To Newest</button>
             <button type="button" class="secondary small" data-copy-target="log">Copy</button>
             <button type="button" class="secondary small" data-clear-target="log">Clear View</button>
           </div>
         </div>
-        <div id="log" class="diagnostics-scroll-box">No diagnostic records.</div>
+        <div id="log" class="diagnostics-scroll-box" tabindex="0">No diagnostic records.</div>
       </div>
     </div>
 
@@ -588,12 +598,13 @@
         <div class="scroll-header">
           <h3>Current Community Report Payload</h3>
           <div class="actions compact">
+            <span class="scroll-hint">Focus box and scroll for older PS4 browsers.</span>
             <button type="button" class="secondary small" data-scroll-target="report-preview">Scroll To Newest</button>
             <button type="button" class="secondary small" data-copy-target="report-preview">Copy</button>
             <button type="button" class="secondary small" data-clear-target="report-preview">Clear View</button>
           </div>
         </div>
-        <div id="report-preview" class="diagnostics-scroll-box">Loading report preview...</div>
+        <div id="report-preview" class="diagnostics-scroll-box" tabindex="0">Loading report preview...</div>
       </div>
     </div>
 
@@ -606,17 +617,18 @@
         <div class="scroll-header">
           <h3>Self-Test Output</h3>
           <div class="actions compact">
+            <span class="scroll-hint">Focus box and scroll for older PS4 browsers.</span>
             <button type="button" class="secondary small" data-scroll-target="diag-self-test-results">Scroll To Newest</button>
             <button type="button" class="secondary small" data-copy-target="diag-self-test-results">Copy</button>
             <button type="button" class="secondary small" data-clear-target="diag-self-test-results">Clear View</button>
           </div>
         </div>
-        <div id="diag-self-test-results" class="diagnostics-scroll-box">Self-test not run.</div>
+        <div id="diag-self-test-results" class="diagnostics-scroll-box" tabindex="0">Self-test not run.</div>
       </div>
     </div>
 
     <div class="panel footer-box">
-      <div>NEXT UI Build: <strong data-build-id>next-universal-1302-research-0006</strong></div>
+      <div>NEXT UI Build: <strong data-build-id>next-universal-1302-research-0007</strong></div>
       <div>Diagnostics JS: <strong id="diag-js-state">LOADING</strong></div>
       <div>Diagnostics Schema: <strong id="diag-schema">next-diagnostics-2</strong></div>
     </div>
