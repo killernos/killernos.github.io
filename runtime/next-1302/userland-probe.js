@@ -1,7 +1,9 @@
 import { establishPrimitive } from "./slopkit/core.js";
+import { abortPrimitive, cleanupTemporaryAllocations } from "./slopkit/core.js";
 import { installWindowP } from "./slopkit/mem.js";
 import { BUILD_ID, createResearchState } from "./research-state.js";
 import { createDiagnosticsBridge } from "./diagnostics-bridge.js";
+import { create1302ResearchAdapter } from "./research-adapter.js";
 
 function parseQuery(name) {
   const pairs = (location.search || "").replace(/^\?/, "").split("&");
@@ -92,6 +94,21 @@ const runButton = doc.getElementById("run-test");
 const stopButton = doc.getElementById("stop-test");
 const downloadButton = doc.getElementById("download-report");
 const context = detectRuntimeContext();
+const adapter = create1302ResearchAdapter({
+  firmware: context.firmware,
+  entryMethod: "SlopKit",
+  diagnostics: diagnostics,
+  primitiveFactory: establishPrimitive,
+  installWindowP: installWindowP,
+  hasWindowP: hasWindowP,
+  verifyRead: readVerified,
+  verifyWrite: writeVerified,
+  abortPrimitive: abortPrimitive,
+  releaseTemporaryAllocations: cleanupTemporaryAllocations,
+  onPrimitiveEvent: function (tag, detail, attempt) {
+    diagnostics.emit(tag, detail, { attempt: attempt });
+  }
+});
 
 state.setFirmware(context.firmware === "Unknown" ? "Unknown" : context.firmware);
 state.setSimulation(context.simulated);
@@ -109,6 +126,12 @@ if (context.simulated) {
   runButton.disabled = true;
 }
 diagnostics.init();
+
+const adapterInit = adapter.initialize();
+if (!adapterInit.ok) {
+  runButton.disabled = true;
+  state.setStatus("13.02 experimental runtime is disabled in this build. Enable ENABLE_1302_EXPERIMENTAL only for development builds.", "bad");
+}
 
 if (window.PS4Diag && typeof window.PS4Diag.markHen === "function") {
   window.PS4Diag.markHen({
@@ -140,8 +163,8 @@ window.addEventListener("beforeunload", function () {
 });
 
 async function runProbe() {
-  let carrier;
-  let prim;
+  let entryResult;
+  let verifyResult;
 
   state.clearStopRequest();
   state.setRunning(true);
@@ -174,18 +197,10 @@ async function runProbe() {
   diagnostics.emit("NEXT-1302-HARDWARE-CONFIRMED", navigator.userAgent);
   diagnostics.emit("SLOPKIT-BEGIN", "maxAttempts=6");
   state.setPrimitive("RUNNING");
-
-  try {
-    carrier = await establishPrimitive({
-      maxAttempts: 6,
-      onEvent: function (tag, detail, attempt) {
-        diagnostics.emit(tag, detail, { attempt: attempt });
-      }
-    });
-  } catch (error) {
+  entryResult = await adapter.runUserlandEntry();
+  if (!entryResult || !entryResult.ok) {
     state.setPrimitive("FAILED");
-    state.setStatus("SlopKit did not obtain a carrier.", "bad");
-    diagnostics.emit("SLOPKIT-FAIL", error && error.message ? error.message : "establishPrimitive-threw");
+    state.setStatus("SlopKit did not complete a verified entry stage.", "bad");
     state.setRunning(false);
     diagnostics.markCompleted(false);
     return;
@@ -198,62 +213,24 @@ async function runProbe() {
     return;
   }
 
-  if (!carrier) {
-    state.setPrimitive("FAILED");
-    state.setStatus("SlopKit returned without a carrier.", "bad");
-    diagnostics.emit("SLOPKIT-FAIL", "carrier-not-returned");
-    state.setRunning(false);
-    diagnostics.markCompleted(false);
-    return;
-  }
-
   state.setPrimitive("OBTAINED");
   state.setCarrier("OBTAINED", true);
-  diagnostics.emit("SLOPKIT-CARRIER-OBTAINED", "carrier-returned");
-
-  try {
-    installWindowP(carrier, { promote: false });
-    prim = window.p;
-  } catch (error) {
-    state.setStatus("window.p installation failed.", "bad");
-    diagnostics.emit("SLOPKIT-FAIL", error && error.message ? error.message : "installWindowP-threw");
-    state.setRunning(false);
-    diagnostics.markCompleted(false);
-    return;
-  }
-
-  if (!hasWindowP(prim)) {
-    state.setStatus("window.p did not expose the expected userland methods.", "bad");
-    diagnostics.emit("SLOPKIT-FAIL", "window-p-methods-missing");
-    state.setRunning(false);
-    diagnostics.markCompleted(false);
-    return;
-  }
-
   state.setWindowP("INSTALLED", true);
+  diagnostics.emit("SLOPKIT-CARRIER-OBTAINED", "carrier-returned");
   diagnostics.emit("SLOPKIT-WINDOW-P-INSTALLED", "promote=false");
 
-  if (readVerified(carrier, prim)) {
-    state.setRead("VERIFIED", true);
-    diagnostics.emit("SLOPKIT-READ-VERIFIED", "carrier-self-validation-pass");
-  } else {
-    state.setStatus("Carrier returned but userland read could not be verified.", "bad");
-    diagnostics.emit("SLOPKIT-FAIL", "userland-read-not-verified");
+  verifyResult = await adapter.verifyUserlandReadWrite();
+  if (!verifyResult || !verifyResult.ok) {
+    state.setStatus("Userland read/write could not be verified.", "bad");
     state.setRunning(false);
     diagnostics.markCompleted(false);
     return;
   }
 
-  if (writeVerified(carrier)) {
-    state.setWrite("VERIFIED", true);
-    diagnostics.emit("SLOPKIT-WRITE-VERIFIED", "page-owned-memory-restored");
-  } else {
-    state.setStatus("Userland write could not be safely verified.", "bad");
-    diagnostics.emit("SLOPKIT-FAIL", "userland-write-not-verified");
-    state.setRunning(false);
-    diagnostics.markCompleted(false);
-    return;
-  }
+  state.setRead("VERIFIED", true);
+  state.setWrite("VERIFIED", true);
+  diagnostics.emit("SLOPKIT-READ-VERIFIED", "carrier-self-validation-pass");
+  diagnostics.emit("SLOPKIT-WRITE-VERIFIED", "page-owned-memory-restored");
 
   state.setARW("VERIFIED", true);
   state.setStatus("13.02 userland validation completed. Kernel path remains locked.", "ok");
@@ -269,6 +246,7 @@ runButton.addEventListener("click", function () {
 
 stopButton.addEventListener("click", function () {
   state.requestStop();
+  adapter.abort();
   if (state.snapshot.running) {
     state.setStatus("Stop requested. Waiting for the current SlopKit attempt to return.", "bad");
   } else if (!context.exact1302 && !context.simulated) {

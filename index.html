@@ -234,8 +234,19 @@
       margin-top: 20px;
     }
 
+    .actions button,
+    .actions .link-button {
+      flex: 0 0 auto;
+    }
+
     .action-group {
       flex: 1 1 240px;
+      min-width: 240px;
+    }
+
+    .action-stack {
+      display: grid;
+      gap: 10px;
       min-width: 240px;
     }
 
@@ -266,6 +277,12 @@
       background: linear-gradient(135deg, var(--accent), #96f0db);
       color: #072018;
       font-weight: 700;
+    }
+
+    .ghost-button {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     button:disabled {
@@ -329,6 +346,56 @@
       background: rgba(255, 210, 122, 0.1);
       color: #fff0c8;
       line-height: 1.6;
+    }
+
+    .recovery-banner {
+      border-color: rgba(255, 159, 159, 0.32);
+      background: rgba(255, 159, 159, 0.12);
+      color: #ffe0e0;
+    }
+
+    .home-instruction {
+      margin: 16px 0 0;
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(121, 224, 195, 0.22);
+      background: rgba(121, 224, 195, 0.08);
+      color: #e8fff8;
+      line-height: 1.6;
+    }
+
+    .switch-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .switch-card {
+      padding: 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: var(--panel-strong);
+    }
+
+    .switch-card h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+      letter-spacing: 0.04em;
+    }
+
+    .switch-card p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .switch-meta {
+      margin-top: 12px;
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.95rem;
     }
 
     .selector-grid {
@@ -421,15 +488,28 @@
 
     }
   </style>
-  <script src="./build.js?v=next-universal-1302-research-0007" defer></script>
-  <script src="./js/diagnostics.js?v=next-universal-1302-research-0007" defer></script>
-  <script src="./js/capabilities.js?v=next-universal-1302-research-0007" defer></script>
-  <script src="./js/entrypoints.js?v=next-universal-1302-research-0007" defer></script>
-  <script src="./js/hens.js?v=next-universal-1302-research-0007" defer></script>
-  <script src="./js/payloads.js?v=next-universal-1302-research-0007" defer></script>
-  <script src="./payloads/catalog.js?v=next-universal-1302-research-0007" defer></script>
-  <script src="./js/payload-loader.js?v=next-universal-1302-research-0007" defer></script>
-  <script src="./js/next-firmware-capability.js?v=next-universal-1302-research-0007" defer></script>
+  <script src="./js/autoload-guard.js?v=next-universal-1302-research-0005"></script>
+  <script>
+    window.__PS4_AUTOLOAD_CANCEL_STATE__ = window.__PS4_AUTOLOAD_CANCEL_STATE__ || { cancelled: false, reason: "" };
+    if (window.PS4AutoloadGuard && !window.__PS4AutoCancel) {
+      window.__PS4AutoCancel = window.PS4AutoloadGuard.createCancellationController({
+        onCancel: function (reason) {
+          window.__PS4_AUTOLOAD_CANCEL_STATE__.cancelled = true;
+          window.__PS4_AUTOLOAD_CANCEL_STATE__.reason = reason || "cancelled";
+        }
+      });
+      window.__PS4AutoCancel.attach(window);
+    }
+  </script>
+  <script src="./build.js?v=next-universal-1302-research-0005" defer></script>
+  <script src="./js/diagnostics.js?v=next-universal-1302-research-0005" defer></script>
+  <script src="./js/capabilities.js?v=next-universal-1302-research-0005" defer></script>
+  <script src="./js/entrypoints.js?v=next-universal-1302-research-0005" defer></script>
+  <script src="./js/hens.js?v=next-universal-1302-research-0005" defer></script>
+  <script src="./js/payloads.js?v=next-universal-1302-research-0005" defer></script>
+  <script src="./payloads/catalog.js?v=next-universal-1302-research-0005" defer></script>
+  <script src="./js/payload-loader.js?v=next-universal-1302-research-0005" defer></script>
+  <script src="./js/next-firmware-capability.js?v=next-universal-1302-research-0005" defer></script>
 </head>
 <body>
   <div class="shell">
@@ -484,11 +564,15 @@
           </div>
           <div class="stat">
             <span class="stat-label">Launch Mode</span>
-            <span class="stat-value">Manual</span>
+            <span class="stat-value" id="launch-mode">Disabled</span>
           </div>
           <div class="stat">
             <span class="stat-label">Recovery Path</span>
-            <span class="stat-value">Browser Home</span>
+            <span class="stat-value" id="recovery-path">Safe Host Screen</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Autoload Countdown</span>
+            <span class="stat-value" id="autoload-countdown">Not scheduled</span>
           </div>
           <div class="stat">
             <span class="stat-label">Userland State</span>
@@ -504,18 +588,44 @@
           </div>
           <div class="stat">
             <span class="stat-label">Build</span>
-            <span class="stat-value" data-build-id>next-universal-1302-research-0007</span>
+            <span class="stat-value" data-build-id>next-universal-1302-research-0005</span>
           </div>
         </div>
+        <div id="recovery-banner" class="preview-banner recovery-banner" hidden>Autoload disabled for recovery</div>
         <p id="routing-status" class="routing-copy">Inspecting the PS4 browser user agent.</p>
-        <p class="routing-copy">Automatic launch is intentionally disabled here. Open NEXT manually so the console always retains a recovery path back to the normal PS4 shell.</p>
+        <p id="autoload-status" class="routing-copy">Autoload disabled by default. Re-enable it only on verified firmware after confirming the console is stable.</p>
+        <div class="switch-grid">
+          <div class="switch-card">
+            <h3>Local Recovery Switch</h3>
+            <p>Available through this page, <a href="./safe.html?v=next-universal-1302-research-0005">/safe.html</a>, and <a href="./index.html?safe=1&amp;v=next-universal-1302-research-0005">/?safe=1</a>. It changes only this browser's localStorage and cannot affect other visitors.</p>
+            <div id="local-switch-meta" class="switch-meta">
+              <div>Scope: This browser only</div>
+              <div id="local-switch-state">State: Disabled</div>
+              <div id="local-switch-reason">Reason: Not recorded</div>
+            </div>
+          </div>
+          <div class="switch-card">
+            <h3>Global Emergency Kill Switch</h3>
+            <p>Read-only for public visitors. It is controlled only by private repository deployment and never by a URL parameter, browser request, report submission, or public API call.</p>
+            <div id="global-switch-meta" class="switch-meta">
+              <div id="global-switch-status">Status: Checking</div>
+              <div id="global-switch-by">Disabled By: Checking</div>
+              <div id="global-switch-reason">Reason: Checking</div>
+              <div id="global-switch-revision">Revision: Checking</div>
+            </div>
+          </div>
+        </div>
+        <p id="home-instruction" class="home-instruction">Return to PS4 home if the browser becomes unstable. This host stays on the current page until you manually launch or re-enable autoload.</p>
         <div class="actions">
-          <button id="run-next" type="button" disabled>Run NEXT Runtime</button>
+          <button id="run-next" type="button" disabled>Run Manually</button>
+          <button id="reenable-autoload" type="button" class="ghost-button">Re-enable Autoload</button>
+          <button id="cancel-autoload" type="button" class="ghost-button">Cancel Autoload</button>
           <div class="action-group">
             <button id="run-1302-research" type="button" disabled>Run 13.02 Research</button>
             <div id="research-1302-status" class="action-note">13.02 Research Lab<br>Checking firmware availability.</div>
           </div>
-          <a class="link-button" href="./diagnostics.html?v=next-universal-1302-research-0007">Open Diagnostics</a>
+          <a class="link-button" href="./safe.html?v=next-universal-1302-research-0005">Open Safe Recovery</a>
+          <a class="link-button" href="./diagnostics.html?v=next-universal-1302-research-0005">Open Diagnostics</a>
         </div>
       </div>
 
@@ -565,7 +675,7 @@
           <div class="support-row">
             <strong>Public Sources</strong>
             <span>Audited</span>
-            <small>See <a href="./credits.html?v=next-universal-1302-research-0007">Credits</a> and the repository notices for authors, licenses, and provenance.</small>
+            <small>See <a href="./credits.html?v=next-universal-1302-research-0005">Credits</a> and the repository notices for authors, licenses, and provenance.</small>
           </div>
           <div class="support-row">
             <strong>13.02 Research</strong>
@@ -590,7 +700,7 @@
         <p id="cache-copy" class="routing-copy">Checking whether this browser reports offline cache support.</p>
         <div class="actions">
           <button id="refresh-next-cache" type="button">Refresh NEXT Cache</button>
-          <a class="link-button" href="./credits.html?v=next-universal-1302-research-0007">Open Credits</a>
+          <a class="link-button" href="./credits.html?v=next-universal-1302-research-0005">Open Credits</a>
         </div>
       </div>
     </section>
@@ -603,9 +713,23 @@
       var nextAccessElement = document.getElementById("next-access");
       var runtimeStatusElement = document.getElementById("runtime-status");
       var hardwareVerificationElement = document.getElementById("hardware-verification");
+      var launchModeElement = document.getElementById("launch-mode");
+      var recoveryPathElement = document.getElementById("recovery-path");
+      var autoloadCountdownElement = document.getElementById("autoload-countdown");
       var statusElement = document.getElementById("routing-status");
+      var autoloadStatusElement = document.getElementById("autoload-status");
+      var recoveryBanner = document.getElementById("recovery-banner");
+      var localSwitchStateElement = document.getElementById("local-switch-state");
+      var localSwitchReasonElement = document.getElementById("local-switch-reason");
+      var globalSwitchStatusElement = document.getElementById("global-switch-status");
+      var globalSwitchByElement = document.getElementById("global-switch-by");
+      var globalSwitchReasonElement = document.getElementById("global-switch-reason");
+      var globalSwitchRevisionElement = document.getElementById("global-switch-revision");
       var simulationNotice = document.getElementById("simulation-notice");
+      var homeInstructionElement = document.getElementById("home-instruction");
       var runButton = document.getElementById("run-next");
+      var reenableAutoloadButton = document.getElementById("reenable-autoload");
+      var cancelAutoloadButton = document.getElementById("cancel-autoload");
       var research1302Button = document.getElementById("run-1302-research");
       var research1302Status = document.getElementById("research-1302-status");
       var backendStateElement = document.getElementById("backend-state");
@@ -633,6 +757,94 @@
       var backend = "Unsupported";
       var capability = null;
       var baseStatusText = "";
+      var autoloadGuard = window.PS4AutoloadGuard || null;
+      var autoloadConfig = autoloadGuard ? autoloadGuard.DEFAULT_CONFIG : { autoloadEnabled: false, reason: "guard-unavailable", loaded: false };
+      var autoloadCountdown = null;
+      var autoloadCancelled = window.__PS4_AUTOLOAD_CANCEL_STATE__ || { cancelled: false, reason: "" };
+      var autoloadLaunchStarted = false;
+      var safeModeRequested = false;
+      var recoveryMode = false;
+      var firmwareMismatch = false;
+      var recoveryReason = "";
+
+      function readAutoloadState() {
+        if (!autoloadGuard) {
+          return { autoloadEnabled: false, consecutiveFailures: 0, launchPending: false, lastLaunchTimestamp: "", disableReason: "", savedFirmware: "" };
+        }
+        return autoloadGuard.readState(window.localStorage);
+      }
+
+      function writeAutoloadState(patch) {
+        if (!autoloadGuard) return readAutoloadState();
+        return autoloadGuard.writeState(window.localStorage, patch || {});
+      }
+
+      function recoveryCopy(reason) {
+        if (reason === "three-consecutive-failures") return "Autoload disabled for recovery. Three unfinished launches were detected, so the host will stay on the safe screen until you run manually or re-enable autoload.";
+        if (reason === "previous-launch-unfinished") return "A previous launch never acknowledged success. The host stayed on the safe screen instead of retrying automatically.";
+        if (reason === "firmware-mismatch") return "Stored firmware state disagreed with the current detection, so autoload was disabled for safety.";
+        if (reason === "safe-query") return "Safe recovery mode was requested from the query string. Autoload remains disabled until you explicitly re-enable it.";
+        if (reason === "config-disabled") return "The server kill switch disabled autoload. This console will remain on the safe host screen.";
+        if (reason === "config-unavailable") return "Autoload configuration could not be loaded, so autoload remains disabled by default.";
+        if (reason === "config-invalid") return "Autoload configuration failed validation, so the read-only global kill switch remains disabled by default.";
+        if (reason === "config-expired") return "Autoload configuration expired, so the read-only global kill switch remains disabled by default.";
+        if (reason === "firmware-not-verified") return "Autoload is allowed only for verified firmware records. This firmware must stay on the safe host screen.";
+        if (reason === "unsupported-firmware") return "This firmware has no verified autoload path. The host will stay on the safe screen until you choose a manual action.";
+        if (reason === "user-cancelled" || reason === "escape" || reason === "options-hold" || reason === "button") return "Autoload was cancelled before launch. The host will remain on the safe screen until you re-enable it.";
+        return "Autoload disabled by default. Re-enable it only after confirming the verified runtime is the one you want to launch.";
+      }
+
+      function updateHomeInstruction() {
+        if (!homeInstructionElement) return;
+        homeInstructionElement.textContent = "Return to PS4 home if the browser becomes unstable. This host never loops through repeated refreshes or redirects.";
+      }
+
+      function clearCancellationFlag() {
+        autoloadCancelled.cancelled = false;
+        autoloadCancelled.reason = "";
+      }
+
+      function setRecoveryMode(reason) {
+        if (reason) recoveryReason = reason;
+        recoveryMode = true;
+      }
+
+      function clearRecoveryMode() {
+        recoveryMode = false;
+        recoveryReason = "";
+      }
+
+      function describeLocalReason(state) {
+        if (!state || !state.disableReason) return "Not recorded";
+        return state.disableReason;
+      }
+
+      function updateSwitchPanels(storedAutoload, evaluation) {
+        var globalConfig = autoloadGuard && typeof autoloadGuard.describeGlobalConfig === "function"
+          ? autoloadGuard.describeGlobalConfig(autoloadConfig)
+          : { status: "DISABLED", disabledBy: "private-repository-deployment", reason: "config-unavailable", revision: "unavailable" };
+        if (localSwitchStateElement) {
+          localSwitchStateElement.textContent = "State: " + (storedAutoload.autoloadEnabled ? "Enabled locally" : "Disabled locally");
+        }
+        if (localSwitchReasonElement) {
+          localSwitchReasonElement.textContent = "Reason: " + describeLocalReason(storedAutoload);
+        }
+        if (globalSwitchStatusElement) {
+          globalSwitchStatusElement.textContent = "Status: " + globalConfig.status + (evaluation && evaluation.reason && !evaluation.allowed && (evaluation.reason === "config-disabled" || evaluation.reason === "config-unavailable" || evaluation.reason === "config-invalid" || evaluation.reason === "config-expired") ? " (read-only)" : "");
+        }
+        if (globalSwitchByElement) globalSwitchByElement.textContent = "Disabled By: " + globalConfig.disabledBy;
+        if (globalSwitchReasonElement) globalSwitchReasonElement.textContent = "Reason: " + globalConfig.reason;
+        if (globalSwitchRevisionElement) globalSwitchRevisionElement.textContent = "Revision: " + globalConfig.revision;
+      }
+
+      function cancelScheduledAutoload(reason, persistDisable) {
+        if (autoloadCountdown && autoloadCountdown.isActive()) autoloadCountdown.cancel(reason || "cancelled");
+        if (persistDisable !== false) {
+          writeAutoloadState({ autoloadEnabled: false, disableReason: reason === "cancelled" ? "user-cancelled" : (reason || "user-cancelled"), launchPending: false });
+          setRecoveryMode(reason === "cancelled" ? "user-cancelled" : (reason || "user-cancelled"));
+        }
+        updateLaunchState();
+      }
 
       function currentCapability() {
         var entry;
@@ -688,9 +900,9 @@
 
       function runtimeButtonLabel(value) {
         if (!value) return "NEXT Runtime Unsupported";
-        if (value.mode === "research") return "Run NEXT 13.02 Research";
-        if (value.mode === "compatibility") return "Run NEXT Compatibility Test";
-        if (value.mode === "runtime") return "Run NEXT Runtime";
+        if (value.mode === "research") return "Run 13.02 Research";
+        if (value.mode === "compatibility") return "Run Compatibility Manually";
+        if (value.mode === "runtime") return "Run Manually";
         return "NEXT Runtime Unsupported";
       }
 
@@ -721,10 +933,21 @@
         return url.pathname + url.search;
       }
 
+      function experimental1302Enabled() {
+        return !!((window.PS4_WEBKIT_FLAGS && window.PS4_WEBKIT_FLAGS.ENABLE_1302_EXPERIMENTAL === true)
+          || (window.PS4_WEBKIT_BUILD && window.PS4_WEBKIT_BUILD.flags && window.PS4_WEBKIT_BUILD.flags.ENABLE_1302_EXPERIMENTAL === true)
+          || window.ENABLE_1302_EXPERIMENTAL === true);
+      }
+
       function updateResearch1302State() {
         var enabled = firmwareNumber != null && firmwareNumber <= 1302;
-        if (research1302Button) research1302Button.disabled = !enabled;
+        var featureEnabled = experimental1302Enabled();
+        if (research1302Button) research1302Button.disabled = !enabled || !featureEnabled;
         if (!research1302Status) return;
+        if (!featureEnabled) {
+          research1302Status.innerHTML = "13.02 Research Lab<br>Disabled in this build.<br>ENABLE_1302_EXPERIMENTAL must be enabled for development-only testing.";
+          return;
+        }
         if (firmware === "13.02") {
           research1302Status.innerHTML = "13.02 Research Lab<br>Hardware firmware matches.<br>Manual SlopKit test available.";
           return;
@@ -925,8 +1148,19 @@
         return true;
       }
 
+      function autoloadEvaluation() {
+        var state = readAutoloadState();
+        if (!autoloadGuard) return { allowed: false, reason: "guard-unavailable" };
+        return autoloadGuard.canAutoload(capability, autoloadConfig, state, {
+          safeMode: recoveryMode,
+          firmwareMismatch: firmwareMismatch
+        });
+      }
+
       function updateLaunchState() {
         var ready = launchReady();
+        var storedAutoload = readAutoloadState();
+        var evaluation = autoloadEvaluation();
         capability = currentCapability();
         nextAccessElement.textContent = capability.nextAccess;
         nextAccessElement.className = "status-pill " + capabilityStatusClass(capability.nextAccess);
@@ -944,6 +1178,19 @@
               : ready ? "Ready for manual launch" : previewMode ? "Preview only" : "Observation only";
         }
         statusElement.textContent = baseStatusText;
+        if (capability.mode === "research" && capability.disabledReason) statusElement.textContent = capability.disabledReason;
+        if (launchModeElement) {
+          launchModeElement.textContent = storedAutoload.autoloadEnabled
+            ? (evaluation.allowed ? (autoloadCountdown && autoloadCountdown.isActive() ? "Countdown" : "Enabled") : "Blocked")
+            : "Disabled";
+        }
+        if (recoveryPathElement) recoveryPathElement.textContent = recoveryMode ? "Safe Host Screen" : "Browser Home";
+        if (autoloadCountdownElement) autoloadCountdownElement.textContent = autoloadCountdown && autoloadCountdown.isActive() ? "Running" : "Not scheduled";
+        if (autoloadStatusElement) autoloadStatusElement.textContent = recoveryCopy(recoveryReason || evaluation.reason || storedAutoload.disableReason);
+        if (recoveryBanner) recoveryBanner.hidden = !(recoveryMode || storedAutoload.disableReason === "three-consecutive-failures" || evaluation.reason === "config-disabled" || evaluation.reason === "config-unavailable");
+        updateSwitchPanels(storedAutoload, evaluation);
+        if (cancelAutoloadButton) cancelAutoloadButton.disabled = !(autoloadCountdown && autoloadCountdown.isActive());
+        if (reenableAutoloadButton) reenableAutoloadButton.disabled = !(capability && capability.mode === "runtime" && capability.hardwareVerification === "LOCAL");
         updateResearch1302State();
         if (previewBanner) previewBanner.hidden = !previewMode;
         if (!selectedPayload) {
@@ -1051,14 +1298,17 @@
         updatePayloadState(false);
       }
 
-      function navigateToRuntime() {
+      function navigateToRuntime(triggerLabel) {
         var href;
         capability = currentCapability();
         if (!launchReady() || !capability || !capability.target) return;
+        if (autoloadLaunchStarted) return;
+        autoloadLaunchStarted = true;
+        if (autoloadGuard) autoloadGuard.beginLaunch(window.localStorage, firmware || "Unknown");
         nextAccessElement.textContent = capability.mode === "research" ? "RESEARCH" : "AVAILABLE";
         if (window.PS4Diag) {
           if (typeof window.PS4Diag.beginAttempt === "function") {
-            window.PS4Diag.beginAttempt("Manual NEXT launch initiated.", {
+            window.PS4Diag.beginAttempt((triggerLabel || "Manual") + " NEXT launch initiated.", {
               category: "ROUTING",
               runtimeMode: capability.mode,
               runtimeTarget: capability.target,
@@ -1091,7 +1341,7 @@
             pageName: window.PS4Runtime.pageName,
             payloadId: runtimePayloadId(),
             payloadVersion: runtimePayloadId() === "none" ? "none" : selectedPayload.version,
-            message: "Manual runtime launch requested from NEXT home.",
+            message: (triggerLabel || "Manual") + " runtime launch requested from NEXT home.",
             runtime: {
               firmwareCapability: capability.firmware,
               runtimeConfigured: capability.runtimeConfigured,
@@ -1132,6 +1382,69 @@
         } catch (error) { }
         href = runtimeTargetHref(capability);
         location.href = href;
+      }
+
+      function startAutoloadCountdown() {
+        var evaluation = autoloadEvaluation();
+        if (!autoloadGuard || !evaluation.allowed || autoloadLaunchStarted) {
+          updateLaunchState();
+          return;
+        }
+        if (autoloadCancelled.cancelled) {
+          cancelScheduledAutoload(autoloadCancelled.reason || "user-cancelled", true);
+          return;
+        }
+        autoloadCountdown = autoloadGuard.createCountdown({
+          seconds: 8,
+          onTick: function (secondsLeft) {
+            if (autoloadCountdownElement) autoloadCountdownElement.textContent = secondsLeft <= 0 ? "Launching" : (secondsLeft + "s remaining");
+            if (autoloadStatusElement) autoloadStatusElement.textContent = "Automatic launch in " + secondsLeft + " seconds. Press Cancel Autoload, hold OPTIONS, or press Escape to stop it.";
+          },
+          onDone: function () {
+            if (autoloadCountdownElement) autoloadCountdownElement.textContent = "Launching";
+            navigateToRuntime("Automatic");
+          },
+          onCancel: function (reason) {
+            if (autoloadCountdownElement) autoloadCountdownElement.textContent = "Cancelled";
+            writeAutoloadState({ autoloadEnabled: false, disableReason: reason || "user-cancelled", launchPending: false });
+            setRecoveryMode(reason || "user-cancelled");
+            updateLaunchState();
+          }
+        });
+        autoloadCountdown.start();
+        updateLaunchState();
+      }
+
+      function initializeAutoload() {
+        var handled;
+        writeAutoloadState(readAutoloadState());
+        safeModeRequested = parseQuery("safe") === "1";
+        handled = autoloadGuard ? autoloadGuard.handleInterruptedLaunch(window.localStorage, firmware || "Unknown") : null;
+        if (handled) {
+          firmwareMismatch = handled.firmwareMismatch;
+          if (handled.interruptedLaunch) setRecoveryMode(handled.lockedOut ? "three-consecutive-failures" : "previous-launch-unfinished");
+          if (handled.firmwareMismatch) setRecoveryMode("firmware-mismatch");
+          if (handled.lockedOut) setRecoveryMode("three-consecutive-failures");
+        }
+        if (safeModeRequested && autoloadGuard) {
+          autoloadGuard.applySafeMode(window.localStorage, readAutoloadState().disableReason || "safe-query");
+          if (!recoveryReason) setRecoveryMode("safe-query");
+        }
+        updateLaunchState();
+        if (!autoloadGuard) return Promise.resolve();
+        return autoloadGuard.loadConfig(window.fetch ? window.fetch.bind(window) : null, "./autoload-config.json?v=next-universal-1302-research-0005")
+          .then(function (config) {
+            autoloadConfig = config;
+            if (config.autoloadEnabled !== true) {
+              if (!recoveryReason) setRecoveryMode(config.reason || "config-disabled");
+            }
+            if (autoloadCancelled.cancelled) {
+              cancelScheduledAutoload(autoloadCancelled.reason || "user-cancelled", true);
+              return;
+            }
+            updateLaunchState();
+            startAutoloadCountdown();
+          });
       }
 
       try {
@@ -1210,6 +1523,7 @@
       renderPayloadChoices();
       updateLaunchState();
       updateCacheStatus();
+      updateHomeInstruction();
 
       if (henSelectElement) {
         henSelectElement.addEventListener("change", function () {
@@ -1261,8 +1575,29 @@
       }
 
       runButton.addEventListener("click", function () {
-        navigateToRuntime();
+        cancelScheduledAutoload("manual-launch", false);
+        navigateToRuntime("Manual");
       });
+
+      if (reenableAutoloadButton) {
+        reenableAutoloadButton.onclick = function () {
+          clearCancellationFlag();
+          autoloadLaunchStarted = false;
+          clearRecoveryMode();
+          writeAutoloadState({ autoloadEnabled: true, disableReason: "", launchPending: false, savedFirmware: firmware || "Unknown" });
+          updateLaunchState();
+          startAutoloadCountdown();
+        };
+      }
+
+      if (cancelAutoloadButton) {
+        cancelAutoloadButton.onclick = function () {
+          cancelScheduledAutoload("button", true);
+        };
+        if (window.__PS4AutoCancel && typeof window.__PS4AutoCancel.bindButton === "function") {
+          window.__PS4AutoCancel.bindButton(cancelAutoloadButton);
+        }
+      }
 
       if (refreshCacheButton) {
         refreshCacheButton.onclick = function () {
@@ -1281,6 +1616,8 @@
           location.href = research1302TargetHref();
         };
       }
+
+      initializeAutoload();
     });
   </script>
 </body>

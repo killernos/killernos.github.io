@@ -2,11 +2,20 @@
 
 window.PS4_WEBKIT_BUILD = {
   firmwareTarget: "multi-firmware",
-  buildId: "next-universal-1302-research-0007",
-  cacheRevision: "next-universal-1302-research-0007",
+  buildId: "next-universal-1302-research-0005",
+  cacheRevision: "next-universal-1302-research-0005",
   diagnosticsSchema: "next-diagnostics-2",
-  researchBuildId: ""
+  researchBuildId: "",
+  flags: {
+    ENABLE_1302_EXPERIMENTAL: false
+  }
 };
+
+window.PS4_WEBKIT_FLAGS = {
+  ENABLE_1302_EXPERIMENTAL: false
+};
+
+window.ENABLE_1302_EXPERIMENTAL = false;
 
 (function () {
   var elements = document.querySelectorAll("[data-build-id]");

@@ -1,0 +1,236 @@
+﻿<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PS4 WebKit Next Safe Recovery</title>
+  <style>
+    :root {
+      --bg: #09121f;
+      --panel: rgba(11, 24, 43, 0.92);
+      --line: rgba(152, 186, 255, 0.18);
+      --text: #eef4ff;
+      --muted: #a1b6d8;
+      --warn: #ffd27a;
+      --bad: #ffb1b1;
+      --accent: #79e0c3;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(255, 209, 122, 0.14), transparent 32%),
+        linear-gradient(160deg, var(--bg), #050b14 70%);
+    }
+
+    .shell {
+      width: min(92vw, 900px);
+      margin: 0 auto;
+      padding: 32px 0 56px;
+    }
+
+    .panel {
+      padding: 28px;
+      border-radius: 28px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: 2.7rem;
+      line-height: 0.95;
+    }
+
+    p,
+    li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .banner,
+    .card {
+      margin-top: 18px;
+      padding: 16px 18px;
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .banner {
+      border-color: rgba(255, 177, 177, 0.3);
+      background: rgba(255, 177, 177, 0.12);
+      color: #ffe8e8;
+    }
+
+    .state-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .label {
+      display: block;
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--warn);
+    }
+
+    .value {
+      display: block;
+      margin-top: 8px;
+      color: var(--text);
+      font-size: 1.08rem;
+      font-weight: 700;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .section-title {
+      margin-top: 24px;
+      margin-bottom: 0;
+      font-size: 1.1rem;
+      letter-spacing: 0.04em;
+    }
+
+    button,
+    a {
+      appearance: none;
+      border: 0;
+      border-radius: 999px;
+      padding: 14px 20px;
+      font: inherit;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    button {
+      background: linear-gradient(135deg, var(--accent), #96f0db);
+      color: #072018;
+      font-weight: 700;
+    }
+
+    a {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text);
+    }
+  </style>
+  <script src="./js/autoload-guard.js?v=next-universal-1302-research-0005"></script>
+</head>
+<body>
+  <div class="shell">
+    <section class="panel">
+      <h1>Safe Recovery</h1>
+      <p>This page loads no exploit or payload runtime. It clears any pending autoload state, disables autoload immediately, and leaves the console on a stable host screen.</p>
+      <div class="banner">Autoload disabled for recovery</div>
+      <h2 class="section-title">Local Recovery State</h2>
+      <div class="state-grid">
+        <div class="card">
+          <span class="label">Autoload Enabled</span>
+          <span id="safe-autoload-enabled" class="value">Unknown</span>
+        </div>
+        <div class="card">
+          <span class="label">Consecutive Failures</span>
+          <span id="safe-consecutive-failures" class="value">Unknown</span>
+        </div>
+        <div class="card">
+          <span class="label">Launch Pending</span>
+          <span id="safe-launch-pending" class="value">Unknown</span>
+        </div>
+        <div class="card">
+          <span class="label">Last Launch Timestamp</span>
+          <span id="safe-last-launch" class="value">Unknown</span>
+        </div>
+        <div class="card">
+          <span class="label">Disable Reason</span>
+          <span id="safe-disable-reason" class="value">Unknown</span>
+        </div>
+        <div class="card">
+          <span class="label">Saved Firmware</span>
+          <span id="safe-saved-firmware" class="value">Unknown</span>
+        </div>
+      </div>
+      <h2 class="section-title">Global Emergency Kill Switch</h2>
+      <p>This switch is read-only for visitors. Only private repository deployment can publish a new global configuration.</p>
+      <div class="state-grid">
+        <div class="card">
+          <span class="label">Global Status</span>
+          <span id="safe-global-status" class="value">Unknown</span>
+        </div>
+        <div class="card">
+          <span class="label">Disabled By</span>
+          <span id="safe-global-by" class="value">Unknown</span>
+        </div>
+        <div class="card">
+          <span class="label">Global Reason</span>
+          <span id="safe-global-reason" class="value">Unknown</span>
+        </div>
+        <div class="card">
+          <span class="label">Configuration Revision</span>
+          <span id="safe-global-revision" class="value">Unknown</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="clear-host-settings" type="button">Clear host settings</button>
+        <a href="./index.html?v=next-universal-1302-research-0005">Return to main page</a>
+      </div>
+      <p>Return to PS4 home if you want the normal browser shell before attempting another manual launch.</p>
+    </section>
+  </div>
+  <script>
+    (function () {
+      var guard = window.PS4AutoloadGuard;
+      var state;
+
+      function setText(id, value) {
+        var node = document.getElementById(id);
+        if (node) node.textContent = value;
+      }
+
+      if (!guard) return;
+      state = guard.handleInterruptedLaunch(window.localStorage, "").state;
+      state = guard.applySafeMode(window.localStorage, state.disableReason || "safe-page");
+      setText("safe-autoload-enabled", state.autoloadEnabled ? "true" : "false");
+      setText("safe-consecutive-failures", String(state.consecutiveFailures));
+      setText("safe-launch-pending", state.launchPending ? "true" : "false");
+      setText("safe-last-launch", state.lastLaunchTimestamp || "Not recorded");
+      setText("safe-disable-reason", state.disableReason || "Not recorded");
+      setText("safe-saved-firmware", state.savedFirmware || "Not recorded");
+
+      guard.loadConfig(window.fetch ? window.fetch.bind(window) : null, "./autoload-config.json?v=next-universal-1302-research-0005").then(function (config) {
+        var globalState = guard.describeGlobalConfig(config);
+        setText("safe-global-status", globalState.status);
+        setText("safe-global-by", globalState.disabledBy);
+        setText("safe-global-reason", globalState.reason);
+        setText("safe-global-revision", globalState.revision);
+      });
+
+      document.getElementById("clear-host-settings").addEventListener("click", function () {
+        try {
+          window.localStorage.removeItem(guard.STORAGE_KEYS.autoloadEnabled);
+          window.localStorage.removeItem(guard.STORAGE_KEYS.consecutiveFailures);
+          window.localStorage.removeItem(guard.STORAGE_KEYS.launchPending);
+          window.localStorage.removeItem(guard.STORAGE_KEYS.lastLaunchTimestamp);
+          window.localStorage.removeItem(guard.STORAGE_KEYS.disableReason);
+          window.localStorage.removeItem(guard.STORAGE_KEYS.savedFirmware);
+        } catch (error) { }
+        location.reload();
+      });
+    })();
+  </script>
+</body>
+</html>
