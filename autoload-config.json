@@ -1,6 +1,6 @@
 {
   "scope": "global-emergency-kill-switch",
-  "revision": "next-universal-1302-research-0005-autoload-0001",
+  "revision": "next-universal-1302-research-0008-autoload-0001",
   "updatedAt": "2026-09-06T00:00:00Z",
   "expiresAt": "2027-01-01T00:00:00Z",
   "autoloadEnabled": false,

@@ -488,7 +488,7 @@
 
     }
   </style>
-  <script src="./js/autoload-guard.js?v=next-universal-1302-research-0005"></script>
+  <script src="./js/autoload-guard.js?v=next-universal-1302-research-0008"></script>
   <script>
     window.__PS4_AUTOLOAD_CANCEL_STATE__ = window.__PS4_AUTOLOAD_CANCEL_STATE__ || { cancelled: false, reason: "" };
     if (window.PS4AutoloadGuard && !window.__PS4AutoCancel) {
@@ -501,15 +501,15 @@
       window.__PS4AutoCancel.attach(window);
     }
   </script>
-  <script src="./build.js?v=next-universal-1302-research-0005" defer></script>
-  <script src="./js/diagnostics.js?v=next-universal-1302-research-0005" defer></script>
-  <script src="./js/capabilities.js?v=next-universal-1302-research-0005" defer></script>
-  <script src="./js/entrypoints.js?v=next-universal-1302-research-0005" defer></script>
-  <script src="./js/hens.js?v=next-universal-1302-research-0005" defer></script>
-  <script src="./js/payloads.js?v=next-universal-1302-research-0005" defer></script>
-  <script src="./payloads/catalog.js?v=next-universal-1302-research-0005" defer></script>
-  <script src="./js/payload-loader.js?v=next-universal-1302-research-0005" defer></script>
-  <script src="./js/next-firmware-capability.js?v=next-universal-1302-research-0005" defer></script>
+  <script src="./build.js?v=next-universal-1302-research-0008" defer></script>
+  <script src="./js/diagnostics.js?v=next-universal-1302-research-0008" defer></script>
+  <script src="./js/capabilities.js?v=next-universal-1302-research-0008" defer></script>
+  <script src="./js/entrypoints.js?v=next-universal-1302-research-0008" defer></script>
+  <script src="./js/hens.js?v=next-universal-1302-research-0008" defer></script>
+  <script src="./js/payloads.js?v=next-universal-1302-research-0008" defer></script>
+  <script src="./payloads/catalog.js?v=next-universal-1302-research-0008" defer></script>
+  <script src="./js/payload-loader.js?v=next-universal-1302-research-0008" defer></script>
+  <script src="./js/next-firmware-capability.js?v=next-universal-1302-research-0008" defer></script>
 </head>
 <body>
   <div class="shell">
@@ -588,7 +588,7 @@
           </div>
           <div class="stat">
             <span class="stat-label">Build</span>
-            <span class="stat-value" data-build-id>next-universal-1302-research-0005</span>
+            <span class="stat-value" data-build-id>next-universal-1302-research-0008</span>
           </div>
         </div>
         <div id="recovery-banner" class="preview-banner recovery-banner" hidden>Autoload disabled for recovery</div>
@@ -597,7 +597,7 @@
         <div class="switch-grid">
           <div class="switch-card">
             <h3>Local Recovery Switch</h3>
-            <p>Available through this page, <a href="./safe.html?v=next-universal-1302-research-0005">/safe.html</a>, and <a href="./index.html?safe=1&amp;v=next-universal-1302-research-0005">/?safe=1</a>. It changes only this browser's localStorage and cannot affect other visitors.</p>
+            <p>Available through this page, <a href="./safe.html?v=next-universal-1302-research-0008">/safe.html</a>, and <a href="./index.html?safe=1&amp;v=next-universal-1302-research-0008">/?safe=1</a>. It changes only this browser's localStorage and cannot affect other visitors.</p>
             <div id="local-switch-meta" class="switch-meta">
               <div>Scope: This browser only</div>
               <div id="local-switch-state">State: Disabled</div>
@@ -624,8 +624,8 @@
             <button id="run-1302-research" type="button" disabled>Run 13.02 Research</button>
             <div id="research-1302-status" class="action-note">13.02 Research Lab<br>Checking firmware availability.</div>
           </div>
-          <a class="link-button" href="./safe.html?v=next-universal-1302-research-0005">Open Safe Recovery</a>
-          <a class="link-button" href="./diagnostics.html?v=next-universal-1302-research-0005">Open Diagnostics</a>
+          <a class="link-button" href="./safe.html?v=next-universal-1302-research-0008">Open Safe Recovery</a>
+          <a class="link-button" href="./diagnostics.html?v=next-universal-1302-research-0008">Open Diagnostics</a>
         </div>
       </div>
 
@@ -675,7 +675,7 @@
           <div class="support-row">
             <strong>Public Sources</strong>
             <span>Audited</span>
-            <small>See <a href="./credits.html?v=next-universal-1302-research-0005">Credits</a> and the repository notices for authors, licenses, and provenance.</small>
+            <small>See <a href="./credits.html?v=next-universal-1302-research-0008">Credits</a> and the repository notices for authors, licenses, and provenance.</small>
           </div>
           <div class="support-row">
             <strong>13.02 Research</strong>
@@ -700,7 +700,7 @@
         <p id="cache-copy" class="routing-copy">Checking whether this browser reports offline cache support.</p>
         <div class="actions">
           <button id="refresh-next-cache" type="button">Refresh NEXT Cache</button>
-          <a class="link-button" href="./credits.html?v=next-universal-1302-research-0005">Open Credits</a>
+          <a class="link-button" href="./credits.html?v=next-universal-1302-research-0008">Open Credits</a>
         </div>
       </div>
     </section>
@@ -1432,7 +1432,7 @@
         }
         updateLaunchState();
         if (!autoloadGuard) return Promise.resolve();
-        return autoloadGuard.loadConfig(window.fetch ? window.fetch.bind(window) : null, "./autoload-config.json?v=next-universal-1302-research-0005")
+        return autoloadGuard.loadConfig(window.fetch ? window.fetch.bind(window) : null, "./autoload-config.json?v=next-universal-1302-research-0008")
           .then(function (config) {
             autoloadConfig = config;
             if (config.autoloadEnabled !== true) {
