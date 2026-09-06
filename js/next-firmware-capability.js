@@ -31,11 +31,6 @@
     return String(entry.kernel || "Unsupported");
   }
 
-  function experimental1302Enabled() {
-    var flags = window.PS4_WEBKIT_FLAGS || (window.PS4_WEBKIT_BUILD && window.PS4_WEBKIT_BUILD.flags) || {};
-    return flags.ENABLE_1302_EXPERIMENTAL === true || window.ENABLE_1302_EXPERIMENTAL === true;
-  }
-
   function hardwareVerificationFor(entry, firmware) {
     if (!entry) return "UNVERIFIED";
     if (entry.verifiedByKillerNoS) return "LOCAL";
@@ -75,18 +70,17 @@
         : mode === "research"
           ? "RESEARCH ONLY"
           : "UNSUPPORTED";
-    var researchLocked = mode === "research" && entry && entry.featureFlagRequired === "ENABLE_1302_EXPERIMENTAL" && !experimental1302Enabled();
     return {
       firmware: firmware,
       firmwareNumber: firmwareNumber(firmware),
-      buttonAllowed: mode !== "unsupported" && !researchLocked,
+      buttonAllowed: mode !== "unsupported",
       mode: mode,
       backend: backendNameFor(entry, firmware),
       target: entry && entry.runtime ? entry.runtime : "",
       runtimeConfigured: mode === "runtime",
       research: mode !== "runtime",
-      nextAccess: mode === "unsupported" ? "UNSUPPORTED" : researchLocked ? "DISABLED" : "AVAILABLE",
-      runtimeStatus: researchLocked ? "DISABLED BY FEATURE FLAG" : runtimeStatus,
+      nextAccess: mode === "unsupported" ? "UNSUPPORTED" : "AVAILABLE",
+      runtimeStatus: runtimeStatus,
       hardwareVerification: hardwareVerificationFor(entry, firmware),
       researchCandidate: entry && entry.userland ? entry.userland : "",
       candidateStatus: entry && entry.evidence ? String(entry.evidence).toLowerCase() : "unknown",
@@ -95,7 +89,7 @@
       details: entry && entry.details ? entry.details : null,
       releaseChannel: entry && entry.releaseChannel ? entry.releaseChannel : "unsupported",
       featureFlagRequired: entry && entry.featureFlagRequired ? entry.featureFlagRequired : "",
-      disabledReason: researchLocked ? "ENABLE_1302_EXPERIMENTAL is false in this build." : ""
+      disabledReason: ""
     };
   }
 

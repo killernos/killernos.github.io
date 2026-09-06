@@ -933,21 +933,10 @@
         return url.pathname + url.search;
       }
 
-      function experimental1302Enabled() {
-        return !!((window.PS4_WEBKIT_FLAGS && window.PS4_WEBKIT_FLAGS.ENABLE_1302_EXPERIMENTAL === true)
-          || (window.PS4_WEBKIT_BUILD && window.PS4_WEBKIT_BUILD.flags && window.PS4_WEBKIT_BUILD.flags.ENABLE_1302_EXPERIMENTAL === true)
-          || window.ENABLE_1302_EXPERIMENTAL === true);
-      }
-
       function updateResearch1302State() {
         var enabled = firmwareNumber != null && firmwareNumber <= 1302;
-        var featureEnabled = experimental1302Enabled();
-        if (research1302Button) research1302Button.disabled = !enabled || !featureEnabled;
+        if (research1302Button) research1302Button.disabled = !enabled;
         if (!research1302Status) return;
-        if (!featureEnabled) {
-          research1302Status.innerHTML = "13.02 Research Lab<br>Disabled in this build.<br>ENABLE_1302_EXPERIMENTAL must be enabled for development-only testing.";
-          return;
-        }
         if (firmware === "13.02") {
           research1302Status.innerHTML = "13.02 Research Lab<br>Hardware firmware matches.<br>Manual SlopKit test available.";
           return;

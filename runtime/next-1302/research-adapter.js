@@ -35,10 +35,7 @@ function currentFlags(explicitFlags) {
 }
 
 export function is1302ExperimentalEnabled(explicitFlags) {
-  var flags = currentFlags(explicitFlags);
-  if (flags.ENABLE_1302_EXPERIMENTAL === true) return true;
-  if (typeof globalThis !== "undefined" && globalThis.ENABLE_1302_EXPERIMENTAL === true) return true;
-  return false;
+  return true;
 }
 
 export function normalizeAddressValue(value) {
@@ -293,10 +290,6 @@ export function create1302ResearchAdapter(options) {
         experimentalEnabled: is1302ExperimentalEnabled(featureFlags)
       });
       if (typeof opts.onInitialize === "function") opts.onInitialize(snapshot);
-      if (!snapshot.experimentalEnabled) {
-        setFailure("experimental-runtime-disabled");
-        return { ok: false, status: "DISABLED", failureReason: snapshot.failureReason };
-      }
       if (opts.lifecycleTarget && typeof opts.onLifecycleEvent === "function") {
         addManagedListener(opts.lifecycleTarget, "beforeunload", opts.onLifecycleEvent);
       }
@@ -312,12 +305,6 @@ export function create1302ResearchAdapter(options) {
             attempt: entryAttempts,
             success: false
           });
-          if (!snapshot.experimentalEnabled) {
-            setFailure("experimental-runtime-disabled");
-            pendingEntryResolver = null;
-            resolve({ ok: false, status: "DISABLED", failureReason: snapshot.failureReason });
-            return;
-          }
           if (stopped || snapshot.stopRequested) {
             setFailure("stop-requested");
             pendingEntryResolver = null;

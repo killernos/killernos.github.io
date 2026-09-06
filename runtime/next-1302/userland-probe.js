@@ -127,11 +127,7 @@ if (context.simulated) {
 }
 diagnostics.init();
 
-const adapterInit = adapter.initialize();
-if (!adapterInit.ok) {
-  runButton.disabled = true;
-  state.setStatus("13.02 experimental runtime is disabled in this build. Enable ENABLE_1302_EXPERIMENTAL only for development builds.", "bad");
-}
+adapter.initialize();
 
 if (window.PS4Diag && typeof window.PS4Diag.markHen === "function") {
   window.PS4Diag.markHen({
