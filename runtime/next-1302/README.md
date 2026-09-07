@@ -6,6 +6,9 @@ This directory isolates the PS4 13.02 research launch path from the known-good N
 - `userland-probe.js` wraps SlopKit with exact 13.02 gating and stops after userland validation.
 - `diagnostics-bridge.js` forwards research events to `window.PS4Diag` when available.
 - `research-state.js` owns the local UI state and report export.
+- `kernel-candidate.html` is a separate consent-gated diagnostics-only page.
+- `kernel-candidate-adapter.js` collects only fixed, browser-visible signals and exposes no SlopKit or kernel operation.
+- `kernel-candidate-probe.js` connects the candidate page to bounded local reporting and shared diagnostics.
 - `slopkit/` contains direct copies of the current `site/runtime/next/` `core.js`, `mem.js`, and `int64.js` files for isolated testing.
 
 Boundary:
@@ -14,3 +17,4 @@ Boundary:
 - No Netctrl.
 - No Celsius execution.
 - No kernel offsets, guessed bases, or GoldHEN loading.
+- No filesystem enumeration or device-node access; the device-node allowlist remains empty until an independently verified harmless query exists.
