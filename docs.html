@@ -176,7 +176,7 @@
       .button { width: 100%; text-align: center; }
     }
   </style>
-  <script src="./build.js?v=next-universal-1302-research-0009" defer></script>
+  <script src="./build.js?v=next-universal-1302-research-0010" defer></script>
 </head>
 <body>
   <main class="shell">
@@ -186,9 +186,9 @@
       <p>Setup, firmware boundaries, safe 13.02 research testing, troubleshooting, and community report submission for the KillerNoS host.</p>
       <div class="notice"><strong>Important:</strong> 13.02 is a research target, not confirmed kernel-exploit support. The current 13.02 path tests only an isolated SlopKit userland primitive and does not run Celsius, kernel code, a payload, or GoldHEN.</div>
       <div class="actions">
-        <a class="button primary" href="./index.html?v=next-universal-1302-research-0009">Open NEXT</a>
-        <a class="button" href="./diagnostics.html?v=next-universal-1302-research-0009">Open Diagnostics / Report</a>
-        <a class="button" href="./safe.html?v=next-universal-1302-research-0009">Safe Recovery</a>
+        <a class="button primary" href="./index.html?v=next-universal-1302-research-0010">Open NEXT</a>
+        <a class="button" href="./diagnostics.html?v=next-universal-1302-research-0010">Open Diagnostics / Report</a>
+        <a class="button" href="./safe.html?v=next-universal-1302-research-0010">Safe Recovery</a>
       </div>
       <nav class="toc" aria-label="Guide sections">
         <a href="#status">Status</a>
@@ -231,8 +231,10 @@
       <div class="step"><strong>1. Start from the main page.</strong><p>Open NEXT on an actual PS4. Confirm that the detected firmware reads <code>13.02</code>. If it does not, stop; the 13.02 test must not be forced.</p></div>
       <div class="step"><strong>2. Keep the run manual.</strong><p>Do not enable autoload and do not select a payload. Choose <strong>Run 13.02 Research</strong>. The separate research page should identify itself as an isolated SlopKit userland test.</p></div>
       <div class="step"><strong>3. Run one attempt.</strong><p>Choose <strong>Run SlopKit Userland Test</strong> once and wait for a terminal status. Do not rapidly retry. Record the last stage shown, whether the page returned, and whether the browser, application, or console crashed.</p></div>
-      <div class="step"><strong>4. Stop after instability.</strong><p>If the browser stalls, freezes, or reboots, do not loop the test. Reopen <a href="./safe.html?v=next-universal-1302-research-0009">Safe Recovery</a>, then capture the diagnostics and submit one report.</p></div>
+      <div class="step"><strong>4. Stop after instability.</strong><p>If the browser stalls, freezes, or reboots, do not loop the test. Reopen <a href="./safe.html?v=next-universal-1302-research-0010">Safe Recovery</a>, then capture the diagnostics and submit one report.</p></div>
       <div class="step"><strong>5. Preserve the evidence.</strong><p>Open Diagnostics before clearing host data. Download the full JSON report and note the exact action and visible stage immediately before the result.</p></div>
+      <h3>Optional diagnostics-only candidate probe</h3>
+      <p>After the userland test, you may open the separate <a href="./runtime/next-1302/kernel-candidate.html">13.02 Kernel Candidate Probe</a>. Its collection button starts disabled and requires explicit consent. It records a fixed set of browser-visible prerequisites only. It does not import SlopKit, enumerate files, access device nodes, trigger Celsius, use offsets, touch kernel memory, send a report, or load a payload.</p>
     </section>
 
     <section id="results" class="panel">
@@ -245,6 +247,7 @@
           <tr><td>Freeze or reboot</td><td>Report as observed behavior or “possible kernel panic” only when that is genuinely what happened. Do not label it a kernel exploit.</td></tr>
           <tr><td>Kernel fields remain “NOT VERIFIED”</td><td>Expected. The public 13.02 research page contains no kernel execution path.</td></tr>
           <tr><td>GoldHEN remains “LOCKED”</td><td>Expected. The 13.02 research path does not load a payload.</td></tr>
+          <tr><td>Candidate probe completes</td><td>Only the allowlisted browser signals were collected. Completion is not evidence of a kernel vulnerability or exploit.</td></tr>
         </tbody>
       </table>
       <div class="notice"><strong>Evidence standard:</strong> a genuine 13.02 kernel result needs reproducible, independently reviewable proof of a kernel primitive or controlled kernel behavior. UI labels, a crash, a reboot, or userland arbitrary read/write alone are insufficient.</div>
@@ -253,7 +256,7 @@
     <section id="submit" class="panel">
       <h2>How to submit a useful test report</h2>
       <ol>
-        <li>Open <a href="./diagnostics.html?v=next-universal-1302-research-0009">Diagnostics</a> after the attempt.</li>
+        <li>Open <a href="./diagnostics.html?v=next-universal-1302-research-0010">Diagnostics</a> after the attempt.</li>
         <li>Enter an optional tester alias and select the real console model.</li>
         <li>Select the actual entrypoint and candidate. For this page use <strong>SlopKit</strong> unless you knowingly tested something else.</li>
         <li>Choose the closest observed outcome. Use the notes for the last visible stage, approximate wait time, number of attempts, and steps needed to reproduce it.</li>
@@ -264,7 +267,7 @@
       <p>Exact firmware, console model, build ID, entrypoint, candidate, last successful stage, exact outcome, retry count, and whether Safe Recovery was needed.</p>
       <h3>Do not include</h3>
       <p>Passwords, account identifiers, IP addresses, private keys, purchased content, copyrighted system files, or unrelated personal data.</p>
-      <div class="actions"><a class="button primary" href="./diagnostics.html?v=next-universal-1302-research-0009">Prepare a Test Report</a></div>
+      <div class="actions"><a class="button primary" href="./diagnostics.html?v=next-universal-1302-research-0010">Prepare a Test Report</a></div>
     </section>
 
     <section id="troubleshooting" class="panel">
@@ -276,8 +279,8 @@
         <li><strong>Report endpoint unavailable:</strong> download the full report and use the GitHub short-report fallback.</li>
       </ul>
       <div class="actions">
-        <a class="button" href="./safe.html?v=next-universal-1302-research-0009">Open Safe Recovery</a>
-        <a class="button" href="./credits.html?v=next-universal-1302-research-0009">Credits &amp; Provenance</a>
+        <a class="button" href="./safe.html?v=next-universal-1302-research-0010">Open Safe Recovery</a>
+        <a class="button" href="./credits.html?v=next-universal-1302-research-0010">Credits &amp; Provenance</a>
       </div>
       <p class="small">PS4 WebKit NEXT is maintained by KillerNoS for authorized homebrew and security research. Third-party authors retain their own credits and licenses.</p>
     </section>
