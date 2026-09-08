@@ -386,9 +386,9 @@
         var jsState = document.getElementById("diag-js-state");
         if (warning) {
           warning.style.display = "block";
-          warning.innerHTML = "Diagnostics JavaScript failed to initialize. Static diagnostics controls remain available.";
+          warning.textContent = "Diagnostics JavaScript failed to initialize. Static diagnostics controls remain available.";
         }
-        if (jsState) jsState.innerHTML = "FAILED";
+        if (jsState) jsState.textContent = "FAILED";
       }
     }, 1500);
   </script>

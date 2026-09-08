@@ -88,7 +88,7 @@ export function createDiagnosticsBridge(state) {
       window.PS4Runtime.backendEntered = true;
       if (!window.PS4Diag) return;
       window.PS4Diag.markBackend({ selected: BACKEND_NAME, entered: true, completed: !!success, failed: !success });
-      window.PS4Diag.info("NEXT-1302-REPORT", "13.02 research state updated.", {
+      window.PS4Diag.info("NEXT-1302-REPORT", state.snapshot.firmware + " research state updated.", {
         category: "RESEARCH",
         firmware: state.snapshot.firmware,
         hardware: state.snapshot.hardware,

@@ -292,7 +292,9 @@
     }
     if (/^ATTEMPT-(START|BEGIN)$|^AUTO-RETRY-|^CORE-GIVE-UP$|^SETUP-THREW$|^REFUSING-TO-ARM$/.test(stage)) return "WK-BEGIN";
     if (/^ARMED$|^RACE-|^RECLAIM-FAILED$|^PRECOMMIT-|^WIN-EVIDENCE$/.test(stage)) return "WK-TRIGGER";
-    if (/^PRIMITIVE-OK$|^BASES$|^PROOF-OK$/.test(stage)) return "WK-PRIMITIVE";
+    if (/^PRIMITIVE-OK$|^BASES$|^PROOF-OK$|^ADDROF-|^SLOPKIT-CARRIER-OBTAINED$/.test(stage)) return "WK-PRIMITIVE";
+    if (/^READ-PRIMITIVE-PASS$|^SLOPKIT-READ-VERIFIED$/.test(stage)) return "ARW-READ-PASS";
+    if (/^SLOPKIT-WRITE-VERIFIED$|^USERLAND[_-]ARW-(CONFIRMED|VERIFIED)$/.test(stage)) return "ARW-WRITE-PASS";
     if (/^WORKER-READY$|^BUFFERS$|^GADGET-|^STUB-|^KV-BENCH|^KV-STATS$/.test(stage)) return "ROP-BEGIN";
     if (/^PID$|^SIGIO-PID$|^KREAD-PID$|^STAGE9-STUBS$|^STUB-SCAN$|^STUB-TABLE$/.test(stage)) return "SYSCALL-READY";
     if (/^DOUBLE-FREE-ACHIEVED$|^LEAK-|^KADDR-|^TARGET-(SEARCH|SCAN|WINDOW-LOST|ID)$|^REQS2-FOUND$|^STAGE-2-DONE$/.test(stage)) return "KEX-BEGIN";
@@ -547,6 +549,26 @@
     return result;
   }
 
+  function sessionHasStage(records, pattern) {
+    var index;
+    for (index = 0; index < records.length; index++) {
+      if (pattern.test(records[index].stage || "")) return true;
+    }
+    return false;
+  }
+
+  function lastSessionStageMatching(records, pattern) {
+    var index;
+    for (index = records.length - 1; index >= 0; index--) {
+      if (pattern.test(records[index].stage || "")) return records[index].stage;
+    }
+    return "";
+  }
+
+  function testerOutcomeIsFailure(outcome) {
+    return /^(Exploit did not start|Exploit stalled|Browser crash|Application crash|PS4 froze|PS4 rebooted|Possible kernel panic|Payload failed to load|GoldHEN did not appear|Cache problem|Offline problem|Repeated failure)$/.test(outcome || "");
+  }
+
   function recountCurrentSession() {
     var sessionRecords = currentSessionRecords();
     var completed = !!state.sessionCompleted;
@@ -564,13 +586,14 @@
       if (record.normalizedStage) state.lastNormalizedStage = record.normalizedStage;
       if (record.status === "PASS") state.passes++;
       if (record.status === "FAIL") state.failures++;
-      if (/ATTEMPT-(BEGIN|START)/.test(record.stage)) state.attempts++;
+      if (record.stage === "ATTEMPT-START") state.attempts++;
       if (record.category === "RESOURCE") state.resourceErrors++;
       if (record.stage === "JS-ERROR" || record.stage === "UNHANDLED-PROMISE") state.jsErrors++;
       if (record.stage === "DONE" || record.stage === "SESSION-COMPLETE" || record.stage === "PAYLOAD-END") {
         completed = true;
       }
     }
+    if (!state.attempts && sessionHasStage(sessionRecords, /^ATTEMPT-BEGIN$/)) state.attempts = 1;
     state.sessionCompleted = completed;
   }
 
@@ -688,7 +711,7 @@
     var normalizedStage = normalizedStageFor(stage, {
       pageName: runtime.pageName,
       category: (details && details.category) || categorize(stage)
-    }) || state.lastNormalizedStage || "";
+    }) || "";
     var record = {
       timestamp: timestamp,
       elapsedMs: state.sessionStartedAt ? Math.max(0, Date.parse(timestamp) - Date.parse(state.sessionStartedAt)) : 0,
@@ -1019,6 +1042,14 @@
         break;
       }
     }
+    var observedResearch = sessionHasStage(sessionRecords, /^RUNTIME-RESEARCH$|^NEXT-1302-|^SLOPKIT-|^ADDROF-|^READ-PRIMITIVE-PASS$|^USERLAND[_-]ARW-/);
+    var observedFailureCount = state.failures + (testerOutcomeIsFailure(state.testerOutcome) ? 1 : 0);
+    var observedCarrier = sessionHasStage(sessionRecords, /^SLOPKIT-CARRIER-OBTAINED$/);
+    var observedWindowP = sessionHasStage(sessionRecords, /^SLOPKIT-WINDOW-P-INSTALLED$/);
+    var observedRead = sessionHasStage(sessionRecords, /^SLOPKIT-READ-VERIFIED$|^READ-PRIMITIVE-PASS$/);
+    var observedWrite = sessionHasStage(sessionRecords, /^SLOPKIT-WRITE-VERIFIED$/);
+    var observedArw = sessionHasStage(sessionRecords, /^USERLAND[_-]ARW-(CONFIRMED|VERIFIED)$/);
+    var lastResearchStage = lastSessionStageMatching(sessionRecords, /^NEXT-1302-|^SLOPKIT-|^ADDROF-|^READ-PRIMITIVE-PASS$|^USERLAND[_-]ARW-/);
     var report = {
       schema: REPORT_SCHEMA,
       reportId: getOrCreateReportId(),
@@ -1047,13 +1078,13 @@
         backendFailed: state.backend.failed
       },
       runtime: {
-        firmwareCapability: state.runtime.firmwareCapability,
-        runtimeConfigured: state.runtime.runtimeConfigured,
-        runtimeMode: state.runtime.runtimeMode,
-        runtimeBackend: state.runtime.runtimeBackend,
-        runtimeTarget: state.runtime.runtimeTarget,
-        nextAccess: state.runtime.nextAccess,
-        hardwareVerification: state.runtime.hardwareVerification
+        firmwareCapability: observedResearch ? "research" : state.runtime.firmwareCapability,
+        runtimeConfigured: observedResearch ? true : state.runtime.runtimeConfigured,
+        runtimeMode: observedResearch ? "research" : state.runtime.runtimeMode,
+        runtimeBackend: observedResearch ? (state.backend.selected || "NEXT 13.02 Research") : state.runtime.runtimeBackend,
+        runtimeTarget: observedResearch ? (state.runtime.runtimeTarget || "./runtime/next-1302/index.html") : state.runtime.runtimeTarget,
+        nextAccess: observedResearch ? "RESEARCH" : state.runtime.nextAccess,
+        hardwareVerification: observedResearch && state.firmware && state.firmware.hardwareDetected ? "HARDWARE-DETECTED" : state.runtime.hardwareVerification
       },
       payload: {
         payloadId: state.payload.id,
@@ -1085,7 +1116,7 @@
       },
       attemptCount: state.attempts,
       passCount: state.passes,
-      failureCount: state.failures,
+      failureCount: observedFailureCount,
       firstStage: sessionRecords.length ? sessionRecords[0].stage : "",
       firstNormalizedStage: firstNormalizedStage,
       lastStage: state.lastStage,
@@ -1123,14 +1154,14 @@
         kernelRead: state.research.kernelRead,
         kernelWrite: state.research.kernelWrite,
         kernelExecution: state.research.kernelExecution,
-        lastResearchStage: state.research.lastResearchStage,
+        lastResearchStage: lastResearchStage || state.research.lastResearchStage,
         slopkitAttempt: state.attempts,
-        slopkitLastStage: state.lastStage,
-        carrierState: /SLOPKIT-CARRIER-OBTAINED/.test(state.lastStage) ? "OBTAINED" : "NOT OBTAINED",
-        windowPState: /SLOPKIT-WINDOW-P-INSTALLED/.test(state.lastStage) ? "INSTALLED" : "NOT INSTALLED",
-        readPrimitiveState: /SLOPKIT-READ-VERIFIED|READ-PRIMITIVE-PASS/.test(state.lastStage) ? "VERIFIED" : "NOT VERIFIED",
-        writePrimitiveState: /SLOPKIT-WRITE-VERIFIED/.test(state.lastStage) ? "VERIFIED" : "NOT VERIFIED",
-        userlandARWState: /USERLAND-ARW-VERIFIED/.test(state.lastStage) ? "VERIFIED" : "NOT VERIFIED",
+        slopkitLastStage: lastResearchStage || state.lastStage,
+        carrierState: observedCarrier ? "OBTAINED" : "NOT OBTAINED",
+        windowPState: observedWindowP ? "INSTALLED" : "NOT INSTALLED",
+        readPrimitiveState: observedRead ? "VERIFIED" : "NOT VERIFIED",
+        writePrimitiveState: observedWrite ? "VERIFIED" : "NOT VERIFIED",
+        userlandARWState: observedArw ? "VERIFIED" : "NOT VERIFIED",
         nativeSyscallState: "LOCKED",
         celsiusState: "LOCKED",
         kernelFaultState: state.research.kernelFaultObserved ? "OBSERVED" : "NOT OBSERVED",

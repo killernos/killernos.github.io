@@ -174,7 +174,7 @@
       firmware: "13.02",
       userland: "SlopKit",
       kernel: "LOCKED",
-      backendLabel: "NEXT 13.02 Research",
+      backendLabel: "NEXT 13.02-13.52 Research",
       runtime: "./runtime/next-1302/index.html",
       mode: "research",
       releaseChannel: "research-only",
@@ -191,7 +191,7 @@
       verifiedByKillerNoS: false,
       henAllowed: false,
       researchOnly: true,
-      notes: "Userland research laboratory only. Kernel, Celsius, HEN, and GoldHEN remain locked until independently verified."
+      notes: "Firmware-specific userland research laboratory for 13.02 through 13.52. Kernel, Celsius, HEN, and GoldHEN remain locked until independently verified."
     }
   ];
 
@@ -289,11 +289,23 @@
     };
   }
 
+  function researchCapability(firmware) {
+    var base = findExact("13.02") || {};
+    var research = clone(base);
+    research.firmware = firmware;
+    research.backendLabel = "NEXT 13.02-13.52 Research";
+    research.notes = "Firmware-specific userland research only. Results are tagged with the exact detected firmware. Kernel, Celsius, HEN, and GoldHEN remain locked until independently verified.";
+    research.details = detailedStatus(research);
+    return research;
+  }
+
   function resolve(firmware) {
     var normalized = normalizeFirmware(firmware);
+    var number = firmwareNumber(normalized);
     var exact = normalized ? findExact(normalized) : null;
     if (exact) return exact;
-    if (normalized && firmwareNumber(normalized) < firmwareNumber("13.02")) return compatibilityCapability(normalized);
+    if (normalized && number >= firmwareNumber("13.02") && number <= firmwareNumber("13.52")) return researchCapability(normalized);
+    if (normalized && number < firmwareNumber("13.02")) return compatibilityCapability(normalized);
     return unsupportedCapability(normalized);
   }
 

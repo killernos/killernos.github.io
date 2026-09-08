@@ -25,7 +25,7 @@
   function backendNameFor(entry, firmware) {
     if (!entry) return "Unsupported";
     if (entry.backendLabel) return String(entry.backendLabel);
-    if (entry.mode === "research") return "NEXT 13.02 Research";
+    if (entry.mode === "research") return "NEXT 13.02-13.52 Research";
     if (/netctrl/i.test(String(entry.kernel || ""))) return "Poops";
     if (/lapse/i.test(String(entry.kernel || ""))) return "Lapse";
     return String(entry.kernel || "Unsupported");
@@ -113,12 +113,12 @@
     };
   }
 
-  function researchCapability() {
-    var entry = capabilityRegistry && typeof capabilityRegistry.findExact === "function" ? capabilityRegistry.findExact("13.02") : null;
-    return exactEntryCapability("13.02", entry || {
+  function researchCapability(firmware) {
+    var entry = capabilityRegistry && typeof capabilityRegistry.resolve === "function" ? capabilityRegistry.resolve(firmware) : null;
+    return exactEntryCapability(firmware, entry || {
       runtime: "./runtime/next-1302/index.html",
       mode: "research",
-      backendLabel: "NEXT 13.02 Research",
+      backendLabel: "NEXT 13.02-13.52 Research",
       userland: "SlopKit Userland",
       evidence: "RESEARCH",
       releaseChannel: "research-only",
@@ -151,7 +151,7 @@
     var exact = normalized && capabilityRegistry && typeof capabilityRegistry.findExact === "function"
       ? capabilityRegistry.findExact(normalized)
       : null;
-    if (normalized === "13.02") return researchCapability();
+    if (normalized && firmwareNumber(normalized) >= firmwareNumber("13.02") && firmwareNumber(normalized) <= firmwareNumber("13.52")) return researchCapability(normalized);
     if (exact) {
       if (exact.mode === "runtime") return configuredCapability(normalized, exact);
       return exactEntryCapability(normalized, exact);

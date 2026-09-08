@@ -1,5 +1,5 @@
-export const BUILD_ID = "next-universal-1302-research-0010";
-export const BACKEND_NAME = "NEXT 13.02 Research";
+export const BUILD_ID = "next-universal-1302-1352-research-0011";
+export const BACKEND_NAME = "NEXT 13.02-13.52 Research";
 export const CANDIDATE_NAME = "SlopKit Userland";
 export const KERNEL_CANDIDATE_NAME = "Celsius / ffs_mountfs";
 
@@ -230,7 +230,7 @@ export function createResearchState(doc) {
       const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
       const link = doc.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = "next-1302-slopkit-report.json";
+      link.download = "next-13xx-slopkit-report-" + snapshot.firmware.replace(".", "-") + ".json";
       link.click();
       setTimeout(function () {
         URL.revokeObjectURL(link.href);

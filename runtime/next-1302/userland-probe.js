@@ -16,11 +16,18 @@ function parseQuery(name) {
   return "";
 }
 
+function isResearchFirmware(value) {
+  const match = /^(\d+)\.(\d{2})$/.exec(String(value || ""));
+  if (!match) return false;
+  const number = parseInt(match[1], 10) * 100 + parseInt(match[2], 10);
+  return number >= 1302 && number <= 1352;
+}
+
 function detectRuntimeContext() {
   const match = /PlayStation\s+4[\/ ](\d+)\.(\d+)/.exec(navigator.userAgent || "");
   const forcedFirmware = (parseQuery("fw") || "").replace(/\s+/g, "").trim();
   const researchMode = parseQuery("research") === "1";
-  const simulated = forcedFirmware === "13.02" && researchMode;
+  const simulated = isResearchFirmware(forcedFirmware) && researchMode;
 
   if (match) {
     const minorValue = parseInt(match[2], 16);
@@ -30,7 +37,7 @@ function detectRuntimeContext() {
     return {
       firmware,
       hardwareDetected: true,
-      exact1302: firmware === "13.02",
+      researchFirmware: isResearchFirmware(firmware),
       simulated: false,
       researchMode
     };
@@ -39,7 +46,7 @@ function detectRuntimeContext() {
   return {
     firmware: forcedFirmware || (simulated ? "13.02" : "Unknown"),
     hardwareDetected: false,
-    exact1302: false,
+    researchFirmware: false,
     simulated,
     researchMode
   };
@@ -112,17 +119,17 @@ const adapter = create1302ResearchAdapter({
 
 state.setFirmware(context.firmware === "Unknown" ? "Unknown" : context.firmware);
 state.setSimulation(context.simulated);
-state.setHardware(context.simulated ? "simulation" : context.exact1302 ? "hardware" : "not-13.02");
-state.setHen("none", "No HEN", "none", null, null, "source-confirmed", false, false, "LOCKED", "HEN loading is locked during the 13.02 userland research test.");
+state.setHardware(context.simulated ? "simulation" : context.researchFirmware ? "hardware" : "outside-13.02-13.52");
+state.setHen("none", "No HEN", "none", null, null, "source-confirmed", false, false, "LOCKED", "HEN loading is locked during the 13.02-13.52 userland research test.");
 if (context.simulated) {
   state.setHardwareTest("READY", "Simulation mode is enabled for UI and diagnostics testing only.");
   state.setStatus("Simulation mode is enabled for page and diagnostics testing only.");
-} else if (context.exact1302) {
+} else if (context.researchFirmware) {
   state.setHardwareTest("READY", "Hardware firmware matches. Manual SlopKit test available.");
   state.setStatus("Awaiting manual start.");
 } else {
-  state.setHardwareTest("LOCKED", "This console is not running firmware 13.02.");
-  state.setStatus("NEXT 13.02 Research Laboratory loaded for inspection only. Exploit execution is locked on non-13.02 hardware.", "bad");
+  state.setHardwareTest("LOCKED", "This console is outside the 13.02-13.52 research range.");
+  state.setStatus("NEXT 13.02-13.52 Research Laboratory loaded for inspection only. Execution is locked outside the supported research range.", "bad");
   runButton.disabled = true;
 }
 diagnostics.init();
@@ -143,7 +150,7 @@ if (window.PS4Diag && typeof window.PS4Diag.markHen === "function") {
     requested: false,
     attempted: false,
     status: "LOCKED",
-    error: "HEN loading is locked during the 13.02 userland research test."
+    error: "HEN loading is locked during the 13.02-13.52 userland research test."
   });
 }
 
@@ -182,9 +189,9 @@ async function runProbe() {
     return;
   }
 
-  if (!context.exact1302) {
-    state.setStatus("This page only accepts exact PS4 13.02 hardware.", "bad");
-    diagnostics.emit("SLOPKIT-FAIL", "requires-exact-ps4-13.02-hardware");
+  if (!context.researchFirmware) {
+    state.setStatus("This page only accepts PS4 firmware 13.02 through 13.52 hardware.", "bad");
+    diagnostics.emit("SLOPKIT-FAIL", "requires-ps4-13.02-through-13.52-hardware");
     state.setRunning(false);
     diagnostics.markCompleted(false);
     return;
@@ -229,7 +236,7 @@ async function runProbe() {
   diagnostics.emit("SLOPKIT-WRITE-VERIFIED", "page-owned-memory-restored");
 
   state.setARW("VERIFIED", true);
-  state.setStatus("13.02 userland validation completed. Kernel path remains locked.", "ok");
+  state.setStatus(context.firmware + " userland validation completed. Kernel path remains locked.", "ok");
   diagnostics.emit("USERLAND-ARW-VERIFIED", "read-and-write-verified");
   state.setRunning(false);
   diagnostics.markCompleted(true);
@@ -245,8 +252,8 @@ stopButton.addEventListener("click", function () {
   adapter.abort();
   if (state.snapshot.running) {
     state.setStatus("Stop requested. Waiting for the current SlopKit attempt to return.", "bad");
-  } else if (!context.exact1302 && !context.simulated) {
-    state.setStatus("13.02 hardware test remains locked because this console is not running firmware 13.02.", "bad");
+  } else if (!context.researchFirmware && !context.simulated) {
+    state.setStatus("Research test remains locked because this console is outside firmware 13.02-13.52.", "bad");
   } else {
     state.setStatus("No active test is running.");
   }

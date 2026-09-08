@@ -220,7 +220,7 @@ export function create1302ResearchAdapter(options) {
 
   function notImplemented(operation, checkpoint) {
     if (checkpoint) {
-      emit(checkpoint, operation + " requested but remains unavailable on 13.02 research.", {
+      emit(checkpoint, operation + " requested but remains unavailable on 13.02-13.52 research.", {
         failureReason: NOT_IMPLEMENTED,
         success: false
       });
@@ -300,7 +300,7 @@ export function create1302ResearchAdapter(options) {
         pendingEntryResolver = resolve;
         function runAttempt() {
           entryAttempts += 1;
-          emit(CHECKPOINTS.ENTRY_STARTED, "Starting 13.02 userland entry attempt.", {
+          emit(CHECKPOINTS.ENTRY_STARTED, "Starting firmware-tagged userland research attempt.", {
             verificationMethod: "awaiting-integrity-check",
             attempt: entryAttempts,
             success: false
