@@ -129,7 +129,7 @@
       color: var(--text);
     }
   </style>
-  <script src="./js/autoload-guard.js?v=next-universal-1302-research-0010"></script>
+  <script src="./js/autoload-guard.js?v=next-universal-1302-research-0008"></script>
 </head>
 <body>
   <div class="shell">
@@ -186,8 +186,7 @@
       </div>
       <div class="actions">
         <button id="clear-host-settings" type="button">Clear host settings</button>
-        <a href="./docs.html#troubleshooting">Open troubleshooting guide</a>
-        <a href="./index.html?v=next-universal-1302-research-0010">Return to main page</a>
+        <a href="./index.html?v=next-universal-1302-research-0008">Return to main page</a>
       </div>
       <p>Return to PS4 home if you want the normal browser shell before attempting another manual launch.</p>
     </section>
@@ -212,7 +211,7 @@
       setText("safe-disable-reason", state.disableReason || "Not recorded");
       setText("safe-saved-firmware", state.savedFirmware || "Not recorded");
 
-      guard.loadConfig(window.fetch ? window.fetch.bind(window) : null, "./autoload-config.json?v=next-universal-1302-research-0010").then(function (config) {
+      guard.loadConfig(window.fetch ? window.fetch.bind(window) : null, "./autoload-config.json?v=next-universal-1302-research-0008").then(function (config) {
         var globalState = guard.describeGlobalConfig(config);
         setText("safe-global-status", globalState.status);
         setText("safe-global-by", globalState.disabledBy);
