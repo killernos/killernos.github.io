@@ -422,3 +422,56 @@
     createCountdown: createCountdown
   };
 });
+
+(function () {
+  "use strict";
+
+  function addDocsGuidePanel() {
+    if (typeof document === "undefined" || document.getElementById("docs-guide-panel")) return;
+    var shell = document.querySelector(".shell");
+    if (!shell) return;
+
+    var panel = document.createElement("section");
+    panel.id = "docs-guide-panel";
+    panel.className = "panel selector-panel";
+
+    var heading = document.createElement("h2");
+    heading.textContent = "Docs / Guide";
+    panel.appendChild(heading);
+
+    var copy = document.createElement("p");
+    copy.className = "footnote";
+    copy.textContent = "Start here for safe testing instructions, firmware 13.02-13.52 research guidance, report submission rules, and help understanding research results.";
+    panel.appendChild(copy);
+
+    var actions = document.createElement("div");
+    actions.className = "actions";
+
+    var links = [
+      ["Open Research Guide", "https://github.com/killernos/PS4-WebKit/blob/next-1302-research-framework/docs/guide/README.md"],
+      ["Getting Started", "https://github.com/killernos/PS4-WebKit/blob/next-1302-research-framework/docs/guide/getting-started.md"],
+      ["Testing 13.02+", "https://github.com/killernos/PS4-WebKit/blob/next-1302-research-framework/docs/guide/testing-13.02-plus.md"],
+      ["Submitting Reports", "https://github.com/killernos/PS4-WebKit/blob/next-1302-research-framework/docs/guide/submitting-reports.md"],
+      ["Understanding Results", "https://github.com/killernos/PS4-WebKit/blob/next-1302-research-framework/docs/guide/understanding-results.md"]
+    ];
+
+    for (var i = 0; i < links.length; i += 1) {
+      var link = document.createElement("a");
+      link.className = "link-button";
+      link.href = links[i][1];
+      link.textContent = links[i][0];
+      actions.appendChild(link);
+    }
+
+    panel.appendChild(actions);
+    shell.appendChild(panel);
+  }
+
+  if (typeof document !== "undefined") {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", addDocsGuidePanel);
+    } else {
+      addDocsGuidePanel();
+    }
+  }
+})();
