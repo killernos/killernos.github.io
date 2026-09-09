@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { buildHardwareObservationSession } from '../runtime/next-1302/observation-session-bridge.js';
 import { validateHardwareObservationSession } from '../runtime/next-1302/hardware-source-correlation.js';
-const completeEvents=[{stage:'NEXT-1302-HARDWARE-CONFIRMED'},{stage:'NEXT-1302-SESSION-COMPLETED'}];
+const completeEvents=[{stage:'NEXT-1302-HARDWARE-CONFIRMED',sessionId:'NEXT-SESSION-a'},{stage:'NEXT-1302-SESSION-COMPLETED',sessionId:'NEXT-SESSION-a'}];
 const base={sessionId:'NEXT-SESSION-a',firmware:'13.02',firmwareSource:'UA',hardware:'hardware',simulation:false,buildId:'0013',carrierObtained:true,windowPInstalled:true,readVerified:true,writeVerified:true,userlandARWVerified:true,events:completeEvents};
 const good=buildHardwareObservationSession(base);assert.equal(good.ok,true);assert.equal(good.session.reportType,'NEXT_HARDWARE_OBSERVATION_SESSION');assert.equal(good.session.schemaVersion,2);assert.equal(good.session.evidenceClass,'HARDWARE_OBSERVED');assert.equal(good.session.sessionId,'NEXT-SESSION-a');assert.equal(validateHardwareObservationSession(good.session).ok,true);assert.equal(good.session.kernelExecutionObserved,false);assert.equal(good.session.kernelWriteObserved,false);assert.equal(good.session.henObserved,false);
 assert.equal(buildHardwareObservationSession({...base,firmware:'13.03'}).ok,true);
-for(const bad of [{...base,sessionId:''},{...base,firmwareSource:'QUERY'},{...base,simulation:true},{...base,hardware:'simulation'},{...base,events:[]},{...base,events:[{stage:'NEXT-1302-HARDWARE-CONFIRMED'}]}])assert.equal(buildHardwareObservationSession(bad).ok,false);
+for(const bad of [{...base,sessionId:''},{...base,firmwareSource:'QUERY'},{...base,simulation:true},{...base,hardware:'simulation'},{...base,events:[]},{...base,events:[{stage:'NEXT-1302-HARDWARE-CONFIRMED',sessionId:'NEXT-SESSION-a'}]},{...base,events:[{stage:'NEXT-1302-HARDWARE-CONFIRMED',sessionId:'NEXT-SESSION-a'},{stage:'NEXT-1302-SESSION-COMPLETED',sessionId:'OTHER'}]},{...base,events:[...completeEvents,{stage:'LATE-EVENT',sessionId:'NEXT-SESSION-a'}]}])assert.equal(buildHardwareObservationSession(bad).ok,false);
 console.log('observation session bridge regression tests passed');
