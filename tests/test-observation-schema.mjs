@@ -7,4 +7,7 @@ assert.equal(validateObservationSession(valid({schemaVersion:1})).ok,false);
 assert.equal(validateObservationSession(valid({simulated:undefined})).ok,false);
 assert.equal(validateObservationSession(valid({samples:[{key:'probe',value:true},{key:'probe',value:false}]})).ok,false);
 assert.equal(validateObservationSession(valid({samples:[{key:'probe',value:{nested:true}}]})).ok,false);
+assert.equal(validateObservationSession(valid({samples:[{key:'probe',value:NaN}]})).ok,false);
+assert.equal(validateObservationSession(valid({samples:[{key:'probe',value:Infinity}]})).ok,false);
+assert.equal(validateObservationSession(valid({samples:[{key:'probe',value:-Infinity}]})).ok,false);
 console.log('observation schema integrity checks passed');
