@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const html=fs.readFileSync(new URL('../runtime/next-1302/index.html',import.meta.url),'utf8');
+const state=fs.readFileSync(new URL('../runtime/next-1302/research-state.js',import.meta.url),'utf8');
+const probe=fs.readFileSync(new URL('../runtime/next-1302/userland-probe.js',import.meta.url),'utf8');
+const diag=fs.readFileSync(new URL('../runtime/next-1302/diagnostics-bridge.js',import.meta.url),'utf8');
+assert.match(html,/next-universal-1302-1352-research-0013/g);
+assert.match(html,/id="download-observation"/);
+assert.match(html,/hardware-evidence\.html/);
+assert.match(state,/BUILD_ID = "next-universal-1302-1352-research-0013"/);
+assert.match(probe,/createObservationUi/);
+assert.match(probe,/NEXT-1302-SESSION-COMPLETED/);
+assert.doesNotMatch(probe,/runKernelTrigger\(/);
+assert.match(diag,/firmwareSource: state\.snapshot\.firmwareSource/);
+assert.match(diag,/sessionId: state\.snapshot\.sessionId/);
+console.log('Phase 13 live evidence wiring checks passed');

@@ -1,15 +1,16 @@
 import assert from 'node:assert/strict';
 import { processEvidenceBatch, rankResearchQueue, buildTriageExport } from '../runtime/next-1302/evidence-intake.js';
 const source=[{firmware:'13.00',key:'lead',value:'1'},{firmware:'13.02',key:'lead',value:'2'}];
-const session={reportType:'NEXT_HARDWARE_OBSERVATION_SESSION',evidenceClass:'HARDWARE_OBSERVED',firmware:'13.02',firmwareSource:'UA',simulated:false,imported:false,queryDerived:false,userEntered:false,storageDerived:false,samples:[{key:'lead',result:'OBSERVED'}]};
-const bad={...session,simulated:true};
-const triage=processEvidenceBatch([session,{...session},bad],source);
+function session(id){return {reportType:'NEXT_HARDWARE_OBSERVATION_SESSION',schemaVersion:2,evidenceClass:'HARDWARE_OBSERVED',sessionId:id,firmware:'13.02',firmwareSource:'UA',simulated:false,imported:false,queryDerived:false,userEntered:false,storageDerived:false,kernelExecutionObserved:false,kernelWriteObserved:false,henObserved:false,samples:[{key:'lead',value:'OBSERVED'}]};}
+const a=session('NEXT-EVIDENCE-A'),b=session('NEXT-EVIDENCE-B'),bad={...session('NEXT-EVIDENCE-C'),simulated:true};
+const triage=processEvidenceBatch([a,b,bad],source);
 assert.equal(triage.reportType,'NEXT_EVIDENCE_TRIAGE_REPORT');
 assert.equal(triage.accepted.length,2);
 assert.equal(triage.rejected.length,1);
 assert.equal(triage.queue.length>=1,true);
 const lead=triage.queue.find(x=>x.key==='lead');
 assert.equal(lead.reproductions,2);
+assert.equal(lead.distinctSessionCount,2);
 assert.equal(lead.candidateEligible,true);
 assert.equal(lead.exploitProven,false);
 assert.equal(triage.kernelExecutionAuthorized,false);

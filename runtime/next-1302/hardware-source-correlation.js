@@ -1,23 +1,12 @@
 import { KERNEL_SOURCE_REGISTRY } from './kernel-source-registry.js';
 import { buildDifferentialMatrix } from './kernel-differential.js';
+import { validateObservationSession } from './observation-schema.js';
 
-const SUPPORTED_FW = new Set(KERNEL_SOURCE_REGISTRY.researchScope.firmware);
-const FORBIDDEN_PROVENANCE = ['simulated','imported','queryDerived','userEntered','storageDerived'];
 function text(v){ return v == null ? '' : String(v).trim(); }
 function clone(v){ return JSON.parse(JSON.stringify(v)); }
 
 export function validateHardwareObservationSession(session){
-  const errors=[];
-  if(!session || typeof session !== 'object') return {ok:false,errors:['session must be an object']};
-  if(session.reportType !== 'NEXT_HARDWARE_OBSERVATION_SESSION') errors.push('reportType must be NEXT_HARDWARE_OBSERVATION_SESSION');
-  if(session.evidenceClass !== 'HARDWARE_OBSERVED') errors.push('evidenceClass must be HARDWARE_OBSERVED');
-  if(!text(session.sessionId)) errors.push('sessionId is required');
-  if(!SUPPORTED_FW.has(text(session.firmware))) errors.push('unsupported firmware');
-  if(text(session.firmwareSource).toUpperCase() !== 'UA') errors.push('firmwareSource must be UA');
-  for(const flag of FORBIDDEN_PROVENANCE) if(session[flag] === true) errors.push(`${flag} sessions are ineligible`);
-  if(!Array.isArray(session.samples) || session.samples.length < 1) errors.push('at least one sample is required');
-  if(Array.isArray(session.samples) && session.samples.length > 10) errors.push('maximum 10 samples per session');
-  return {ok:errors.length===0,errors};
+  return validateObservationSession(session);
 }
 
 export function correlateHardwareToSource(session, sourceRecords){

@@ -12,13 +12,15 @@ function stageStatus(stageName) {
 
 export function createDiagnosticsBridge(state) {
   function runtimeInfo() {
+    const uaFirmware = String(state.snapshot.firmwareSource || "").toUpperCase() === "UA";
     return {
       firmware: state.snapshot.firmware,
       firmwareRaw: state.snapshot.firmware,
       firmwareNormalized: state.snapshot.firmware,
-      firmwareSource: state.snapshot.simulation ? "query" : "user-agent",
-      hardwareDetected: !state.snapshot.simulation,
+      firmwareSource: state.snapshot.firmwareSource,
+      hardwareDetected: uaFirmware,
       simulated: state.snapshot.simulation,
+      sessionId: state.snapshot.sessionId,
       selectedBackend: BACKEND_NAME,
       buildId: BUILD_ID,
       cacheRevision: window.PS4_WEBKIT_BUILD ? window.PS4_WEBKIT_BUILD.cacheRevision : BUILD_ID,
@@ -27,7 +29,7 @@ export function createDiagnosticsBridge(state) {
       researchMode: true,
       researchCandidate: KERNEL_CANDIDATE_NAME,
       candidateStatus: "locked",
-      isPS4: !state.snapshot.simulation,
+      isPS4: uaFirmware,
       launcherReady: true,
       backendEntered: state.snapshot.running,
       kernelRW: false,
@@ -39,26 +41,33 @@ export function createDiagnosticsBridge(state) {
   function emit(stageName, detail, extra) {
     const text = detailText(detail);
     const status = stageStatus(stageName);
+    const meta = {
+      category: "RESEARCH",
+      attempt: extra && extra.attempt,
+      sessionId: extra && extra.sessionId ? extra.sessionId : state.snapshot.sessionId,
+      firmwareSource: state.snapshot.firmwareSource
+    };
     state.appendEvent(stageName, text, {
       attempt: extra && extra.attempt,
+      sessionId: meta.sessionId,
       success: status === "pass"
     });
 
     if (!window.PS4Diag) return;
     if (typeof window.PS4Diag.observeRuntimeEvent === "function") {
-      window.PS4Diag.observeRuntimeEvent(stageName, text, extra || {});
+      window.PS4Diag.observeRuntimeEvent(stageName, text, Object.assign({}, extra || {}, meta));
       return;
     }
     if (status === "fail" && typeof window.PS4Diag.fail === "function") {
-      window.PS4Diag.fail(stageName, text, { category: "RESEARCH", attempt: extra && extra.attempt });
+      window.PS4Diag.fail(stageName, text, meta);
       return;
     }
     if (status === "pass" && typeof window.PS4Diag.pass === "function") {
-      window.PS4Diag.pass(stageName, text, { category: "RESEARCH", attempt: extra && extra.attempt });
+      window.PS4Diag.pass(stageName, text, meta);
       return;
     }
     if (typeof window.PS4Diag.stage === "function") {
-      window.PS4Diag.stage(stageName, text, { category: "RESEARCH", attempt: extra && extra.attempt });
+      window.PS4Diag.stage(stageName, text, meta);
     }
   }
 
@@ -90,7 +99,9 @@ export function createDiagnosticsBridge(state) {
       window.PS4Diag.markBackend({ selected: BACKEND_NAME, entered: true, completed: !!success, failed: !success });
       window.PS4Diag.info("NEXT-1302-REPORT", state.snapshot.firmware + " research state updated.", {
         category: "RESEARCH",
+        sessionId: state.snapshot.sessionId,
         firmware: state.snapshot.firmware,
+        firmwareSource: state.snapshot.firmwareSource,
         hardware: state.snapshot.hardware,
         buildId: BUILD_ID,
         page: "NEXT-1302-RESEARCH",
