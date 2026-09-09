@@ -8,6 +8,7 @@ export function validateCorrelationReport(report){
  if(!report||typeof report!=='object') return {ok:false,errors:['report must be an object']};
  if(report.reportType!=='NEXT_HARDWARE_SOURCE_CORRELATION') errors.push('unexpected reportType');
  if(report.evidenceClass!=='HARDWARE_OBSERVED') errors.push('correlation must be HARDWARE_OBSERVED');
+ if(!text(report.sessionId)) errors.push('sessionId is required');
  if(report.firmwareSource!=='UA') errors.push('firmwareSource must be UA');
  if(report.automaticExploitPromotion!==false) errors.push('automaticExploitPromotion must remain false');
  if(report.kernelExecutionAuthorized!==false||report.kernelWriteAuthorized!==false||report.henAuthorized!==false) errors.push('execution/write/HEN authorization must remain false');
@@ -20,23 +21,24 @@ export function deriveReviewQueue(correlations){
   for(const row of report.matchedDifferences||[]){
    if(!INTERESTING_DIFFS.has(row.state)) continue;
    const id=keyOf(row);
-   if(!grouped.has(id)) grouped.set(id,{id,key:text(row.key),baseFirmware:text(row.baseFirmware),targetFirmware:text(row.targetFirmware),differenceState:row.state,reproductions:0,firmware:new Set(),sources:[],notes:[]});
-   const item=grouped.get(id); item.reproductions++; item.firmware.add(text(report.firmware));
+   if(!grouped.has(id)) grouped.set(id,{id,key:text(row.key),baseFirmware:text(row.baseFirmware),targetFirmware:text(row.targetFirmware),differenceState:row.state,sessions:new Set(),firmware:new Set()});
+   const item=grouped.get(id); item.sessions.add(text(report.sessionId)); item.firmware.add(text(report.firmware));
   }
  }
- return [...grouped.values()].map(item=>({
+ return [...grouped.values()].map(item=>{const distinctSessionCount=item.sessions.size;return {
   id:item.id,key:item.key,baseFirmware:item.baseFirmware,targetFirmware:item.targetFirmware,differenceState:item.differenceState,
-  reproductions:item.reproductions,observedFirmware:[...item.firmware],
-  reviewState:item.reproductions>=2?'REPRODUCED':'HARDWARE_OBSERVED',
-  priority:item.reproductions>=3?'HIGH':item.reproductions>=2?'MEDIUM':'LOW',
-  candidateEligible:item.reproductions>=2,exploitProven:false,kernelExecutionAuthorized:false,kernelWriteAuthorized:false,henAuthorized:false,
+  reproductions:distinctSessionCount,distinctSessionCount,observedFirmware:[...item.firmware],
+  reviewState:distinctSessionCount>=2?'REPRODUCED':'HARDWARE_OBSERVED',
+  priority:distinctSessionCount>=3?'HIGH':distinctSessionCount>=2?'MEDIUM':'LOW',
+  candidateEligible:distinctSessionCount>=2,exploitProven:false,kernelExecutionAuthorized:false,kernelWriteAuthorized:false,henAuthorized:false,
   sources:[],reproductionNotes:[]
- }));
+ };});
 }
 export function updateReviewState(entry,nextState,note=''){
  if(!entry||typeof entry!=='object') throw new Error('entry required');
  if(!ALLOWED_STATES.has(nextState)) throw new Error('invalid review state');
- if(nextState==='CANDIDATE' && (!entry.candidateEligible || Number(entry.reproductions)<2)) throw new Error('candidate requires at least two eligible reproductions');
+ const count=Number(entry.distinctSessionCount??entry.reproductions??0);
+ if(nextState==='CANDIDATE' && (!entry.candidateEligible || count<2)) throw new Error('candidate requires at least two distinct eligible hardware sessions');
  const out=clone(entry); out.reviewState=nextState; out.updatedAt=new Date().toISOString();
  if(note) out.reproductionNotes=[...(out.reproductionNotes||[]),text(note)];
  out.exploitProven=false; out.kernelExecutionAuthorized=false; out.kernelWriteAuthorized=false; out.henAuthorized=false;
