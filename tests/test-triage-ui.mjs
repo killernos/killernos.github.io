@@ -6,7 +6,7 @@ assert.equal(invalid.ok,false);
 assert.equal(invalid.error.code,'NEXT_TRIAGE_EXPORT_INVALID');
 
 const source=[{firmware:'13.00',key:'ui_probe',value:'A'},{firmware:'13.02',key:'ui_probe',value:'B'}];
-const session={reportType:'NEXT_HARDWARE_OBSERVATION_SESSION',evidenceClass:'HARDWARE_OBSERVED',firmware:'13.02',firmwareSource:'UA',simulated:false,imported:false,queryDerived:false,userEntered:false,storageDerived:false,samples:[{key:'ui_probe'}]};
+const session={reportType:'NEXT_HARDWARE_OBSERVATION_SESSION',schemaVersion:2,evidenceClass:'HARDWARE_OBSERVED',sessionId:'NEXT-UI-A',firmware:'13.02',firmwareSource:'UA',simulated:false,imported:false,queryDerived:false,userEntered:false,storageDerived:false,kernelExecutionObserved:false,kernelWriteObserved:false,henObserved:false,samples:[{key:'ui_probe',value:'OBSERVED'}]};
 const result=runTriageForUi([session],source);
 assert.equal(result.ok,true);
 const summary=summarizeTriageForUi(result);
