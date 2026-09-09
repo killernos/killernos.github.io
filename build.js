@@ -27,27 +27,40 @@ window.ENABLE_1302_EXPERIMENTAL = false;
 (function () {
   "use strict";
 
+  var destinations = [
+    "./guide.html",
+    "./guide.html#getting-started",
+    "./guide.html#testing-1302",
+    "./guide.html#submitting-reports",
+    "./guide.html#understanding-results"
+  ];
+
   function routeGuideLinksLocally() {
     var panel = document.getElementById("docs-guide-panel");
-    if (!panel) return;
+    if (!panel) return false;
 
     var links = panel.querySelectorAll("a.link-button");
-    var destinations = [
-      "./guide.html",
-      "./guide.html#getting-started",
-      "./guide.html#testing-1302",
-      "./guide.html#submitting-reports",
-      "./guide.html#understanding-results"
-    ];
-
     for (var i = 0; i < links.length && i < destinations.length; i++) {
       links[i].href = destinations[i];
+      links[i].removeAttribute("target");
+      links[i].removeAttribute("rel");
     }
+    return links.length > 0;
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", routeGuideLinksLocally);
-  } else {
-    routeGuideLinksLocally();
+  function ensureGuideLinks() {
+    if (routeGuideLinksLocally()) return;
+
+    var attempts = 0;
+    var timer = window.setInterval(function () {
+      attempts += 1;
+      if (routeGuideLinksLocally() || attempts >= 20) {
+        window.clearInterval(timer);
+      }
+    }, 100);
   }
+
+  document.addEventListener("DOMContentLoaded", ensureGuideLinks);
+  window.addEventListener("load", ensureGuideLinks);
+  window.setTimeout(ensureGuideLinks, 0);
 })();
