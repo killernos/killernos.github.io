@@ -6,14 +6,9 @@ window.NEXT_COMMUNITY_REPORT_ENDPOINT =
 /*
  * Compatibility bridge for next-community-report-2.
  *
- * The private receiver validates an exact key set. Older live diagnostics
- * omitted userAgent when the tester left the opt-in checkbox unchecked and
- * emitted empty previous-session placeholders. That made otherwise valid
- * reports fail validation with HTTP 400.
- *
- * This bridge only normalizes outgoing JSON for the configured NEXT report
- * endpoint. It does not add identifying data: userAgent remains an empty
- * string unless diagnostics already included it.
+ * The private receiver validates an exact key set and caps request bodies at
+ * 65,536 bytes. Full reports remain available through the local download;
+ * only the network submission is compacted when needed.
  */
 (function () {
   if (typeof XMLHttpRequest === "undefined") return;
@@ -21,6 +16,39 @@ window.NEXT_COMMUNITY_REPORT_ENDPOINT =
   var endpoint = String(window.NEXT_COMMUNITY_REPORT_ENDPOINT || "");
   var originalOpen = XMLHttpRequest.prototype.open;
   var originalSend = XMLHttpRequest.prototype.send;
+  var SAFE_SUBMISSION_CHARS = 48000;
+
+  function compactRecords(records, keepCount) {
+    if (!Array.isArray(records) || records.length <= keepCount) return records || [];
+    var headCount = Math.min(8, Math.floor(keepCount / 4));
+    var tailCount = Math.max(0, keepCount - headCount);
+    return records.slice(0, headCount).concat(records.slice(records.length - tailCount));
+  }
+
+  function compactForSubmission(report) {
+    var serialized = JSON.stringify(report);
+    var keepCount;
+    var compacted;
+
+    if (serialized.length <= SAFE_SUBMISSION_CHARS) return serialized;
+
+    keepCount = Array.isArray(report.diagnostics) ? Math.min(report.diagnostics.length, 120) : 0;
+    if (!keepCount) return serialized;
+
+    while (keepCount >= 10) {
+      compacted = compactRecords(report.diagnostics, keepCount);
+      report.diagnostics = compacted;
+      report.diagnosticRecords = compacted.slice();
+      serialized = JSON.stringify(report);
+      if (serialized.length <= SAFE_SUBMISSION_CHARS) return serialized;
+      keepCount = Math.floor(keepCount / 2);
+    }
+
+    compacted = compactRecords(report.diagnostics, 10);
+    report.diagnostics = compacted;
+    report.diagnosticRecords = compacted.slice();
+    return JSON.stringify(report);
+  }
 
   XMLHttpRequest.prototype.open = function (method, url) {
     this.__nextCommunityReportRequest =
@@ -45,7 +73,7 @@ window.NEXT_COMMUNITY_REPORT_ENDPOINT =
         if (!report.previousLastTimestamp) {
           report.previousLastTimestamp = report.createdAt || report.timestamp || new Date().toISOString();
         }
-        body = JSON.stringify(report);
+        body = compactForSubmission(report);
       }
     } catch (error) {
       /* Leave malformed/unexpected bodies untouched so the receiver rejects them normally. */
