@@ -49,6 +49,7 @@ export function createDiagnosticsBridge(state) {
     };
     state.appendEvent(stageName, text, {
       attempt: extra && extra.attempt,
+      sessionId: meta.sessionId,
       success: status === "pass"
     });
 
