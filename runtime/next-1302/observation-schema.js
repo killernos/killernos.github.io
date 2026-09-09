@@ -22,7 +22,7 @@ export function validateObservationSession(session){
    if(!sample||typeof sample!=='object'||Array.isArray(sample)){errors.push('sample '+index+' must be an object');return;}
    const key=text(sample.key);if(!key)errors.push('sample '+index+' key is required');
    else if(seen.has(key))errors.push('sample '+index+' duplicates key '+key);else seen.add(key);
-   const value=sample.value;if(value!==null&&!['string','number','boolean'].includes(typeof value))errors.push('sample '+index+' value must be a JSON scalar');
+   const value=sample.value;if(value!==null&&(!['string','number','boolean'].includes(typeof value)||(typeof value==='number'&&!Number.isFinite(value))))errors.push('sample '+index+' value must be a finite JSON scalar');
   });
  }
  return {ok:errors.length===0,errors};
