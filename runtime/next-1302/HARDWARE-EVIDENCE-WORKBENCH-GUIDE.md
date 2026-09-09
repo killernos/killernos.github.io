@@ -11,10 +11,10 @@ A strict observation export is available only after a manual run has:
 - `simulation: false` exactly;
 - hardware status `hardware`;
 - firmware in the inclusive 13.02–13.52 research range;
-- a `NEXT-1302-HARDWARE-CONFIRMED` event; and
-- a terminal `NEXT-1302-SESSION-COMPLETED` event.
+- a `NEXT-1302-HARDWARE-CONFIRMED` event bound to the current `sessionId`; and
+- a `NEXT-1302-SESSION-COMPLETED` event bound to that same `sessionId` as the final event in the run.
 
-The live page exposes the session ID, firmware source and observation eligibility. `Download Hardware Observation` remains disabled until these conditions are satisfied.
+A stale completion marker or a completion event followed by later progress/failure events is not eligible for strict export. The live page exposes the session ID, firmware source and observation eligibility. `Download Hardware Observation` remains disabled until these conditions are satisfied.
 
 ## Strict schema v2
 
