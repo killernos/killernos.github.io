@@ -2,7 +2,7 @@ export const BUILD_ID = "next-universal-1302-1352-research-0013";
 export const BACKEND_NAME = "NEXT 13.02-13.52 Research";
 export const CANDIDATE_NAME = "SlopKit Userland";
 export const KERNEL_CANDIDATE_NAME = "Celsius / ffs_mountfs";
-const SUCCESS_STAGE_NAMES = {"NEXT-1302-HARDWARE-CONFIRMED":true,"SLOPKIT-CARRIER-OBTAINED":true,"SLOPKIT-WINDOW-P-INSTALLED":true,"SLOPKIT-READ-VERIFIED":true,"SLOPKIT-WRITE-VERIFIED":true,"USERLAND-ARW-VERIFIED":true,"NEXT-1302-SESSION-COMPLETED":true};
+const SUCCESS_STAGE_NAMES = {"NEXT-1302-HARDWARE-CONFIRMED":true,"SLOPKIT-CARRIER-OBTAINED":true,"SLOPKIT-WINDOW-P-INSTALLED":true,"SLOPKIT-READ-VERIFIED":true,"SLOPKIT-WRITE-VERIFIED":true,"USERLAND-ARW-VERIFIED":true};
 function isoNow(){return new Date().toISOString();}
 function text(value){return value==null||value===""?"":String(value);}
 function makeSessionId(){
