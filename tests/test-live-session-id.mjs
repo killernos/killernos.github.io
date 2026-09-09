@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const state=fs.readFileSync(new URL('../runtime/next-1302/research-state.js',import.meta.url),'utf8');
+const probe=fs.readFileSync(new URL('../runtime/next-1302/userland-probe.js',import.meta.url),'utf8');
+assert.match(state,/function makeSessionId\(/);
+assert.match(state,/crypto\.randomUUID/);
+assert.match(state,/crypto\.getRandomValues/);
+assert.match(state,/beginSession\(\)/);
+assert.match(state,/sessionId:snapshot\.sessionId/);
+assert.match(state,/firmwareSource:snapshot\.firmwareSource/);
+assert.match(probe,/firmwareSource:"UA"/);
+assert.match(probe,/firmwareSource:forced\?"QUERY":"UNKNOWN"/);
+assert.match(probe,/const sessionId=state\.beginSession\(\)/);
+assert.match(probe,/createAdapter\(sessionId\)/);
+assert.match(probe,/sessionId:state\.snapshot\.sessionId/);
+assert.doesNotMatch(probe,/runKernelTrigger\(/);
+console.log('live session identity regression checks passed');
