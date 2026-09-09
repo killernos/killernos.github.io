@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PS4 WebKit NEXT Research Guide</title>
+  <style>
+    :root{--bg:#07111f;--bg2:#0d1d33;--panel:rgba(10,21,40,.9);--line:rgba(152,186,255,.2);--text:#eef4ff;--muted:#97accf;--accent:#79e0c3;--accent2:#74a9ff}
+    *{box-sizing:border-box} body{margin:0;min-height:100vh;font-family:Georgia,"Times New Roman",serif;color:var(--text);background:radial-gradient(circle at top left,rgba(116,169,255,.18),transparent 32%),radial-gradient(circle at top right,rgba(121,224,195,.16),transparent 28%),linear-gradient(160deg,var(--bg),var(--bg2) 58%,#050b14)}
+    a{color:#cce1ff}.shell{width:min(92vw,1050px);margin:0 auto;padding:28px 0 56px}.hero,.panel{border:1px solid var(--line);background:var(--panel);border-radius:24px;padding:26px;margin-bottom:18px}.hero h1{margin:8px 0 12px;font-size:2.5rem}.hero p,.panel p,.panel li{color:var(--muted);line-height:1.65}.eyebrow{display:inline-block;padding:7px 12px;border-radius:999px;border:1px solid rgba(121,224,195,.35);color:var(--accent);font-size:12px;letter-spacing:.14em;text-transform:uppercase}.nav{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}.button{display:inline-block;padding:12px 16px;border-radius:999px;text-decoration:none;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:var(--text)}.button.primary{background:linear-gradient(135deg,var(--accent),#96f0db);color:#072018;font-weight:700}.callout{padding:14px 16px;border-left:3px solid var(--accent2);border-radius:0 14px 14px 0;background:rgba(116,169,255,.08);color:#dce9ff;line-height:1.6}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}.card{padding:16px;border-radius:18px;background:rgba(6,15,28,.94);border:1px solid rgba(255,255,255,.06)}h2{margin-top:0}code{color:#dce9ff}ul{padding-left:22px}@media(max-width:640px){.shell{width:min(100% - 20px,1050px)}.hero,.panel{padding:20px}.hero h1{font-size:2rem}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <span class="eyebrow">KillerNoS / PS4 WebKit NEXT</span>
+      <h1>Research &amp; Tester Guide</h1>
+      <p>This is the live, browser-friendly guide for the NEXT research environment. It is designed so testers can read the instructions directly from the website instead of being sent to GitHub.</p>
+      <div class="nav">
+        <a class="button primary" href="./index.html">Back to NEXT</a>
+        <a class="button" href="#getting-started">Getting Started</a>
+        <a class="button" href="#testing-1302">Testing 13.02+</a>
+        <a class="button" href="#submitting-reports">Submitting Reports</a>
+        <a class="button" href="#understanding-results">Understanding Results</a>
+      </div>
+    </section>
+
+    <section class="panel" id="getting-started">
+      <h2>Getting Started</h2>
+      <p>Use the normal NEXT host first and confirm the firmware shown by the page matches the console. Firmware routing is intentionally separated: 12.00 uses the established runtime path, 13.00 is treated as a comparison/compatibility baseline, and 13.02 through 13.52 are isolated research targets.</p>
+      <div class="callout">Research mode is observational. A changed result, interruption, crash, or source match does not by itself prove a vulnerability, kernel primitive, exploit, or jailbreak.</div>
+      <div class="grid">
+        <div class="card"><strong>1. Confirm firmware</strong><p>Use the detected PS4 user agent result. Query-string or manually entered firmware values are simulation only.</p></div>
+        <div class="card"><strong>2. Open research mode</strong><p>For 13.02–13.52, use the isolated research route rather than a production kernel/HEN path.</p></div>
+        <div class="card"><strong>3. Run safe comparisons</strong><p>Collect browser-visible environment, API, storage, buffer, route, and runtime observations.</p></div>
+        <div class="card"><strong>4. Export results</strong><p>Keep the local export so results can be compared without changing runtime state.</p></div>
+      </div>
+    </section>
+
+    <section class="panel" id="testing-1302">
+      <h2>Testing Firmware 13.02+</h2>
+      <p>The 13.02, 13.50, and 13.52 research paths are for bounded, non-destructive browser-visible observations. Use 13.00 as the nearest comparison baseline when possible.</p>
+      <ul>
+        <li>Run a small repeated session rather than an unbounded stress test.</li>
+        <li>Record whether the result is stable, variable, erroring, or inconclusive.</li>
+        <li>Do not treat timing differences alone as a meaningful behavior change.</li>
+        <li>If a previous run stopped unexpectedly, record it as an interrupted run only.</li>
+        <li>Reproduce meaningful differences independently before moving them into the review queue.</li>
+      </ul>
+      <p>Stable test IDs include environment, user-agent/platform, API availability, network state, route/runtime mode, reversible storage, Worker/Blob availability, typed arrays, ArrayBuffer/DataView, timing API, and runtime readiness checks.</p>
+    </section>
+
+    <section class="panel" id="submitting-reports">
+      <h2>Submitting Research Reports</h2>
+      <p>A useful report should identify what was tested and what was observed without including personal information.</p>
+      <div class="grid">
+        <div class="card"><strong>Include</strong><p>Firmware detected, firmware source, test-suite version, test ID, stage reached, result, return value/type where relevant, exception name/message, elapsed time, visibility/network state, whether the previous run was incomplete, evidence class, and notes.</p></div>
+        <div class="card"><strong>Do not include</strong><p>Real name, PSN name, email address, console serial, MAC address, or other unnecessary identifiers.</p></div>
+      </div>
+      <p>Hardware evidence should only be labeled <code>HARDWARE_OBSERVED</code> when the firmware was detected from the actual PS4 user agent and the result was not simulated, imported, query-derived, or manually entered.</p>
+    </section>
+
+    <section class="panel" id="understanding-results">
+      <h2>Understanding Research Results</h2>
+      <p>Comparison results use conservative labels such as <code>SAME</code>, <code>CHANGED</code>, <code>MISSING</code>, <code>NEW</code>, <code>ERROR</code>, <code>INCONCLUSIVE</code>, and <code>EXPECTED</code>.</p>
+      <p>Research evidence is kept separate from conclusions. <code>SIMULATED</code> means the environment was simulated, <code>SOURCE_CONFIRMED</code> means a public source supports the claim, and <code>HARDWARE_OBSERVED</code> means the observation came from qualifying hardware provenance.</p>
+      <p>Review states describe how much observational follow-up has happened. Reproducing a browser-visible difference means only that the difference was reproduced; it does not promote that result into a kernel or exploit claim.</p>
+      <p>Source correlation is documentary only. A strong public-source match can help explain an observed difference, but it never converts public documentation into hardware evidence.</p>
+      <div class="callout">For 13.02–13.52, kernel exploitation, HEN, GoldHEN, and payload execution remain outside the research-mode claim unless separately and independently verified.</div>
+    </section>
+  </main>
+</body>
+</html>
