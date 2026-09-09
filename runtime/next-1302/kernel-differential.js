@@ -4,6 +4,7 @@ const VALID_STATES = new Set(['SAME','CHANGED','NEW','MISSING','INCONCLUSIVE']);
 
 function clone(value){ return JSON.parse(JSON.stringify(value)); }
 function norm(value){ return value == null ? null : String(value).trim(); }
+function recordId(record){ return `${norm(record?.firmware) || ''}\u0000${norm(record?.key) || ''}`; }
 
 export function compareSourceRecord(baseRecord, targetRecord){
   if(!baseRecord && !targetRecord) return {state:'INCONCLUSIVE'};
@@ -15,12 +16,37 @@ export function compareSourceRecord(baseRecord, targetRecord){
   return {state:a === b ? 'SAME' : 'CHANGED', baseValue:a, targetValue:b};
 }
 
+export function validateImportedSourceRecords(records){
+  if(!Array.isArray(records)) return {ok:false,errors:['records must be an array']};
+  const errors=[];
+  const seen=new Map();
+  for(let i=0;i<records.length;i++){
+    const r=records[i]||{};
+    const fw=norm(r.firmware), key=norm(r.key);
+    if(!KERNEL_SOURCE_REGISTRY.researchScope.firmware.includes(fw)) errors.push(`record ${i}: unsupported firmware`);
+    if(!key) errors.push(`record ${i}: key required`);
+    if(r.hardwareObserved===true) errors.push(`record ${i}: imported source data cannot claim HARDWARE_OBSERVED`);
+    if(fw && key){
+      const id=recordId(r);
+      if(seen.has(id)) errors.push(`record ${i}: duplicate firmware/key pair (first seen at record ${seen.get(id)})`);
+      else seen.set(id,i);
+    }
+  }
+  return {ok:errors.length===0,errors};
+}
+
 export function buildDifferentialMatrix(records){
+  const validation=validateImportedSourceRecords(records);
+  if(!validation.ok){
+    const error=new Error(`Invalid kernel source records: ${validation.errors.join('; ')}`);
+    error.code='NEXT_KERNEL_SOURCE_VALIDATION_FAILED';
+    error.validation=validation;
+    throw error;
+  }
   const byFw = new Map();
-  for(const record of records || []){
+  for(const record of records){
     const fw = norm(record.firmware);
     const key = norm(record.key);
-    if(!fw || !key) continue;
     if(!byFw.has(fw)) byFw.set(fw,new Map());
     byFw.get(fw).set(key, clone(record));
   }
@@ -33,42 +59,14 @@ export function buildDifferentialMatrix(records){
     for(const key of keys){
       const result = compareSourceRecord(byFw.get(baseFirmware)?.get(key), byFw.get(targetFirmware)?.get(key));
       if(!VALID_STATES.has(result.state)) result.state='INCONCLUSIVE';
-      rows.push({
-        key,
-        baseFirmware,
-        targetFirmware,
-        state:result.state,
-        baseValue:result.baseValue ?? null,
-        targetValue:result.targetValue ?? null,
-        evidenceClass:'SOURCE_CONFIRMED',
-        hardwareObserved:false,
-        candidateEligible:false
-      });
+      rows.push({key,baseFirmware,targetFirmware,state:result.state,baseValue:result.baseValue ?? null,targetValue:result.targetValue ?? null,evidenceClass:'SOURCE_CONFIRMED',hardwareObserved:false,candidateEligible:false});
     }
   }
-  return {
-    reportType:'NEXT_KERNEL_SOURCE_DIFFERENTIAL',
-    schemaVersion:1,
-    source:clone(KERNEL_SOURCE_REGISTRY.source),
-    createdAt:new Date().toISOString(),
-    rows
-  };
+  return {reportType:'NEXT_KERNEL_SOURCE_DIFFERENTIAL',schemaVersion:1,source:clone(KERNEL_SOURCE_REGISTRY.source),createdAt:new Date().toISOString(),rows};
 }
 
 export function summarizeDifferential(report){
   const summary = {SAME:0,CHANGED:0,NEW:0,MISSING:0,INCONCLUSIVE:0};
   for(const row of report?.rows || []) summary[row.state] = (summary[row.state] || 0) + 1;
   return summary;
-}
-
-export function validateImportedSourceRecords(records){
-  if(!Array.isArray(records)) return {ok:false,errors:['records must be an array']};
-  const errors=[];
-  for(let i=0;i<records.length;i++){
-    const r=records[i]||{};
-    if(!KERNEL_SOURCE_REGISTRY.researchScope.firmware.includes(norm(r.firmware))) errors.push(`record ${i}: unsupported firmware`);
-    if(!norm(r.key)) errors.push(`record ${i}: key required`);
-    if(r.hardwareObserved===true) errors.push(`record ${i}: imported source data cannot claim HARDWARE_OBSERVED`);
-  }
-  return {ok:errors.length===0,errors};
 }
