@@ -4,7 +4,15 @@ const obs=(firmware,sessionId,value)=>({firmware,sessionId,samples:[{key:'userla
 const input=[obs('13.02','A',true),obs('13.02','B',true),obs('13.04','C',false),obs('13.02','A',false),obs('12.00','D',true)];
 const normalized=normalizeEvidence(input);assert.equal(normalized.accepted.length,3);assert.equal(normalized.duplicates.length,1);assert.equal(normalized.rejected.length,1);
 const matrix=buildCrossFirmwareMatrix(input);assert.equal(matrix.acceptedSessions,3);assert.equal(matrix.duplicateSessions,1);assert.equal(matrix.rejectedSessions,1);
-const row=matrix.rows.find(x=>x.firmware==='13.02'&&x.key==='userlandARWVerified');assert.equal(row.state,'STABLE');assert.equal(row.value,true);assert.equal(row.sessionCount,2);
+const row=matrix.rows.find(x=>x.firmware==='13.02'&&x.key==='userlandARWVerified');assert.equal(row.state,'STABLE');assert.equal(row.value,true);assert.equal(row.sessionCount,2);assert.equal(row.observedCount,2);
 const diff=compareFirmwarePair(matrix,'13.02','13.04').find(x=>x.key==='userlandARWVerified');assert.equal(diff.classification,'CHANGED');
 const summary=summarizeCrossFirmwareMatrix(matrix);assert.equal(summary.acceptedSessions,3);assert.ok(summary.stable>0);assert.ok(summary.noData>0);
+
+// Missing a key in any accepted session must not promote the remaining value to STABLE.
+const partial=buildCrossFirmwareMatrix([
+ {firmware:'13.02',sessionId:'P1',samples:[{key:'probe',value:true}]},
+ {firmware:'13.02',sessionId:'P2',samples:[{key:'other',value:true}]}
+]);
+const partialRow=partial.rows.find(x=>x.firmware==='13.02'&&x.key==='probe');
+assert.equal(partialRow.sessionCount,2);assert.equal(partialRow.observedCount,1);assert.equal(partialRow.state,'VARIABLE');assert.equal(partialRow.value,null);
 console.log('cross firmware evidence regression checks passed');
