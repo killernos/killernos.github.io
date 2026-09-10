@@ -12,7 +12,8 @@ export const SOURCE_ARCHAEOLOGY_REPORT = Object.freeze({
     owner: 'mansoor0x',
     repository: 'polpNO',
     snapshotCommit: '499fb0d86311b3af1af86d758810797ef2a94cab',
-    snapshotAt: '2026-09-04T20:24:37Z'
+    snapshotAt: '2026-09-04T20:24:37Z',
+    auditMethod: 'GITHUB_GIT_TREE_AND_COMMIT_METADATA'
   },
   boundaries: {
     hardwareObserved: false,
@@ -60,8 +61,10 @@ export const SOURCE_ARCHAEOLOGY_REPORT = Object.freeze({
       path: 'ps4_offsets.js',
       beforeCommit: '499fb0d86311b3af1af86d758810797ef2a94cab',
       beforeBlobSha: 'd130414d37b3e05afd9e28604e98d0a6ed50eaa2',
+      beforeSize: 49028,
       cleanupCommit: 'e2e5fb597216a1f6cd0cf0589d1c314aa766913f',
       afterBlobSha: '2bc5563bb36089caaef26a3b74f87e7b9a1a309b',
+      afterSize: 17527,
       cleanupAt: '2026-09-04T20:52:48Z',
       additions: 0,
       deletions: 675
@@ -71,9 +74,11 @@ export const SOURCE_ARCHAEOLOGY_REPORT = Object.freeze({
       deletedCommit: '6bb767b85b04a3169c6febbe2331771f61b74035',
       deletedAt: '2026-09-04T21:20:26Z',
       oldBlobSha: 'ff498f3b9335b079f899ac0facf6393c83f97f5c',
+      oldSize: 242716,
       readdedCommit: '8bf23edbe94c710f7c1f54ef901f44437125b804',
       readdedAt: '2026-09-04T21:24:43Z',
-      newBlobSha: '0130e4dffc4438f1cd2f7ac8731b5030c661109a'
+      newBlobSha: '0130e4dffc4438f1cd2f7ac8731b5030c661109a',
+      newSize: 499776
     }
   ],
   timeline: [
