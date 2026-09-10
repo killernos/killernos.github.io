@@ -34,9 +34,17 @@ const weak=[
 ];
 const weakNormalized=normalizeEvidence(weak);assert.equal(weakNormalized.accepted.length,0);assert.equal(weakNormalized.rejected.length,weak.length);
 
-// Reusing one sessionId under two firmware versions is a provenance conflict.
-const conflict=normalizeEvidence([obs('13.02','CROSS',true),obs('13.04','CROSS',true)]);
-assert.equal(conflict.accepted.length,1);assert.equal(conflict.rejected.length,1);assert.match(conflict.rejected[0].reason,/multiple firmware/i);
+// Reusing one sessionId under multiple firmware versions quarantines every valid observation for that ID.
+const conflict=normalizeEvidence([obs('13.02','CROSS',true),obs('13.04','CROSS',false)]);
+assert.equal(conflict.accepted.length,0);assert.equal(conflict.rejected.length,2);assert.ok(conflict.rejected.every(x=>/multiple firmware/i.test(x.reason)));
+const reverseConflict=normalizeEvidence([obs('13.04','CROSS',false),obs('13.02','CROSS',true)]);
+assert.equal(reverseConflict.accepted.length,0);assert.equal(reverseConflict.rejected.length,2);
+const conflictMatrix=buildCrossFirmwareMatrix([obs('13.02','CROSS',true),obs('13.04','CROSS',false)]);
+assert.equal(conflictMatrix.acceptedSessions,0);assert.equal(conflictMatrix.rejectedSessions,2);assert.equal(conflictMatrix.rows.length,0);
+
+// Same-firmware duplicates remain deduplicated without changing the accepted first observation.
+const sameFirmwareDuplicate=normalizeEvidence([obs('13.02','DUP',true),obs('13.02','DUP',false)]);
+assert.equal(sameFirmwareDuplicate.accepted.length,1);assert.equal(sameFirmwareDuplicate.duplicates.length,1);assert.equal(sameFirmwareDuplicate.rejected.length,0);
 
 // Invalid scalar/sample structures are rejected by the shared strict schema.
 const badSamples=normalizeEvidence([obs('13.02','BAD',true,{samples:[{key:'probe',value:Number.NaN}]})]);
