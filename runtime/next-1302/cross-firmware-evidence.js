@@ -10,7 +10,7 @@ export function normalizeEvidence(observations=[]){
 }
 export function buildCrossFirmwareMatrix(observations=[]){
  const normalized=normalizeEvidence(observations),keys=new Set();for(const o of normalized.accepted)for(const key of sampleMap(o).keys())keys.add(key);
- const rows=[];for(const key of [...keys].sort())for(const firmware of FIRMWARES){const sessions=normalized.accepted.filter(o=>text(o.firmware)===firmware),values=sessions.map(o=>sampleMap(o).get(key)).filter(v=>v!==undefined),serialized=values.map(v=>JSON.stringify(v)),unique=[...new Set(serialized)];rows.push({firmware,key,sessionCount:sessions.length,observedCount:values.length,state:values.length===0?'NO_DATA':unique.length===1?'STABLE':'VARIABLE',value:unique.length===1?JSON.parse(unique[0]):null});}
+ const rows=[];for(const key of [...keys].sort())for(const firmware of FIRMWARES){const sessions=normalized.accepted.filter(o=>text(o.firmware)===firmware),values=sessions.map(o=>sampleMap(o).get(key)).filter(v=>v!==undefined),serialized=values.map(v=>JSON.stringify(v)),unique=[...new Set(serialized)],complete=values.length===sessions.length;rows.push({firmware,key,sessionCount:sessions.length,observedCount:values.length,state:values.length===0?'NO_DATA':complete&&unique.length===1?'STABLE':'VARIABLE',value:complete&&unique.length===1?JSON.parse(unique[0]):null});}
  return {reportType:'NEXT_CROSS_FIRMWARE_EVIDENCE_MATRIX',schemaVersion:1,generatedAt:new Date().toISOString(),firmwares:FIRMWARES.slice(),acceptedSessions:normalized.accepted.length,duplicateSessions:normalized.duplicates.length,rejectedSessions:normalized.rejected.length,rows};
 }
 export function compareFirmwarePair(matrix,leftFirmware,rightFirmware){
