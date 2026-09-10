@@ -5,14 +5,18 @@ function scalar(v){return v===null||typeof v==='string'||typeof v==='boolean'||(
 function sampleMap(observation){const out=new Map();for(const sample of Array.isArray(observation?.samples)?observation.samples:[]){const key=text(sample?.key);if(key&&scalar(sample?.value))out.set(key,sample.value);}return out;}
 function sessionKey(o){return text(o?.firmware)+'|'+text(o?.sessionId);}
 export function normalizeEvidence(observations=[]){
- const accepted=[],duplicates=[],rejected=[],seenSessionFirmware=new Map();
+ const accepted=[],duplicates=[],rejected=[],valid=[],sessionFirmwares=new Map(),seenSessionKeys=new Set();
  for(const observation of observations){
   const firmware=text(observation?.firmware),sessionId=text(observation?.sessionId),validation=validateObservationSession(observation);
   if(!FIRMWARES.includes(firmware)||!sessionId||!validation.ok){rejected.push({firmware,sessionId,reason:validation.ok?'unsupported firmware or missing sessionId':validation.errors.join('; ')});continue;}
-  const priorFirmware=seenSessionFirmware.get(sessionId);
-  if(priorFirmware&&priorFirmware!==firmware){rejected.push({firmware,sessionId,reason:'sessionId appears under multiple firmware versions'});continue;}
-  seenSessionFirmware.set(sessionId,firmware);
-  const key=sessionKey(observation);if(accepted.some(x=>sessionKey(x)===key)){duplicates.push({firmware,sessionId});continue;}accepted.push(observation);
+  valid.push({observation,firmware,sessionId});
+  if(!sessionFirmwares.has(sessionId))sessionFirmwares.set(sessionId,new Set());
+  sessionFirmwares.get(sessionId).add(firmware);
+ }
+ for(const entry of valid){
+  const {observation,firmware,sessionId}=entry;
+  if((sessionFirmwares.get(sessionId)?.size||0)>1){rejected.push({firmware,sessionId,reason:'sessionId appears under multiple firmware versions'});continue;}
+  const key=sessionKey(observation);if(seenSessionKeys.has(key)){duplicates.push({firmware,sessionId});continue;}seenSessionKeys.add(key);accepted.push(observation);
  }
  return {accepted,duplicates,rejected};
 }
