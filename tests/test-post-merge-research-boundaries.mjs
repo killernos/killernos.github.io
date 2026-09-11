@@ -9,7 +9,7 @@ assert.match(main,/11\.00-12\.02/);
 assert.match(main,/Lapse/);
 assert.match(main,/12\.00 is still the only locally hardware-testable console/);
 assert.match(research,/id="event-log"[^>]*aria-live="polite"/);
-assert.match(research,/does not execute Celsius, kernel exploitation, kernel patch shellcode, kexec, or GoldHEN/);
+assert.match(research,/does not authorize kernel writes, kernel execution, patching, kexec, or HEN\/GoldHEN/);
 assert.match(registry,/automaticExecution:\s*false/);
 assert.match(registry,/kernelPatchExecution:\s*false/);
 assert.match(registry,/kexecExecution:\s*false/);
