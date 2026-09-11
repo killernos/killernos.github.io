@@ -2,10 +2,10 @@
 
 window.PS4_WEBKIT_BUILD = {
   firmwareTarget: "multi-firmware",
-  buildId: "next-universal-1302-1352-research-0011",
-  cacheRevision: "next-universal-1302-1352-research-0011",
+  buildId: "next-universal-1302-1352-research-0015",
+  cacheRevision: "next-universal-1302-1352-research-0015",
   diagnosticsSchema: "next-diagnostics-2",
-  researchBuildId: "",
+  researchBuildId: "next-universal-1302-1352-research-0015",
   flags: {
     ENABLE_1302_EXPERIMENTAL: false
   }
