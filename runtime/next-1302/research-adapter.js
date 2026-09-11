@@ -102,6 +102,8 @@ export function create1302ResearchAdapter(options) {
   var hasWindowP = opts.hasWindowP;
   var verifyRead = opts.verifyRead;
   var verifyWrite = opts.verifyWrite;
+  var requirePromotion = opts.requirePromotion === true;
+  var verifyPromotion = opts.verifyPromotion;
   var diagnostics = opts.diagnostics || null;
   var scheduler = typeof opts.scheduler === "function" ? opts.scheduler : setTimeout;
   var cancelScheduler = typeof opts.cancelScheduler === "function" ? opts.cancelScheduler : clearTimeout;
@@ -123,6 +125,7 @@ export function create1302ResearchAdapter(options) {
     currentCheckpoint: CHECKPOINTS.IDLE,
     lastVerifiedPrimitive: "NONE",
     verificationEvidence: "",
+    userlandPromotionState: "NOT_ATTEMPTED",
     failureReason: "",
     exceptionName: "",
     exceptionMessage: "",
@@ -236,21 +239,35 @@ export function create1302ResearchAdapter(options) {
 
   async function finalizeEntry(carrier) {
     var primitive;
+    var promotionOk;
+    var carrierHomeOk;
     if (!carrier || typeof installWindowP !== "function") {
       setFailure("carrier-not-usable");
       return { ok: false, status: "FAILED", failureReason: snapshot.failureReason };
     }
-    installWindowP(carrier, { promote: false });
-    primitive = typeof window !== "undefined" ? window.p : null;
-    if (!hasWindowP || !hasWindowP(primitive) || !carrier.assertHome || !carrier.assertHome()) {
-      setFailure("entry-integrity-check-failed");
+    primitive = installWindowP(carrier, {
+      promote: requirePromotion,
+      onEvent: opts.onPrimitiveEvent
+    });
+    if (!primitive && typeof window !== "undefined") primitive = window.p;
+    promotionOk = !requirePromotion || (typeof verifyPromotion === "function" && !!verifyPromotion(carrier, primitive));
+    carrierHomeOk = requirePromotion ? promotionOk : !!(carrier.assertHome && carrier.assertHome());
+    if (!hasWindowP || !hasWindowP(primitive) || !carrierHomeOk) {
+      if (requirePromotion && typeof window !== "undefined") window.p = undefined;
+      updateSnapshot({ userlandPromotionState: requirePromotion ? "FAILED" : "DISABLED" });
+      setFailure(requirePromotion ? "userland-promotion-not-verified" : "entry-integrity-check-failed");
       return { ok: false, status: "FAILED", failureReason: snapshot.failureReason };
     }
+    updateSnapshot({ userlandPromotionState: requirePromotion ? "VERIFIED" : "DISABLED" });
     currentCarrier = carrier;
     currentPrimitive = primitive;
-    return confirm(CHECKPOINTS.ENTRY_CONFIRMED, "Carrier returned and window.p integrity checks passed.", {
-      verifiedPrimitive: "ENTRY",
-      verificationMethod: "carrier-returned-and-window-p-methods-validated",
+    return confirm(CHECKPOINTS.ENTRY_CONFIRMED, requirePromotion
+      ? "Carrier promoted to the real paired userland primitive and window.p integrity checks passed."
+      : "Carrier returned and window.p integrity checks passed.", {
+      verifiedPrimitive: requirePromotion ? "USERLAND_PAIR" : "ENTRY",
+      verificationMethod: requirePromotion
+        ? "paired-carrier-identity-read-write-restore-and-window-p-methods-validated"
+        : "carrier-returned-and-window-p-methods-validated",
       success: true
     });
   }
@@ -286,6 +303,7 @@ export function create1302ResearchAdapter(options) {
         failureReason: "",
         exceptionName: "",
         exceptionMessage: "",
+        userlandPromotionState: "NOT_ATTEMPTED",
         payloadLaunchPrevented: true,
         experimentalEnabled: is1302ExperimentalEnabled(featureFlags)
       });
