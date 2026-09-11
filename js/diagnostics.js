@@ -306,7 +306,7 @@
     if (/^PAYLOAD-(SELECTED|REQUESTED|FILE-AVAILABLE|LOAD-BEGIN|LOAD-END|LOAD-FAIL|BLOB|MAP|COPY|THREAD|RUNNING|SETTLE|ALIVE|MAPPED-NOT-LAUNCHED|SKIPPED|NONE|THREW|FETCH-FAILED)$/.test(stage)) {
       return /ALIVE|LOAD-END/.test(stage) ? "PAYLOAD-END" : "PAYLOAD-BEGIN";
     }
-    if (/^VERDICT$|^DONE$|^SESSION-COMPLETE$|^COMMUNITY-REPORT-SUBMITTED$/.test(stage)) return "DONE";
+    if (/^TEST-PASS$|^VERDICT$|^DONE$|^SESSION-COMPLETE$|^COMMUNITY-REPORT-SUBMITTED$/.test(stage)) return "DONE";
     if (/RESEARCH|CELSIUS|FFS_MOUNTFS|13\.02/.test(stage)) return /NEXT-1302-RESEARCH/.test(pageName) ? "RUNTIME-ENTER" : "KEX-BEGIN";
     return "";
   }
@@ -1042,14 +1042,14 @@
         break;
       }
     }
-    var observedResearch = sessionHasStage(sessionRecords, /^RUNTIME-RESEARCH$|^NEXT-1302-|^SLOPKIT-|^ADDROF-|^READ-PRIMITIVE-PASS$|^USERLAND[_-]ARW-/);
+    var observedResearch = sessionHasStage(sessionRecords, /^RUNTIME-RESEARCH$|^NEXT-1302-|^SLOPKIT-/);
     var observedFailureCount = state.failures + (testerOutcomeIsFailure(state.testerOutcome) ? 1 : 0);
     var observedCarrier = sessionHasStage(sessionRecords, /^SLOPKIT-CARRIER-OBTAINED$/);
     var observedWindowP = sessionHasStage(sessionRecords, /^SLOPKIT-WINDOW-P-INSTALLED$/);
     var observedRead = sessionHasStage(sessionRecords, /^SLOPKIT-READ-VERIFIED$|^READ-PRIMITIVE-PASS$/);
     var observedWrite = sessionHasStage(sessionRecords, /^SLOPKIT-WRITE-VERIFIED$/);
     var observedArw = sessionHasStage(sessionRecords, /^USERLAND[_-]ARW-(CONFIRMED|VERIFIED)$/);
-    var lastResearchStage = lastSessionStageMatching(sessionRecords, /^NEXT-1302-|^SLOPKIT-|^ADDROF-|^READ-PRIMITIVE-PASS$|^USERLAND[_-]ARW-/);
+    var lastResearchStage = observedResearch ? lastSessionStageMatching(sessionRecords, /^RUNTIME-RESEARCH$|^NEXT-1302-|^SLOPKIT-|^PAIR-|^USERLAND[_-]ARW-/) : "";
     var report = {
       schema: REPORT_SCHEMA,
       reportId: getOrCreateReportId(),
@@ -1063,14 +1063,14 @@
       buildId: state.buildId,
       cacheRevision: state.cacheRevision,
       diagnosticsSchema: DIAG_SCHEMA,
-      researchBuildId: state.researchBuildId,
+      researchBuildId: state.researchBuildId || (observedResearch ? state.buildId : ""),
       consoleModel: state.consoleModel,
       page: {
         pageName: state.page.pageName,
         relativePath: state.page.relativePath
       },
       entrypoint: state.testerEntrypoint || (state.page.pageName === "NEXT-1302-RESEARCH" ? "SlopKit" : (state.backend.selected || "Unknown")),
-      candidate: state.testerCandidate || state.research.candidate || "None",
+      candidate: observedArw ? "SlopKit Userland" : (state.testerCandidate && state.testerCandidate !== "None" ? state.testerCandidate : (state.research.candidate || "None")),
       backend: {
         backendSelected: state.backend.selected,
         backendEntered: state.backend.entered,
@@ -1120,7 +1120,7 @@
       firstStage: sessionRecords.length ? sessionRecords[0].stage : "",
       firstNormalizedStage: firstNormalizedStage,
       lastStage: state.lastStage,
-      lastNormalizedStage: state.lastNormalizedStage,
+      lastNormalizedStage: normalizedStageFor(state.lastStage, { pageName: state.page.pageName }) || state.lastNormalizedStage,
       previousSessionIncomplete: !state.previousSessionCompleted,
       previousLastStage: state.previousSession ? state.previousSession.lastStage || "" : "",
       previousLastNormalizedStage: state.previousSession ? state.previousSession.lastNormalizedStage || "" : "",
@@ -1144,11 +1144,11 @@
         testerSelectedOutcome: state.testerOutcome ? "TESTER-REPORTED" : "OBSERVED"
       },
       research: {
-        researchMode: state.research.researchMode,
-        candidate: state.research.candidate,
-        candidateStatus: state.research.candidateStatus,
-        entryReady: state.research.entryReady,
-        candidateReady: state.research.candidateReady,
+        researchMode: state.research.researchMode || observedResearch,
+        candidate: observedArw ? "SlopKit Userland" : state.research.candidate,
+        candidateStatus: observedArw ? "verified-userland" : (observedCarrier ? "entry-observed" : state.research.candidateStatus),
+        entryReady: state.research.entryReady || observedCarrier,
+        candidateReady: state.research.candidateReady || observedArw,
         kernelFaultObserved: state.research.kernelFaultObserved,
         kernelLeak: state.research.kernelLeak,
         kernelRead: state.research.kernelRead,
@@ -1739,6 +1739,19 @@
     else if (/PASS|READY|DONE|RUNNING|COMPLETE|OK/.test(stageName)) status = "PASS";
     if (/ATTEMPT-START|ATTEMPT-BEGIN/.test(stageName)) status = "STAGE";
     state.backend.entered = true;
+    if (/^NEXT-1302-|^SLOPKIT-|^PAIR-|^USERLAND[_-]ARW-/.test(stageName)) {
+      state.research.researchMode = true;
+      state.research.candidate = "SlopKit Userland";
+      state.research.candidateStatus = "research";
+      state.researchBuildId = currentBuild().researchBuildId || state.researchBuildId || state.buildId;
+    }
+    if (/^SLOPKIT-CARRIER-OBTAINED$|^SLOPKIT-PAIR-PROMOTED$|^SLOPKIT-WINDOW-P-INSTALLED$/.test(stageName)) {
+      state.research.entryReady = true;
+    }
+    if (/^USERLAND[_-]ARW-(CONFIRMED|VERIFIED)$/.test(stageName)) {
+      state.research.candidateReady = true;
+      state.research.candidateStatus = "verified-userland";
+    }
     if (/DONE|SESSION-COMPLETE|PAYLOAD-ALIVE|PAYLOAD-END|KERNEL-PATCHED/.test(stageName)) state.backend.completed = true;
     if (status === "FAIL") state.backend.failed = true;
     if (/KERNEL-RW/.test(stageName)) {
