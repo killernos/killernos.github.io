@@ -11,6 +11,10 @@ assert.match(aggressive,/kernelExecutionAuthorized:false/);
 assert.match(aggressive,/kernelWriteAuthorized:false/);
 assert.match(aggressive,/patchingAuthorized:false/);
 assert.match(aggressive,/henAuthorized:false/);
+assert.match(aggressive,/let enabled=false,active=false/);
+assert.match(aggressive,/if\(!enabled\|\|!active\)return/);
+assert.match(aggressive,/active=true;sessionId=/);
+assert.match(aggressive,/persist\(false\);active=false/);
 assert.doesNotMatch(aggressive,/emit\('AGGRESSIVE-/);
 
 const bridge=fs.readFileSync(new URL('../runtime/next-1302/diagnostics-bridge.js',import.meta.url),'utf8');
