@@ -11,21 +11,29 @@ assert.match(aggressive,/kernelExecutionAuthorized:false/);
 assert.match(aggressive,/kernelWriteAuthorized:false/);
 assert.match(aggressive,/patchingAuthorized:false/);
 assert.match(aggressive,/henAuthorized:false/);
+assert.doesNotMatch(aggressive,/emit\('AGGRESSIVE-/);
 
 const bridge=fs.readFileSync(new URL('../runtime/next-1302/diagnostics-bridge.js',import.meta.url),'utf8');
-assert.match(bridge,/NEXT-1302-SESSION-COMPLETED/);
+assert.match(bridge,/markInterrupted/);
+assert.match(bridge,/NEXT-1302-SESSION-INCOMPLETE/);
+assert.match(bridge,/stageName==="NEXT-1302-SESSION-COMPLETED"/);
+assert.match(bridge,/extra&&extra\.success===true/);
 assert.match(bridge,/researchMode:true/);
 assert.match(bridge,/researchCandidate:CANDIDATE_NAME/);
 
 const reportIntegrity=fs.readFileSync(new URL('../js/report-research-integrity.js',import.meta.url),'utf8');
 assert.match(reportIntegrity,/research\.researchMode=true/);
 assert.match(reportIntegrity,/SlopKit Userland/);
-assert.match(reportIntegrity,/finalStage==="NEXT-1302-SESSION-COMPLETED"/);
+assert.match(reportIntegrity,/researchFinal==="NEXT-1302-SESSION-COMPLETED"&&actualFinal==="NEXT-1302-SESSION-COMPLETED"/);
 assert.match(reportIntegrity,/report\.lastNormalizedStage="RUNTIME-COMPLETE"/);
+assert.doesNotMatch(reportIntegrity,/report\.lastStage=researchFinal/);
 
 const probe=fs.readFileSync(new URL('../runtime/next-1302/userland-probe.js',import.meta.url),'utf8');
-assert.match(probe,/createAggressiveResearch/);
+assert.match(probe,/createAggressiveResearch\(doc\)/);
 assert.match(probe,/unhandledrejection/);
 assert.match(probe,/unexpected-termination/);
+assert.match(probe,/diagnostics\.markInterrupted\("page-unloaded-while-running"\)/);
+assert.match(probe,/aggressive\.finish\(\);state\.setRunning\(false\);diagnostics\.markCompleted/);
+assert.match(probe,/diagnostics\.emit\("NEXT-1302-SESSION-COMPLETED"/);
 
 console.log('Aggressive research integrity tests passed.');
