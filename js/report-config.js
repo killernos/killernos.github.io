@@ -1,7 +1,7 @@
 "use strict";
 
 window.NEXT_COMMUNITY_REPORT_ENDPOINT =
-    "https://ps4next.mooo.com/api/community-report";
+    "https://ps4next.duckdns.org/api/community-report";
 
 /*
  * Compatibility bridge for next-community-report-2.
