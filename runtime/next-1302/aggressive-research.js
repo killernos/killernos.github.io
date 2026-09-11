@@ -10,7 +10,7 @@ export function classifyAggressiveResearch(events=[]){
  const kernelCandidateReview=userlandReady&&reviewSignals.size>0;
  return {userlandReady,reviewSignalCount:reviewSignals.size,reviewSignals:[...reviewSignals],kernelCandidateReview,status:kernelCandidateReview?'KERNEL-CANDIDATE / NEEDS-MANUAL-REVIEW':userlandReady?'USERLAND-READY / NO-KERNEL-SIGNAL':'COLLECTING'};
 }
-export function createAggressiveResearch(doc,{emit}={}){
+export function createAggressiveResearch(doc){
  const storageKey='next-1302:aggressive-research-mode';
  const recoveryKey='next-1302:aggressive-research-recovery';
  const modeField=doc.getElementById('field-aggressive-mode'),anomalyField=doc.getElementById('field-anomaly-count'),candidateField=doc.getElementById('field-candidate-review'),toggle=doc.getElementById('toggle-aggressive-mode');
@@ -19,7 +19,7 @@ export function createAggressiveResearch(doc,{emit}={}){
  function classification(){return classifyAggressiveResearch(events);}
  function render(){if(modeField)modeField.textContent=enabled?'ENABLED':'DISABLED';if(anomalyField)anomalyField.textContent=String(events.filter(e=>e.kind==='anomaly').length);if(candidateField)candidateField.textContent=classification().status;if(toggle)toggle.textContent=enabled?'Disable Aggressive Research Mode':'Enable Aggressive Research Mode';}
  function persist(incomplete){if(!enabled)return;try{localStorage.setItem(recoveryKey,JSON.stringify({sessionId,startedAt,updatedAt:now(),incomplete:!!incomplete,classification:classification(),events:events.slice(-40),kernelExecutionAuthorized:false,kernelWriteAuthorized:false,patchingAuthorized:false,henAuthorized:false}));}catch(e){}}
- function record(stage,detail,kind='stage'){if(!enabled)return;const entry={at:now(),sessionId,stage:text(stage),detail:text(detail).slice(0,240),kind:text(kind)||'stage'};events.push(entry);if(events.length>MAX_EVENTS)events.shift();persist(true);if(typeof emit==='function')emit('AGGRESSIVE-'+entry.stage,entry.detail,{sessionId});render();}
+ function record(stage,detail,kind='stage'){if(!enabled)return;const entry={at:now(),sessionId,stage:text(stage),detail:text(detail).slice(0,240),kind:text(kind)||'stage'};events.push(entry);if(events.length>MAX_EVENTS)events.shift();persist(true);render();}
  function setEnabled(value){enabled=!!value;try{localStorage.setItem(storageKey,enabled?'1':'0');if(!enabled)localStorage.removeItem(recoveryKey);}catch(e){};render();return enabled;}
  function start(id){sessionId=text(id);startedAt=now();events=[];record('MODE-SESSION-START','bounded-observation-only');}
  function finish(){record('MODE-SESSION-END',classification().status);persist(false);return snapshot();}
