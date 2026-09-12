@@ -635,7 +635,7 @@
         testerAlias: state.testerAlias,
         testerNotes: state.testerNotes,
         testerOutcome: state.testerOutcome,
-        includeDiagnostics: state.includeDiagnostics,
+        includeDiagnostics: state.includeDiagnostics || observedResearch,
         includeUserAgent: state.includeUserAgent
       }));
     } catch (error) { }
@@ -1171,7 +1171,7 @@
       }
     };
     if (state.includeUserAgent) report.userAgent = navigator.userAgent || "";
-    report.diagnostics = state.includeDiagnostics ? sessionRecords : [];
+    report.diagnostics = (state.includeDiagnostics || observedResearch) ? sessionRecords : [];
     report.diagnosticRecords = report.diagnostics;
     return report;
   }
