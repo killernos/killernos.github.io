@@ -1,10 +1,10 @@
 import { establishPrimitive, abortPrimitive, cleanupTemporaryAllocations } from "./slopkit/core.js?v=10";
-import { installWindowP, pairStatus } from "./slopkit/mem.js?v=next-universal-1302-1352-research-0015";
-import { BUILD_ID, createResearchState } from "./research-state.js?v=next-universal-1302-1352-research-0015";
-import { createDiagnosticsBridge } from "./diagnostics-bridge.js";
-import { create1302ResearchAdapter } from "./research-adapter.js?v=next-universal-1302-1352-research-0015";
+import { installWindowP, pairStatus } from "./slopkit/mem.js?v=next-universal-1302-1352-research-0017";
+import { BUILD_ID, createResearchState } from "./research-state.js?v=next-universal-1302-1352-research-0017";
+import { createDiagnosticsBridge } from "./diagnostics-bridge.js?v=next-universal-1302-1352-research-0017";
+import { create1302ResearchAdapter } from "./research-adapter.js?v=next-universal-1302-1352-research-0017";
 import { createObservationUi } from "./observation-ui.js";
-import { createAggressiveResearch } from "./aggressive-research.js";
+import { createAggressiveResearch } from "./aggressive-research.js?v=next-universal-1302-1352-research-0017";
 function parseQuery(name){const pairs=(location.search||"").replace(/^\?/,"").split("&");for(let i=0;i<pairs.length;i++){const p=pairs[i].split("=");if(decodeURIComponent(p[0]||"")===name)return decodeURIComponent((p[1]||"").replace(/\+/g," "));}return "";}
 function isResearchFirmware(value){const m=/^(\d+)\.(\d{2})$/.exec(String(value||""));if(!m)return false;const n=parseInt(m[1],10)*100+parseInt(m[2],10);return n>=1302&&n<=1352;}
 function detectRuntimeContext(){const m=/PlayStation\s+4[\/ ](\d+)\.(\d+)/.exec(navigator.userAgent||""),forced=(parseQuery("fw")||"").replace(/\s+/g,"").trim(),researchMode=parseQuery("research")==="1",simulated=isResearchFirmware(forced)&&researchMode;if(m){const minorValue=parseInt(m[2],16);let minor=minorValue.toString(16);if(minor.length<2)minor="0"+minor;const firmware=m[1]+"."+minor;return{firmware,firmwareSource:"UA",hardwareDetected:true,researchFirmware:isResearchFirmware(firmware),simulated:false,researchMode:true};}return{firmware:forced||(simulated?"13.02":"Unknown"),firmwareSource:forced?"QUERY":"UNKNOWN",hardwareDetected:false,researchFirmware:false,simulated,researchMode};}

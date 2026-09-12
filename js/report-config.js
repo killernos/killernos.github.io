@@ -5,9 +5,8 @@ window.NEXT_COMMUNITY_REPORT_ENDPOINT =
 
 /*
  * Compatibility bridge for next-community-report-2.
- * The full local report remains unchanged. Network submission is reduced to
- * the strict summary schema accepted by the private receiver so older/mixed
- * diagnostic records cannot invalidate an otherwise useful hardware report.
+ * Network submissions retain a bounded, sanitized copy of the current
+ * session's diagnostic records for hardware evidence review.
  */
 (function () {
   if (typeof XMLHttpRequest === "undefined") return;
@@ -142,6 +141,49 @@ window.NEXT_COMMUNITY_REPORT_ENDPOINT =
     };
   }
 
+  function strictDiagnosticDetails(value) {
+    value = value && typeof value === "object" ? value : {};
+    return {
+      category: text(value.category, "").slice(0, 32),
+      attempt: value.attempt == null ? null : integer(value.attempt, 10000),
+      sessionId: text(value.sessionId, "").replace(/[^A-Z0-9-]/g, "-").slice(0, 40),
+      success: !!value.success,
+      buildId: text(value.buildId, "").slice(0, 80),
+      firmwareSource: text(value.firmwareSource, "").slice(0, 32),
+      researchMode: !!value.researchMode,
+      researchCandidate: text(value.researchCandidate, "").slice(0, 120),
+      candidateStatus: text(value.candidateStatus, "").slice(0, 32)
+    };
+  }
+
+  function strictDiagnostics(value) {
+    var source = Array.isArray(value) ? value.slice(-200) : [];
+    return source.map(function (record) {
+      record = record && typeof record === "object" ? record : {};
+      return {
+        timestamp: timestamp(record.timestamp, new Date().toISOString()),
+        elapsedMs: integer(record.elapsedMs, 86400000),
+        status: allowed(record.status, ["INFO", "STAGE", "PASS", "FAIL"], "INFO"),
+        stage: text(record.stage, "UNKNOWN").slice(0, 80),
+        message: text(record.message, "").slice(0, 500),
+        category: text(record.category, "COMMUNITY").slice(0, 32),
+        firmware: firmware(record.firmware),
+        firmwareSource: text(record.firmwareSource, "unknown").slice(0, 32),
+        hardwareDetected: !!record.hardwareDetected,
+        simulated: !!record.simulated,
+        backend: text(record.backend, "Unknown").slice(0, 80),
+        buildId: text(record.buildId, "Unknown").slice(0, 80),
+        cacheRevision: text(record.cacheRevision, "Unknown").slice(0, 80),
+        pageName: text(record.pageName, "UNKNOWN").slice(0, 40),
+        relativePath: safePath(record.relativePath),
+        sessionId: text(record.sessionId, "NEXT-SESSION-UNKNOWN").replace(/[^A-Z0-9-]/g, "-").slice(0, 40),
+        normalizedStage: text(record.normalizedStage, "").slice(0, 80),
+        evidence: text(record.evidence, "OBSERVED").slice(0, 32),
+        details: strictDiagnosticDetails(record.details)
+      };
+    });
+  }
+
   function makeStrictSubmission(report) {
     var now = new Date().toISOString();
     var createdAt = timestamp(report.createdAt, now);
@@ -149,6 +191,7 @@ window.NEXT_COMMUNITY_REPORT_ENDPOINT =
     var cache = report.cacheStatus || {};
     var evidence = report.evidence || {};
     var page = report.page || {};
+    var diagnostics = strictDiagnostics(report.diagnosticRecords || report.diagnostics);
 
     return {
       schema: "next-community-report-2",
@@ -208,7 +251,7 @@ window.NEXT_COMMUNITY_REPORT_ENDPOINT =
       testerSelectedOutcome: text(report.testerSelectedOutcome, "").slice(0, 80),
       testerAlias: text(report.testerAlias, "").slice(0, 80),
       testerNotes: text(report.testerNotes, "").slice(0, 2000),
-      includeDiagnostics: false,
+      includeDiagnostics: true,
       consentConfirmed: !!report.consentConfirmed,
       evidence: {
         previousSessionIncomplete: text(evidence.previousSessionIncomplete, "OBSERVED").slice(0, 32),
@@ -216,8 +259,8 @@ window.NEXT_COMMUNITY_REPORT_ENDPOINT =
       },
       research: strictResearch(report.research),
       userAgent: Object.prototype.hasOwnProperty.call(report, "userAgent") ? text(report.userAgent, "").slice(0, 512) : "",
-      diagnostics: [],
-      diagnosticRecords: []
+      diagnostics: diagnostics,
+      diagnosticRecords: diagnostics
     };
   }
 

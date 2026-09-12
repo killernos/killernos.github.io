@@ -14,8 +14,8 @@ export function createAggressiveResearch(doc){
  const storageKey='next-1302:aggressive-research-mode';
  const recoveryKey='next-1302:aggressive-research-recovery';
  const modeField=doc.getElementById('field-aggressive-mode'),anomalyField=doc.getElementById('field-anomaly-count'),candidateField=doc.getElementById('field-candidate-review'),toggle=doc.getElementById('toggle-aggressive-mode');
- let enabled=false,active=false,sessionId='',events=[],startedAt='',recovered=null;
- try{enabled=localStorage.getItem(storageKey)==='1';const raw=localStorage.getItem(recoveryKey);if(raw)recovered=JSON.parse(raw);}catch(e){}
+ let enabled=true,active=false,sessionId='',events=[],startedAt='',recovered=null;
+ try{const storedMode=localStorage.getItem(storageKey);if(storedMode!==null)enabled=storedMode==='1';const raw=localStorage.getItem(recoveryKey);if(raw)recovered=JSON.parse(raw);}catch(e){}
  function classification(){return classifyAggressiveResearch(events);}
  function render(){if(modeField)modeField.textContent=enabled?'ENABLED':'DISABLED';if(anomalyField)anomalyField.textContent=String(events.filter(e=>e.kind==='anomaly').length);if(candidateField)candidateField.textContent=classification().status;if(toggle)toggle.textContent=enabled?'Disable Aggressive Research Mode':'Enable Aggressive Research Mode';}
  function persist(incomplete){if(!enabled)return;try{localStorage.setItem(recoveryKey,JSON.stringify({sessionId,startedAt,updatedAt:now(),incomplete:!!incomplete,classification:classification(),events:events.slice(-40),kernelExecutionAuthorized:false,kernelWriteAuthorized:false,patchingAuthorized:false,henAuthorized:false}));}catch(e){}}

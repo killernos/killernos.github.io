@@ -620,7 +620,7 @@
     state.testerAlias = sanitizeText(loaded.testerAlias || "", 80);
     state.testerNotes = sanitizeText(loaded.testerNotes || "", 2000);
     state.testerOutcome = sanitizeText(loaded.testerOutcome || "", 80);
-    state.includeDiagnostics = loaded.includeDiagnostics !== undefined ? !!loaded.includeDiagnostics : state.includeDiagnostics;
+    state.includeDiagnostics = true;
     state.includeUserAgent = !!loaded.includeUserAgent;
   }
 
@@ -635,7 +635,7 @@
         testerAlias: state.testerAlias,
         testerNotes: state.testerNotes,
         testerOutcome: state.testerOutcome,
-        includeDiagnostics: state.includeDiagnostics || observedResearch,
+        includeDiagnostics: true,
         includeUserAgent: state.includeUserAgent
       }));
     } catch (error) { }
@@ -1137,7 +1137,7 @@
       testerSelectedOutcome: state.testerOutcome,
       testerAlias: state.testerAlias,
       testerNotes: state.testerNotes,
-      includeDiagnostics: state.includeDiagnostics,
+      includeDiagnostics: state.includeDiagnostics || observedResearch,
       consentConfirmed: !!(firstElementById("community-consent", "report-review-confirm") && firstElementById("community-consent", "report-review-confirm").checked),
       evidence: {
         previousSessionIncomplete: !state.previousSessionCompleted ? "OBSERVED" : "OBSERVED",
@@ -1733,8 +1733,45 @@
     });
   }
 
+  function adoptRuntimeSession(runtimeSessionId) {
+    var nextSessionId = sanitizeText(runtimeSessionId || "", 96);
+    var previous;
+    if (!nextSessionId || nextSessionId === state.sessionId) return;
+    previous = sessionSnapshot();
+    if (previous.sessionId) {
+      previous.sessionCompleted = !!(previous.sessionCompleted || (previous.backend && previous.backend.completed));
+      persistPrevious(previous);
+      state.previousSession = previous;
+      state.previousSessionCompleted = previous.sessionCompleted;
+    }
+    state.sessionId = nextSessionId;
+    state.sessionStartedAt = nowIso();
+    state.lastEventAt = state.sessionStartedAt;
+    state.sessionCompleted = false;
+    state.lastStage = "Not reported";
+    state.lastNormalizedStage = "Not reported";
+    state.attempts = 0;
+    state.passes = 0;
+    state.failures = 0;
+    state.backend.entered = false;
+    state.backend.completed = false;
+    state.backend.failed = false;
+    state.research.entryReady = false;
+    state.research.candidateReady = false;
+    state.research.kernelFaultObserved = false;
+    state.research.kernelLeak = false;
+    state.research.kernelRead = false;
+    state.research.kernelWrite = false;
+    state.research.kernelExecution = false;
+    state.research.lastResearchStage = "";
+    state.includeDiagnostics = true;
+    resetReportId();
+    persistSession();
+  }
+
   function observeRuntimeEvent(stageName, detail, extra) {
     var status = "INFO";
+    if (stageName === "NEXT-1302-BOOT" && extra && extra.sessionId) adoptRuntimeSession(extra.sessionId);
     if (/FAIL|ERROR|THREW|ABORTED|CANCELLED/.test(stageName)) status = "FAIL";
     else if (/PASS|READY|DONE|RUNNING|COMPLETE|OK/.test(stageName)) status = "PASS";
     if (/ATTEMPT-START|ATTEMPT-BEGIN/.test(stageName)) status = "STAGE";

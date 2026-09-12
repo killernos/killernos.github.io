@@ -1,4 +1,4 @@
-import { BACKEND_NAME, BUILD_ID, CANDIDATE_NAME } from "./research-state.js";
+import { BACKEND_NAME, BUILD_ID, CANDIDATE_NAME } from "./research-state.js?v=next-universal-1302-1352-research-0017";
 function detailText(detail){return detail==null||detail===""?"":String(detail);}
 function stageStatus(stageName,extra){if(stageName==="NEXT-1302-SESSION-COMPLETED")return extra&&extra.success===true?"pass":"fail";if(/FAIL|ERROR|LOCKED/.test(stageName))return "fail";if(/PASS|VERIFIED|OBTAINED|INSTALLED|CONFIRMED|SUCCESS/.test(stageName))return "pass";return "stage";}
 export function createDiagnosticsBridge(state){
