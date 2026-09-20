@@ -86,6 +86,19 @@
       enabled: true,
       defaultSelection: true,
       notes: "Registered only because the payload binary exists locally."
+    },
+    {
+      id: "goldhen-2.4b18.11",
+      family: "goldhen",
+      displayName: "GoldHEN v2.4b18.11",
+      version: "2.4b18.11",
+      payloadPath: "payloads/goldhen/goldhen-2.4b18.11.bin",
+      loader: "payload-bin",
+      supportedFirmware: ["13.02", "13.04", "13.50", "13.52"],
+      evidence: "HARDWARE-REPORTED",
+      enabled: true,
+      defaultSelection: false,
+      notes: "Experimental 13.x payload. Availability does not imply equal stability on every console."
     }
   ];
 })();
