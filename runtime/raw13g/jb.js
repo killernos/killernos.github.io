@@ -10,6 +10,8 @@ let passCount = 0,
   failCount = 0;
 const params = new URLSearchParams(location.search);
 const STOP_BEFORE_DOUBLE = params.get("stop") === "beforedouble";
+const stability = window.NEXTRaw13gStability || null;
+if (stability) stability.runtimeStart();
 
 function post(tag, detail) {
   try {
@@ -50,10 +52,12 @@ function terse(s) {
 const SHOW_LOG = params.get("log") === "1";
 if (SHOW_LOG && document.body) document.body.className = "log";
 function finishUI(ok) {
+  if (stability) stability.complete(!!ok);
   if (SHOW_LOG || !document.body) return;
   document.body.className = ok ? "done" : "fail";
 }
 function mark(tag, detail) {
+  if (stability) stability.checkpoint(tag);
   const raw = detail;
   detail = terse(detail);
   lines.push(tag + (detail == null || detail === "" ? "" : "  " + detail));
