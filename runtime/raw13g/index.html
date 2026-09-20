@@ -1,0 +1,67 @@
+<!doctype html>
+<html manifest="cache.appcache">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>KillerNoS NEXT — 13.02–13.52 Jailbreak</title>
+  <style>
+    body{margin:0;background:#07111f;color:#eef4ff;font:16px Georgia,serif}main{max-width:860px;margin:auto;padding:28px 18px 60px}
+    section{background:#0d1d33;border:1px solid #375170;border-radius:18px;padding:20px;margin:16px 0}h1{margin-top:0}
+    .warn{color:#ffd27a}.bad{color:#ffadad}.ok{color:#87e7c7}button,a.button,select{display:inline-block;margin:8px 8px 0 0;padding:13px 18px;border-radius:10px;border:1px solid #79e0c3;background:#14314a;color:#fff;text-decoration:none;font:inherit}
+    select{background:#f4f8ff;color:#07111f;min-width:280px}button[disabled]{opacity:.45}.meta{font-family:monospace;overflow-wrap:anywhere}.check{line-height:1.7}#countdown{font-size:1.2em;font-weight:bold}
+  </style>
+</head>
+<body>
+<main>
+  <h1>KillerNoS NEXT: 13.02–13.52 Jailbreak</h1>
+  <p class="warn">Manual hardware evaluation only. This early-release path can crash or restart the console. Launch is manual and never autoloads.</p>
+  <section>
+    <h2>Eligibility</h2>
+    <p>Detected firmware: <strong id="firmware">Checking</strong></p>
+    <p>Status: <strong id="status">Checking</strong></p>
+    <p id="simulation" class="bad" hidden>Desktop and query previews cannot launch this runtime; hardware UA required.</p>
+  </section>
+  <section>
+    <h2>HEN payload</h2>
+    <label for="payload">Select the payload to load after the jailbreak:</label><br>
+    <select id="payload">
+      <option value="goldhen.bin" selected>GoldHEN v2.4b18.11 (experimental)</option>
+      <option value="payload2.bin">PS4 HEN 2.2.0 (fallback)</option>
+    </select>
+    <p class="meta">GoldHEN SHA-256: 48d46667249330c9be48c96a2a3a2dab4464dababa8fcb3e38170c98caf3851f</p>
+  </section>
+  <section>
+    <h2>Before testing</h2>
+    <div class="check">1. Start from a complete power-off and cold boot.<br>2. Confirm HEN and Debug Settings are absent.<br>3. Record the firmware and complete attempt.<br>4. If it crashes, reboot fully before retrying.</div>
+  </section>
+  <section>
+    <h2>Manual launch</h2>
+    <p id="countdown">Ready. No launch is scheduled.</p>
+    <button id="arm" type="button" disabled>Arm 8-second launch</button>
+    <button id="cancel" type="button">Cancel</button>
+    <a class="button" href="../../index.html">Return to NEXT</a>
+  </section>
+  <section>
+    <h2>Source and status</h2>
+    <p>This isolated runtime is derived from RAW13G. Firmware support is active for 13.02, 13.04, 13.50 and 13.52. Stability remains under evaluation.</p>
+    <p class="meta">KillerNoS NEXT build: next-universal-1302-1352-research-0022</p>
+  </section>
+</main>
+<script>
+(function(){
+  "use strict";
+  var supported=["13.02","13.04","13.50","13.52"],m=navigator.userAgent.match(/PlayStation\s+4[\/ ](\d+)\.(\d+)/),fw=null,timer=null,left=8;
+  var firmware=document.getElementById("firmware"),status=document.getElementById("status"),simulation=document.getElementById("simulation"),arm=document.getElementById("arm"),cancel=document.getElementById("cancel"),countdown=document.getElementById("countdown"),payload=document.getElementById("payload");
+  if(m){var minor=parseInt(m[2],16).toString(16);if(minor.length<2)minor="0"+minor;fw=m[1]+"."+minor}
+  firmware.textContent=fw||"Not a PS4";
+  if(!fw){status.textContent="BLOCKED — real PS4 required";status.className="bad";simulation.hidden=false}
+  else if(supported.indexOf(fw)===-1){status.textContent="BLOCKED — unsupported firmware";status.className="bad"}
+  else{status.textContent="ACTIVE — manual launch only";status.className="ok";arm.disabled=false}
+  function stop(reason){if(timer){clearInterval(timer);timer=null}left=8;countdown.textContent="Cancelled: "+reason+". No launch is scheduled.";arm.disabled=!(fw&&supported.indexOf(fw)!==-1)}
+  arm.onclick=function(){if(arm.disabled||timer)return;arm.disabled=true;left=8;countdown.textContent="Launch in 8 seconds. Press Cancel to stop.";timer=setInterval(function(){left--;if(left<=0){clearInterval(timer);timer=null;countdown.textContent="Starting jailbreak...";location.href="./jb.html?payloadfile="+encodeURIComponent(payload.value);return}countdown.textContent="Launch in "+left+" seconds. Press Cancel to stop."},1000)};
+  cancel.onclick=function(){stop("user cancellation")};
+  window.addEventListener("pagehide",function(){if(timer)clearInterval(timer)});
+})();
+</script>
+</body>
+</html>
