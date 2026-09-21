@@ -128,8 +128,28 @@
       border: 1px solid rgba(255, 255, 255, 0.1);
       color: var(--text);
     }
-  </style>
-  <script src="./js/autoload-guard.js?v=next-universal-1302-research-0008"></script>
+  
+/* NEXT unified Matrix console theme */
+:root{--mx-bg:#010403;--mx-panel:#031009;--mx-line:rgba(53,255,122,.24);--mx-text:#d9ffe7;--mx-muted:#72ad87;--mx-green:#35ff7a}
+html,body{background:#010403!important;color:var(--mx-text)!important}
+body{font-family:"Courier New",Courier,monospace!important;background:radial-gradient(circle at 50% -15%,rgba(53,255,122,.09),transparent 35%),linear-gradient(180deg,#010503,#020a06 55%,#010302)!important;text-shadow:0 0 8px rgba(53,255,122,.08)}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(rgba(53,255,122,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(53,255,122,.018) 1px,transparent 1px);background-size:28px 28px}
+body:after{content:"";position:fixed;inset:0;z-index:9999;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.1) 0,rgba(0,0,0,.1) 1px,transparent 1px,transparent 4px);opacity:.32}
+main,.shell,#wrap,#brand{position:relative;z-index:1}
+section,.panel,.card,.stat,.notice,.selector-field,.selector-status{background:rgba(2,13,8,.93)!important;border-color:var(--mx-line)!important;border-radius:5px!important;box-shadow:0 18px 50px rgba(0,0,0,.58)}
+h1,h2,h3{color:#dfffe8!important;text-transform:uppercase;letter-spacing:.055em}h2:before{content:"NEXT://";color:var(--mx-green);opacity:.8}
+p,.muted,.note,.label{color:var(--mx-muted)}
+a{color:#8affae!important}
+button,a.button,.button-link{border-radius:4px!important;font-family:"Courier New",Courier,monospace!important;text-transform:uppercase;letter-spacing:.04em;background:#061b0e!important;border:1px solid rgba(53,255,122,.3)!important;color:#baffcd!important}
+button:not([disabled]):hover,a.button:hover,.button-link:hover{border-color:#35ff7a!important;box-shadow:0 0 16px rgba(53,255,122,.12)}
+select{position:relative;z-index:50!important;background:#031108!important;color:#caffd8!important;border-color:rgba(53,255,122,.45)!important;border-radius:3px!important;color-scheme:dark}
+select option,select optgroup{background:#031108!important;color:#caffd8!important}
+.grid,label{position:relative;overflow:visible!important}.ok,.STABLE{color:#35ff7a!important}.warn,.VARIABLE,.INCONCLUSIVE{color:#d7ff55!important}.bad,.ERROR,.danger{color:#ff7070!important}
+table th{color:#35ff7a!important}table td,table th{border-color:rgba(53,255,122,.12)!important}
+#brand{background:#020b06!important;border-bottom-color:rgba(53,255,122,.22)!important}#brand b{color:#baffcd!important}#out{background:#010704!important;border-color:rgba(53,255,122,.22)!important;color:#baffcd!important}
+
+</style>
+  <script src="./js/autoload-guard.js?v=next-universal-1302-1352-research-0012"></script>
 </head>
 <body>
   <div class="shell">
@@ -186,7 +206,7 @@
       </div>
       <div class="actions">
         <button id="clear-host-settings" type="button">Clear host settings</button>
-        <a href="./index.html?v=next-universal-1302-research-0008">Return to main page</a>
+        <a href="./index.html?v=next-universal-1302-1352-research-0012">Return to main page</a>
       </div>
       <p>Return to PS4 home if you want the normal browser shell before attempting another manual launch.</p>
     </section>
@@ -211,7 +231,7 @@
       setText("safe-disable-reason", state.disableReason || "Not recorded");
       setText("safe-saved-firmware", state.savedFirmware || "Not recorded");
 
-      guard.loadConfig(window.fetch ? window.fetch.bind(window) : null, "./autoload-config.json?v=next-universal-1302-research-0008").then(function (config) {
+      guard.loadConfig(window.fetch ? window.fetch.bind(window) : null, "./autoload-config.json?v=next-universal-1302-1352-research-0012").then(function (config) {
         var globalState = guard.describeGlobalConfig(config);
         setText("safe-global-status", globalState.status);
         setText("safe-global-by", globalState.disabledBy);
