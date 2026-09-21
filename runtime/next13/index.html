@@ -30,6 +30,23 @@ select option,select optgroup{background:#031108!important;color:#caffd8!importa
 table th{color:#35ff7a!important}table td,table th{border-color:rgba(53,255,122,.12)!important}
 #brand{background:#020b06!important;border-bottom-color:rgba(53,255,122,.22)!important}#brand b{color:#baffcd!important}#out{background:#010704!important;border-color:rgba(53,255,122,.22)!important;color:#baffcd!important}
 
+
+/* NEXT13 mobile containment + report action */
+*{box-sizing:border-box}
+main{width:100%;max-width:1040px;overflow:hidden}
+section{width:100%;max-width:100%;overflow:hidden}
+button,a.button,select{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.actions-next{display:flex;flex-wrap:wrap;gap:10px;align-items:stretch}
+.actions-next button,.actions-next a.button{margin:0;flex:1 1 220px}
+#submit-killernos{background:linear-gradient(180deg,#35ff7a,#13b94d)!important;color:#001b09!important;border-color:#55ff91!important;font-weight:700}
+@media(max-width:600px){
+ main{padding:20px 12px 44px}
+ section{padding:16px 14px;margin:12px 0}
+ h1{font-size:25px;line-height:1.18;overflow-wrap:anywhere}
+ h2{font-size:20px;overflow-wrap:anywhere}
+ .actions-next{display:block}
+ .actions-next button,.actions-next a.button{display:block;width:100%;margin:9px 0}
+}
 </style>
 </head>
 <body>
@@ -77,16 +94,13 @@ table th{color:#35ff7a!important}table td,table th{border-color:rgba(53,255,122,
     <h2>Manual launch</h2>
     <p id="countdown">Ready. No launch is scheduled.</p>
     <p id="attempts" class="meta"></p>
-    <button id="arm" type="button" disabled>Validate and arm 8-second launch</button>
-    <button id="cancel" type="button">Cancel</button>
-    <a class="button" href="../../index.html">Return to NEXT</a>
+    <div class="actions-next"><button id="arm" type="button" disabled>Validate and arm 8-second launch</button><button id="cancel" type="button">Cancel</button><a class="button" href="../../index.html">Return to NEXT</a></div>
   </section>
   <section>
     <h2>Local stability report</h2>
     <p id="recovery" class="muted">No recovered crash marker.</p>
     <p class="muted">The journal stores firmware, profile, mode, payload, timestamps, outcomes, and coarse stages only. It does not store addresses or exploit details.</p>
-    <button id="download" type="button">Download A/B report</button>
-    <button id="reset" type="button">Reset local report</button>
+    <div class="actions-next"><button id="submit-killernos" type="button">Submit Report To KillerNoS</button><button id="download" type="button">Download A/B report</button><button id="reset" type="button">Reset local report</button></div>
   </section>
   <section>
     <h2>Source and status</h2>
@@ -100,7 +114,7 @@ table th{color:#35ff7a!important}table td,table th{border-color:rgba(53,255,122,
   "use strict";
   var supported=["13.02","13.04","13.50","13.52"],m=navigator.userAgent.match(/PlayStation\s+4[\/ ](\d+)\.(\d+)/),fw=null,timer=null,left=8,eligible=false;
   var api=window.NEXTRaw13gStability;
-  var firmware=document.getElementById("firmware"),status=document.getElementById("status"),simulation=document.getElementById("simulation"),arm=document.getElementById("arm"),cancel=document.getElementById("cancel"),countdown=document.getElementById("countdown"),payload=document.getElementById("payload"),mode=document.getElementById("mode"),profile=document.getElementById("profile"),attempts=document.getElementById("attempts"),integrity=document.getElementById("integrity"),recovery=document.getElementById("recovery"),download=document.getElementById("download"),reset=document.getElementById("reset");
+  var firmware=document.getElementById("firmware"),status=document.getElementById("status"),simulation=document.getElementById("simulation"),arm=document.getElementById("arm"),cancel=document.getElementById("cancel"),countdown=document.getElementById("countdown"),payload=document.getElementById("payload"),mode=document.getElementById("mode"),profile=document.getElementById("profile"),attempts=document.getElementById("attempts"),integrity=document.getElementById("integrity"),recovery=document.getElementById("recovery"),download=document.getElementById("download"),reset=document.getElementById("reset"),submitKillerNoS=document.getElementById("submit-killernos");
   if(m){var minor=parseInt(m[2],16).toString(16);if(minor.length<2)minor="0"+minor;fw=m[1]+"."+minor}
   firmware.textContent=fw||"Not a PS4";
   if(!fw){status.textContent="BLOCKED — real PS4 required";status.className="bad";simulation.hidden=false}
@@ -149,7 +163,7 @@ table th{color:#35ff7a!important}table td,table th{border-color:rgba(53,255,122,
     var text=JSON.stringify(api.report(),null,2),blob=new Blob([text],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");
     a.href=url;a.download="killernos-next-raw13g-stability-"+Date.now()+".json";document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url)},1000);
   };
-  reset.onclick=function(){if(timer)return;api.reset();recovery.textContent="Local stability report reset.";recovery.className="muted";refreshGate()};
+  reset.onclick=function(){if(timer)return;api.reset();recovery.textContent="Local stability report reset.";recovery.className="muted";refreshGate()};\n  submitKillerNoS.onclick=function(){try{localStorage.setItem("ps4next.next13.stability.report",JSON.stringify(api.report()));}catch(e){} location.href="../../diagnostics.html?source=next13&submit=1#community-report";};
   window.addEventListener("pagehide",function(){if(timer)clearInterval(timer)});
   refreshGate();setInterval(refreshGate,1000);
 })();
