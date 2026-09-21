@@ -193,7 +193,8 @@ let allDone = false,
     const KPATCH_FILE =
       "patches/" + (off.kpatch || fwKey.replace(".", "") + ".bin");
     const requestedPayload = params.get("payloadfile");
-    const PAYLOAD_FILE = requestedPayload === "goldhen.bin" || requestedPayload === "payload2.bin"
+    const allowedPayloads = ["goldhen.bin", "payload2.bin", "/payloads/goldhen/goldhen-2.4b18.12.bin"];
+    const PAYLOAD_FILE = allowedPayloads.indexOf(requestedPayload) !== -1
       ? requestedPayload
       : off.payload || "payload2.bin";
     const needPatch = ["k_sysent_661", "k_jmp_rsi"].filter(
