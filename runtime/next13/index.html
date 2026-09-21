@@ -64,7 +64,8 @@ button,a.button,select{max-width:100%;white-space:normal;overflow-wrap:anywhere}
     <div class="grid">
       <label for="payload">HEN payload<br>
         <select id="payload">
-          <option value="goldhen.bin" selected>GoldHEN v2.4b18.11 (experimental)</option>
+          <option value="../../payloads/goldhen/goldhen-2.4b18.12.bin" selected>GoldHEN v2.4b18.12 (latest)</option>
+          <option value="goldhen.bin">GoldHEN v2.4b18.11</option>
           <option value="payload2.bin">PS4 HEN 2.2.0 (fallback)</option>
         </select>
       </label>
@@ -83,7 +84,7 @@ button,a.button,select{max-width:100%;white-space:normal;overflow-wrap:anywhere}
       </label>
     </div>
     <p id="integrity" class="meta">Payload integrity is checked before every arm.</p>
-    <p class="meta">GoldHEN SHA-256: 48d46667249330c9be48c96a2a3a2dab4464dababa8fcb3e38170c98caf3851f</p>
+    <p class="meta">GoldHEN v2.4b18.12 is selected by default. v2.4b18.11 remains available as fallback.</p>
     <p class="muted">Profiles limit manual attempts; they do not change exploit primitives, offsets, patch blobs, or automatically retry.</p>
   </section>
   <section>
@@ -108,7 +109,7 @@ button,a.button,select{max-width:100%;white-space:normal;overflow-wrap:anywhere}
     <p class="meta">KillerNoS NEXT build: next-universal-1302-1352-research-0024</p>
   </section>
 </main>
-<script src="/runtime/raw13g/stability.js?v=2"></script>
+<script src="/runtime/raw13g/stability.js?v=3"></script>
 <script>
 (function(){
   "use strict";
