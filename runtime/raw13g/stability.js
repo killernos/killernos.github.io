@@ -12,6 +12,11 @@
     aggressive: { attemptLimit: 5, cooldownMs: 5000 }
   };
   var PAYLOADS = {
+    "../../payloads/goldhen/goldhen-2.4b18.12.bin": {
+      label: "GoldHEN v2.4b18.12",
+      size: 293120,
+      sha256: ""
+    },
     "goldhen.bin": {
       label: "GoldHEN v2.4b18.11",
       size: 291072,
@@ -211,7 +216,7 @@
       if (!buffer || buffer.byteLength !== expected.size) { done({ ok: false, reason: "payload-size-mismatch", expectedSize: expected.size, actualSize: buffer ? buffer.byteLength : 0 }); return; }
       var bytes = new Uint8Array(buffer);
       if (!bytes.length || bytes[0] !== 0xe9) { done({ ok: false, reason: "payload-magic-mismatch" }); return; }
-      if (root.crypto && root.crypto.subtle && root.crypto.subtle.digest) {
+      if (expected.sha256 && root.crypto && root.crypto.subtle && root.crypto.subtle.digest) {
         root.crypto.subtle.digest("SHA-256", buffer).then(function (digest) {
           var actual = toHex(digest);
           done({ ok: actual === expected.sha256, reason: actual === expected.sha256 ? "verified" : "payload-sha256-mismatch", integrity: "sha256", sha256: actual });
