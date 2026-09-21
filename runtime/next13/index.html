@@ -108,11 +108,11 @@ button,a.button,select{max-width:100%;white-space:normal;overflow-wrap:anywhere}
     <p class="meta">KillerNoS NEXT build: next-universal-1302-1352-research-0024</p>
   </section>
 </main>
-<script src="./stability.js?v=1"></script>
+<script src="/runtime/raw13g/stability.js?v=2"></script>
 <script>
 (function(){
   "use strict";
-  var supported=["13.02","13.04","13.50","13.52"],ua=navigator.userAgent||"",m=ua.match(/PlayStation\\s*4[^0-9]*(\\d+)\\.(\\d+)/i),fw=null,timer=null,eligible=false;
+  var supported=["13.02","13.04","13.50","13.52"],ua=navigator.userAgent||"",m=ua.match(/PlayStation\s*4[^0-9]*(\d+)\.(\d+)/i),fw=null,timer=null,eligible=false;
   var api=window.NEXTRaw13gStability;
   var firmware=document.getElementById("firmware"),status=document.getElementById("status"),simulation=document.getElementById("simulation"),arm=document.getElementById("arm"),cancel=document.getElementById("cancel"),countdown=document.getElementById("countdown"),payload=document.getElementById("payload"),mode=document.getElementById("mode"),profile=document.getElementById("profile"),attempts=document.getElementById("attempts"),integrity=document.getElementById("integrity"),recovery=document.getElementById("recovery"),download=document.getElementById("download"),reset=document.getElementById("reset"),submitKillerNoS=document.getElementById("submit-killernos");
   if(m){var major=parseInt(m[1],10),minor=parseInt(m[2],10);if(!isNaN(major)&&!isNaN(minor)){fw=major+"."+(minor<10?"0":"")+minor}}
@@ -156,7 +156,8 @@ button,a.button,select{max-width:100%;white-space:normal;overflow-wrap:anywhere}
     var text=JSON.stringify(api.report(),null,2),blob=new Blob([text],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");
     a.href=url;a.download="killernos-next-raw13g-stability-"+Date.now()+".json";document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url)},1000);
   };
-  reset.onclick=function(){if(timer)return;api.reset();recovery.textContent="Local stability report reset.";recovery.className="muted";refreshGate()};\n  submitKillerNoS.onclick=function(){try{localStorage.setItem("ps4next.next13.stability.report",JSON.stringify(api.report()));}catch(e){} location.href="../../diagnostics.html?source=next13&submit=1#community-report";};
+  reset.onclick=function(){if(timer)return;api.reset();recovery.textContent="Local stability report reset.";recovery.className="muted";refreshGate()};
+  submitKillerNoS.onclick=function(){try{localStorage.setItem("ps4next.next13.stability.report",JSON.stringify(api.report()));}catch(e){} location.href="../../diagnostics.html?source=next13&submit=1#community-report";};
   
   refreshGate();setInterval(refreshGate,1000);
 })();
