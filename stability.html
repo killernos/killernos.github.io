@@ -1,0 +1,52 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NEXT 13.x Stability Dashboard</title>
+<style>
+:root{--bg:#07111f;--panel:#0b192d;--line:rgba(152,186,255,.2);--text:#eef4ff;--muted:#97accf;--good:#79e0c3;--warn:#ffd27a;--bad:#ff9f9f}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(155deg,var(--bg),#0d1d33);color:var(--text);font-family:Georgia,"Times New Roman",serif;min-height:100vh}
+.shell{width:min(94vw,1180px);margin:auto;padding:28px 0 56px}.panel{padding:22px;border:1px solid var(--line);border-radius:22px;background:rgba(10,21,40,.92);margin-bottom:18px}
+h1,h2{margin-top:0}.lead,.note{color:var(--muted);line-height:1.55}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.card{padding:16px;border:1px solid rgba(255,255,255,.08);border-radius:18px;background:var(--panel)}.fw{font-size:1.35rem;font-weight:700}.state{font-weight:700;margin:8px 0}.STABLE{color:var(--good)}.VARIABLE,.INCONCLUSIVE{color:var(--warn)}.ERROR{color:var(--bad)}
+.metric{display:flex;justify-content:space-between;gap:12px;margin-top:8px;color:var(--muted)}.metric strong{color:var(--text)}
+table{width:100%;border-collapse:collapse;min-width:760px}th,td{padding:10px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left}th{color:var(--good);font-size:.78rem;text-transform:uppercase}.wrap{overflow:auto}
+.actions{display:flex;gap:10px;flex-wrap:wrap}button,a{border:0;border-radius:999px;padding:11px 16px;font:inherit;text-decoration:none;cursor:pointer}button{background:var(--good);color:#072018;font-weight:700}a{background:rgba(255,255,255,.08);color:var(--text);border:1px solid rgba(255,255,255,.1)}
+@media(max-width:800px){.grid{grid-template-columns:1fr 1fr}}@media(max-width:480px){.grid{grid-template-columns:1fr}}
+
+/* NEXT unified Matrix console theme */
+:root{--mx-bg:#010403;--mx-panel:#031009;--mx-line:rgba(53,255,122,.24);--mx-text:#d9ffe7;--mx-muted:#72ad87;--mx-green:#35ff7a}
+html,body{background:#010403!important;color:var(--mx-text)!important}
+body{font-family:"Courier New",Courier,monospace!important;background:radial-gradient(circle at 50% -15%,rgba(53,255,122,.09),transparent 35%),linear-gradient(180deg,#010503,#020a06 55%,#010302)!important;text-shadow:0 0 8px rgba(53,255,122,.08)}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(rgba(53,255,122,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(53,255,122,.018) 1px,transparent 1px);background-size:28px 28px}
+body:after{content:"";position:fixed;inset:0;z-index:9999;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.1) 0,rgba(0,0,0,.1) 1px,transparent 1px,transparent 4px);opacity:.32}
+main,.shell,#wrap,#brand{position:relative;z-index:1}
+section,.panel,.card,.stat,.notice,.selector-field,.selector-status{background:rgba(2,13,8,.93)!important;border-color:var(--mx-line)!important;border-radius:5px!important;box-shadow:0 18px 50px rgba(0,0,0,.58)}
+h1,h2,h3{color:#dfffe8!important;text-transform:uppercase;letter-spacing:.055em}h2:before{content:"NEXT://";color:var(--mx-green);opacity:.8}
+p,.muted,.note,.label{color:var(--mx-muted)}
+a{color:#8affae!important}
+button,a.button,.button-link{border-radius:4px!important;font-family:"Courier New",Courier,monospace!important;text-transform:uppercase;letter-spacing:.04em;background:#061b0e!important;border:1px solid rgba(53,255,122,.3)!important;color:#baffcd!important}
+button:not([disabled]):hover,a.button:hover,.button-link:hover{border-color:#35ff7a!important;box-shadow:0 0 16px rgba(53,255,122,.12)}
+select{position:relative;z-index:50!important;background:#031108!important;color:#caffd8!important;border-color:rgba(53,255,122,.45)!important;border-radius:3px!important;color-scheme:dark}
+select option,select optgroup{background:#031108!important;color:#caffd8!important}
+.grid,label{position:relative;overflow:visible!important}.ok,.STABLE{color:#35ff7a!important}.warn,.VARIABLE,.INCONCLUSIVE{color:#d7ff55!important}.bad,.ERROR,.danger{color:#ff7070!important}
+table th{color:#35ff7a!important}table td,table th{border-color:rgba(53,255,122,.12)!important}
+#brand{background:#020b06!important;border-bottom-color:rgba(53,255,122,.22)!important}#brand b{color:#baffcd!important}#out{background:#010704!important;border-color:rgba(53,255,122,.22)!important;color:#baffcd!important}
+
+</style></head><body><main class="shell">
+<section class="panel"><h1>13.x Hardware Stability Dashboard</h1><p class="lead">KillerNoS / PS4 WebKit NEXT. This view summarizes hardware-observed userland stability stored by this PS4 browser. It does not treat kernel or HEN claims as stability evidence.</p><div class="actions"><button id="refresh">Refresh</button><button id="export">Export Matrix</button><a href="./runtime/next-1302/index.html">Research Runtime</a><a href="./diagnostics.html">Diagnostics</a><a href="./index.html">NEXT Home</a></div></section>
+<section class="panel"><div id="cards" class="grid"></div><p id="summary" class="note"></p></section>
+<section class="panel"><h2>Configuration Details</h2><div class="wrap"><table><thead><tr><th>Firmware</th><th>State</th><th>Attempts</th><th>Userland</th><th>Restore</th><th>Crash</th><th>Median</th><th>Configuration</th></tr></thead><tbody id="rows"></tbody></table></div></section>
+</main><script type="module">
+import {readStabilityMatrix} from "./js/research-stability-report.js";
+const cards=document.getElementById("cards"),rows=document.getElementById("rows"),summary=document.getElementById("summary");
+let current=null;
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));}
+function render(){current=readStabilityMatrix(localStorage);cards.innerHTML="";rows.innerHTML="";let total=0;
+ for(const fw of current.firmwares){const item=current.matrix[fw],best=item.recommended||item.configurations[0]||null;total+=item.totalAttempts;
+ const state=best?best.state:"INCONCLUSIVE";cards.insertAdjacentHTML("beforeend",`<article class="card"><div class="fw">${esc(fw)}</div><div class="state ${esc(state)}">${esc(state)}</div><div class="metric"><span>Attempts</span><strong>${item.totalAttempts}</strong></div><div class="metric"><span>Userland</span><strong>${best?best.userlandSuccessPct:0}%</strong></div><div class="metric"><span>Crash</span><strong>${best?best.crashPct:0}%</strong></div></article>`);
+ for(const c of item.configurations)rows.insertAdjacentHTML("beforeend",`<tr><td>${esc(fw)}</td><td class="${esc(c.state)}">${esc(c.state)}</td><td>${c.attempts}</td><td>${c.userlandSuccessPct}%</td><td>${c.cleanRestorePct}%</td><td>${c.crashPct}%</td><td>${c.medianElapsedMs==null?"—":c.medianElapsedMs+" ms"}</td><td><code>${esc(c.configurationFingerprint)}</code></td></tr>`);
+ }
+ if(!rows.children.length)rows.innerHTML='<tr><td colspan="8">No qualifying hardware observations are stored in this browser yet.</td></tr>';
+ summary.textContent=total+" qualifying hardware observation"+(total===1?"":"s")+" stored locally. STABLE requires at least "+current.minimumStableAttempts+" distinct clean attempts for one configuration.";
+}
+document.getElementById("refresh").onclick=render;document.getElementById("export").onclick=()=>{render();const b=new Blob([JSON.stringify(current,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="NEXT-13x-stability-matrix.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};render();
+</script></body></html>
