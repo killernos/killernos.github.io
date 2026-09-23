@@ -715,7 +715,7 @@
         </div>
         <div id="recovery-banner" class="preview-banner recovery-banner" hidden>Autoload disabled for recovery</div>
         <p id="routing-status" class="routing-copy">Inspecting the PS4 browser user agent.</p>
-        <p id="autoload-status" class="routing-copy">Autoload disabled by default. Re-enable it only on verified firmware after confirming the console is stable.</p>
+        <p id="autoload-status" class="routing-copy">Autoload disabled by default. Use manual launch after confirming the console is stable.</p>
         <div class="switch-grid">
           <div class="switch-card">
             <h3>Local Recovery Switch</h3>
@@ -726,27 +726,15 @@
               <div id="local-switch-reason">Reason: Not recorded</div>
             </div>
           </div>
-          <div class="switch-card">
-            <h3>Global Emergency Kill Switch</h3>
-            <p>Read-only for public visitors. It is controlled only by private repository deployment and never by a URL parameter, browser request, report submission, or public API call.</p>
-            <div id="global-switch-meta" class="switch-meta">
-              <div id="global-switch-status">Status: Checking</div>
-              <div id="global-switch-by">Disabled By: Checking</div>
-              <div id="global-switch-reason">Reason: Checking</div>
-              <div id="global-switch-revision">Revision: Checking</div>
-            </div>
-          </div>
         </div>
-        <p id="home-instruction" class="home-instruction">Return to PS4 home if the browser becomes unstable. This host stays on the current page until you manually launch or re-enable autoload.</p>
+        <p id="home-instruction" class="home-instruction">Return to PS4 home if the browser becomes unstable. This host stays on the current page until you manually launch.</p>
         <div class="actions">
           <button id="run-next" type="button" disabled>Run Manually</button>
-          <button id="reenable-autoload" type="button" class="ghost-button">Re-enable Autoload</button>
-          <button id="cancel-autoload" type="button" class="ghost-button">Cancel Autoload</button>
           <div class="action-group">
             <button id="run-1302-research" type="button" disabled>Run 13.02-13.52 Research</button>
             <div id="research-1302-status" class="action-note">13.02-13.52 Research Lab<br>Checking firmware availability.</div>
           </div>
-          <a class="link-button" href="./runtime/next13/index.html?v=next-universal-1302-1352-research-0024">Open 13.02-13.52 Jailbreak (Experimental)</a>
+          <a class="link-button" href="./runtime/next13/index.html?v=next-universal-1302-1352-research-0024">NEXT 13.02–13.52 JAILBREAK</a>
           <a class="link-button" href="./safe.html?v=next-universal-1302-1352-research-0024">Open Safe Recovery</a>
           <a class="link-button" href="./diagnostics.html?v=next-universal-1302-1352-research-0024">Open Diagnostics</a>
           <a class="link-button" href="./stability.html">Open 13.x Stability Dashboard</a>
@@ -912,7 +900,7 @@
       }
 
       function recoveryCopy(reason) {
-        if (reason === "three-consecutive-failures") return "Autoload disabled for recovery. Three unfinished launches were detected, so the host will stay on the safe screen until you run manually or re-enable autoload.";
+        if (reason === "three-consecutive-failures") return "Autoload disabled for recovery. Three unfinished launches were detected, so the host will stay on the safe screen until you run manually.";
         if (reason === "previous-launch-unfinished") return "A previous launch never acknowledged success. The host stayed on the safe screen instead of retrying automatically.";
         if (reason === "firmware-mismatch") return "Stored firmware state disagreed with the current detection, so autoload was disabled for safety.";
         if (reason === "safe-query") return "Safe recovery mode was requested from the query string. Autoload remains disabled until you explicitly re-enable it.";
@@ -1519,7 +1507,7 @@
           seconds: 8,
           onTick: function (secondsLeft) {
             if (autoloadCountdownElement) autoloadCountdownElement.textContent = secondsLeft <= 0 ? "Launching" : (secondsLeft + "s remaining");
-            if (autoloadStatusElement) autoloadStatusElement.textContent = "Automatic launch in " + secondsLeft + " seconds. Press Cancel Autoload, hold OPTIONS, or press Escape to stop it.";
+            if (autoloadStatusElement) autoloadStatusElement.textContent = "Automatic launch in " + secondsLeft + " seconds. Hold OPTIONS or press Escape to stop it.";
           },
           onDone: function () {
             if (autoloadCountdownElement) autoloadCountdownElement.textContent = "Launching";
