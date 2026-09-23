@@ -34,6 +34,10 @@ export const OPTIONAL_KEYS = [
   "k_pthread_create",
 
   "kpatch",
+  "kpatch_aio",
+  "kpatch_aio_size",
+  "kpatch_aio_off",
+  "kpatch_aio_sha256",
 
   "payload",
 
@@ -535,6 +539,10 @@ PS4["13.50"] = {
   k_prison0: 0x1a5c0c0,
   k_rootvnode: 0x2136e90,
   kpatch: "1350.bin", // BUILT (anchored in kernel_1350.elf); kpatch.js 10/10, both neg controls refuse; UNTESTED on hw
+  kpatch_aio: "1350-aio.bin", // Al-Azif c89c6f9, AIO_PATCH=1; OFFLINE-REBUILT, UNTESTED on hw
+  kpatch_aio_size: 632,
+  kpatch_aio_sha256: "f771c196d012496c01f575674e95a74d7b00b7c1bc22325c7321f3ab6eb77b56",
+  kpatch_aio_off: 0x125591,
   payload: "payload2.bin", // PS4-HEN, works through 13.52
 };
 
@@ -561,6 +569,10 @@ PS4["13.52"] = Object.assign({}, PS4["13.50"], {
   k_evf_cv: 0x785228,
 
   kpatch: "1352.bin",
+  kpatch_aio: "1352-aio.bin", // Al-Azif c89c6f9, AIO_PATCH=1; OFFLINE-REBUILT, UNTESTED on hw
+  kpatch_aio_size: 632,
+  kpatch_aio_sha256: "adfb9771904f71cd1f5a82cbded8ac46c7ffeb3df974579535cf711904ac347e",
+  kpatch_aio_off: 0x125631,
 
   payload: "goldhen.bin",
   fw_status:
@@ -591,6 +603,10 @@ PS4["13.02"] = Object.assign({}, PS4["13.00"], {
   k_prison0: 0x1a5c0c0,
   k_rootvnode: 0x2136e90,
   kpatch: "1302.bin", // ported from 1300.c, 18 sites +0x10; HW-PROVEN on 13.02 (KEXEC rc=0, pass=51)
+  kpatch_aio: "1302-aio.bin", // Al-Azif c89c6f9, AIO_PATCH=1; OFFLINE-REBUILT, UNTESTED on hw
+  kpatch_aio_size: 632,
+  kpatch_aio_sha256: "235a051f5a066daa546253de6eb61c1223a2682cb34edd916fc4565bb2c02fc6",
+  kpatch_aio_off: 0x125591,
   payload: "payload2.bin", // PS4-HEN, works through 13.52; replaces the non-shipped 13.00 placeholder
   fw_status:
     "state=663-JB+KPATCH-PROVEN-on-hw-pass=51 shares=13.00 (webkit+libkernel, PRIMITIVE-OK) " +
@@ -618,6 +634,10 @@ PS4["13.04"] = Object.assign({}, PS4["13.00"], {
   k_prison0: 0x1a5c0c0,
   k_rootvnode: 0x2136e90,
   kpatch: "1302.bin", // SAME kernel as 13.02 -> reuses the one blob (HW-PROVEN on 13.02)
+  kpatch_aio: "1302-aio.bin", // SAME kernel as 13.02; AIO variant remains UNTESTED on hw
+  kpatch_aio_size: 632,
+  kpatch_aio_sha256: "235a051f5a066daa546253de6eb61c1223a2682cb34edd916fc4565bb2c02fc6",
+  kpatch_aio_off: 0x125591,
   payload: "payload2.bin", // PS4-HEN, works through 13.52
   fw_status:
     "state=663-JB+KPATCH-via-13.02(pass=51) shares=13.00 (webkit+libkernel, PRIMITIVE-OK) " +

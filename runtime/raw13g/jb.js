@@ -190,8 +190,29 @@ let allDone = false,
     )
       return;
 
-    const KPATCH_FILE =
-      "patches/" + (off.kpatch || fwKey.replace(".", "") + ".bin");
+    const requestedAio = params.get("aio") === "1";
+    const useAio =
+      requestedAio &&
+      typeof off.kpatch_aio === "string" &&
+      off.kpatch_aio_off !== undefined &&
+      off.kpatch_aio_size !== undefined &&
+      typeof off.kpatch_aio_sha256 === "string";
+    if (
+      !check(
+        "aio-profile-supported",
+        !requestedAio || useAio,
+        "fw=" + fwKey + " requested=" + (requestedAio ? 1 : 0),
+      )
+    )
+      return;
+    const selectedKpatch = useAio
+      ? off.kpatch_aio
+      : off.kpatch || fwKey.replace(".", "") + ".bin";
+    const KPATCH_FILE = "patches/" + selectedKpatch;
+    mark(
+      "KPATCH-PROFILE",
+      "profile=" + (useAio ? "aio" : "standard") + " file=" + KPATCH_FILE,
+    );
     const requestedPayload = params.get("payloadfile");
     const allowedPayloads = ["goldhen.bin", "payload2.bin", "/payloads/goldhen/goldhen-2.4b18.12.bin"];
     const PAYLOAD_FILE = allowedPayloads.indexOf(requestedPayload) !== -1
@@ -2567,6 +2588,34 @@ let allDone = false,
               } catch (e) {
                 mark("KPATCH-FETCH-THREW", (e && e.message) || String(e));
               }
+              if (kpatchBlob && useAio) {
+                const sizeOk = kpatchBlob.length === off.kpatch_aio_size;
+                let hashOk = null;
+                if (sizeOk && window.crypto && window.crypto.subtle) {
+                  try {
+                    const digest = await window.crypto.subtle.digest(
+                      "SHA-256",
+                      kpatchBlob,
+                    );
+                    const actualHash = Array.from(new Uint8Array(digest))
+                      .map((b) => ("0" + b.toString(16)).slice(-2))
+                      .join("");
+                    hashOk = actualHash === off.kpatch_aio_sha256;
+                  } catch (e) {
+                    hashOk = null;
+                  }
+                }
+                mark(
+                  "KPATCH-INTEGRITY",
+                  "profile=aio size=" +
+                    kpatchBlob.length +
+                    "/" +
+                    off.kpatch_aio_size +
+                    " sha256=" +
+                    (hashOk === null ? "unavailable" : hashOk ? "match" : "MISMATCH"),
+                );
+                if (!sizeOk || hashOk === false) kpatchBlob = null;
+              }
               if (kpatchBlob)
                 for (let i = 0; i + 7 <= kpatchBlob.length; i++) {
                   if (kpatchBlob[i] !== 0xc6 || kpatchBlob[i + 1] !== 0x81)
@@ -3010,7 +3059,31 @@ let allDone = false,
                         sameI64(SV.getBInt(8), oCall) &&
                         SV.getInt32(0) === oNarg &&
                         SV.getInt32(0x2c) === oThr;
-                      kpDone = rc === 0 && allEb && restored;
+                      let aioOk = true;
+                      if (useAio) {
+                        const aio0 = read8(KBASE.add32(off.kpatch_aio_off));
+                        const aio1 = read8(KBASE.add32(off.kpatch_aio_off + 0x42));
+                        const aio2 = read8(KBASE.add32(off.kpatch_aio_off + 0x4a));
+                        aioOk =
+                          (aio0.low & 0xffff) === 0x48eb &&
+                          (aio1.low & 0xffff) === 0x06eb &&
+                          aio2.low >>> 0 === 0xa0bf8341 &&
+                          aio2.hi >>> 0 === 0x00000004;
+                        mark(
+                          "AIO-VERIFY",
+                          "off=0x" +
+                            off.kpatch_aio_off.toString(16) +
+                            " head=" +
+                            (aio0.low & 0xffff).toString(16) +
+                            " branch=" +
+                            (aio1.low & 0xffff).toString(16) +
+                            " layout=" +
+                            aio2 +
+                            " ok=" +
+                            (aioOk ? 1 : 0),
+                        );
+                      }
+                      kpDone = rc === 0 && allEb && restored && aioOk;
                       kpatched = kpDone;
                       mark(
                         "KEXEC",
@@ -3019,7 +3092,9 @@ let allDone = false,
                           " sites_eb=" +
                           (allEb ? 1 : 0) +
                           " sysent_restored=" +
-                          (restored ? 1 : 0),
+                          (restored ? 1 : 0) +
+                          " aio=" +
+                          (aioOk ? 1 : 0),
                       );
                       check(
                         "KERNEL-PATCHED",
@@ -3029,7 +3104,9 @@ let allDone = false,
                           " allEb=" +
                           (allEb ? 1 : 0) +
                           " restored=" +
-                          (restored ? 1 : 0),
+                          (restored ? 1 : 0) +
+                          " aio=" +
+                          (aioOk ? 1 : 0),
                       );
                     }
                   }

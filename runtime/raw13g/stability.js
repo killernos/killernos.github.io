@@ -12,10 +12,10 @@
     aggressive: { attemptLimit: 5, cooldownMs: 5000 }
   };
   var PAYLOADS = {
-    "../../payloads/goldhen/goldhen-2.4b18.12.bin": {
+    "/payloads/goldhen/goldhen-2.4b18.12.bin": {
       label: "GoldHEN v2.4b18.12",
       size: 293120,
-      sha256: ""
+      sha256: "df3f27c1b35bc7c40e3a08caab948930914dc7d0301a73b68945cf6ffe40ea12"
     },
     "goldhen.bin": {
       label: "GoldHEN v2.4b18.11",
@@ -27,6 +27,12 @@
       size: 311744,
       sha256: "fab982aea6c9b2aa9d590eae4adb1530f7b4ccd32322c097d6e3c2527bbd6135"
     }
+  };
+  var KPATCHES = {
+    "13.02": { aio: { file: "1302-aio.bin", size: 632, sha256: "235a051f5a066daa546253de6eb61c1223a2682cb34edd916fc4565bb2c02fc6" } },
+    "13.04": { aio: { file: "1302-aio.bin", size: 632, sha256: "235a051f5a066daa546253de6eb61c1223a2682cb34edd916fc4565bb2c02fc6" } },
+    "13.50": { aio: { file: "1350-aio.bin", size: 632, sha256: "f771c196d012496c01f575674e95a74d7b00b7c1bc22325c7321f3ab6eb77b56" } },
+    "13.52": { aio: { file: "1352-aio.bin", size: 632, sha256: "adfb9771904f71cd1f5a82cbded8ac46c7ffeb3df974579535cf711904ac347e" } }
   };
   var STAGES = {
     "FW": "firmware",
@@ -56,6 +62,7 @@
   function cleanPayload(value) {
     return Object.prototype.hasOwnProperty.call(PAYLOADS, value) ? value : "unknown";
   }
+  function cleanKpatch(value) { return value === "aio" ? "aio" : "standard"; }
   function emptyStore() {
     return { schema: SCHEMA, records: [], active: null };
   }
@@ -137,9 +144,10 @@
     var record = {
       schema: SCHEMA,
       id: id(),
-      buildId: "next-universal-1302-1352-research-0023",
+      buildId: "next-universal-1302-1352-research-0025",
       firmware: firmware,
       payload: cleanPayload(meta && meta.payload),
+      kpatch: cleanKpatch(meta && meta.kpatch),
       profile: profile,
       mode: mode,
       startedAt: now(),
@@ -180,8 +188,9 @@
     var store = load();
     var summary = {};
     store.records.forEach(function (r) {
-      var key = [r.firmware, r.profile, r.mode, r.payload].join("|");
-      if (!summary[key]) summary[key] = { firmware: r.firmware, profile: r.profile, mode: r.mode, payload: r.payload, attempts: 0, success: 0, failure: 0, incomplete: 0 };
+      var kpatch = cleanKpatch(r.kpatch);
+      var key = [r.firmware, r.profile, r.mode, r.payload, kpatch].join("|");
+      if (!summary[key]) summary[key] = { firmware: r.firmware, profile: r.profile, mode: r.mode, payload: r.payload, kpatch: kpatch, attempts: 0, success: 0, failure: 0, incomplete: 0 };
       summary[key].attempts++;
       if (r.outcome === "success") summary[key].success++;
       else if (r.outcome === "failure") summary[key].failure++;
@@ -216,7 +225,7 @@
       if (!buffer || buffer.byteLength !== expected.size) { done({ ok: false, reason: "payload-size-mismatch", expectedSize: expected.size, actualSize: buffer ? buffer.byteLength : 0 }); return; }
       var bytes = new Uint8Array(buffer);
       if (!bytes.length || bytes[0] !== 0xe9) { done({ ok: false, reason: "payload-magic-mismatch" }); return; }
-      if (expected.sha256 && root.crypto && root.crypto.subtle && root.crypto.subtle.digest) {
+      if (root.crypto && root.crypto.subtle && root.crypto.subtle.digest) {
         root.crypto.subtle.digest("SHA-256", buffer).then(function (digest) {
           var actual = toHex(digest);
           done({ ok: actual === expected.sha256, reason: actual === expected.sha256 ? "verified" : "payload-sha256-mismatch", integrity: "sha256", sha256: actual });
@@ -225,6 +234,36 @@
         });
       } else {
         done({ ok: true, reason: "verified-size-magic", integrity: "size+magic", sha256: expected.sha256 });
+      }
+    };
+    xhr.send();
+  }
+
+  function validateKpatch(firmware, profile, done) {
+    firmware = cleanFirmware(firmware);
+    profile = cleanKpatch(profile);
+    if (profile === "standard") { done({ ok: true, reason: "standard-profile", integrity: "existing-blob" }); return; }
+    var expected = KPATCHES[firmware] && KPATCHES[firmware][profile];
+    if (!expected) { done({ ok: false, reason: "unsupported-kpatch-profile" }); return; }
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "./patches/" + expected.file, true);
+    xhr.responseType = "arraybuffer";
+    xhr.timeout = 20000;
+    xhr.onerror = function () { done({ ok: false, reason: "kpatch-fetch-error" }); };
+    xhr.ontimeout = function () { done({ ok: false, reason: "kpatch-fetch-timeout" }); };
+    xhr.onload = function () {
+      var buffer = xhr.response;
+      if (xhr.status && xhr.status !== 200) { done({ ok: false, reason: "kpatch-http-" + xhr.status }); return; }
+      if (!buffer || buffer.byteLength !== expected.size) { done({ ok: false, reason: "kpatch-size-mismatch", expectedSize: expected.size, actualSize: buffer ? buffer.byteLength : 0 }); return; }
+      if (root.crypto && root.crypto.subtle && root.crypto.subtle.digest) {
+        root.crypto.subtle.digest("SHA-256", buffer).then(function (digest) {
+          var actual = toHex(digest);
+          done({ ok: actual === expected.sha256, reason: actual === expected.sha256 ? "verified" : "kpatch-sha256-mismatch", integrity: "sha256", sha256: actual, file: expected.file });
+        }, function () {
+          done({ ok: true, reason: "verified-size", integrity: "size", sha256: expected.sha256, file: expected.file });
+        });
+      } else {
+        done({ ok: true, reason: "verified-size", integrity: "size", sha256: expected.sha256, file: expected.file });
       }
     };
     xhr.send();
@@ -251,6 +290,8 @@
     reset: reset,
     report: report,
     validatePayload: validatePayload,
+    validateKpatch: validateKpatch,
+    kpatches: JSON.parse(JSON.stringify(KPATCHES)),
     runtimeStart: runtimeStart
   };
 })(typeof window !== "undefined" ? window : globalThis);
