@@ -842,7 +842,6 @@
       var reenableAutoloadButton = document.getElementById("reenable-autoload");
       var cancelAutoloadButton = document.getElementById("cancel-autoload");
       var research1302Button = document.getElementById("run-1302-research");
-      var research1302Status = document.getElementById("research-1302-status");
       var backendStateElement = document.getElementById("backend-state");
       var payloadStateElement = document.getElementById("payload-state");
       var payloadChoicesElement = document.getElementById("payload-choices");
@@ -1055,16 +1054,6 @@
       function updateResearch1302State() {
         var enabled = firmwareNumber != null && firmwareNumber >= 1302 && firmwareNumber <= 1352;
         if (research1302Button) research1302Button.disabled = !enabled;
-        if (!research1302Status) return;
-        if (isResearchFirmwareValue(firmware)) {
-          research1302Status.innerHTML = "13.02-13.52 Research Lab<br>Supported 13.x hardware detected. Diagnostics remain available, and the isolated manual jailbreak launcher is enabled for experimental testing.";
-          return;
-        }
-        if (enabled) {
-          research1302Status.innerHTML = "13.02-13.52 Research Lab<br>Firmware 13.02-13.52 is eligible for the isolated manual jailbreak launcher. GoldHEN 2.4b18.11 is experimental and stability varies by firmware and console.";
-          return;
-        }
-        research1302Status.innerHTML = "13.02-13.52 Research Lab<br>Unavailable on this firmware.<br>The laboratory page only opens on detected firmware from 13.02 through 13.52.";
       }
 
       function updateCacheStatus() {
