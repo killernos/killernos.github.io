@@ -609,6 +609,9 @@
     .preview-banner,.recovery-banner { border-radius:4px; }
     @media (prefers-reduced-motion:reduce) { h1::after { animation:none; } #matrix-rain { display:none; } }
 
+  
+    /* Simplified public view: developer detail remains in Diagnostics/Stability pages. */
+    .dev-detail{display:none!important}
   </style>
   <script src="./js/autoload-guard.js?v=next-universal-1302-1352-research-0024"></script>
   <script>
@@ -729,11 +732,8 @@
         </div>
         <p id="home-instruction" class="home-instruction">Return to PS4 home if the browser becomes unstable. This host stays on the current page until you manually launch.</p>
         <div class="actions">
-          <button id="run-next" type="button" disabled>Run Manually</button>
-          <div class="action-group">
-            <button id="run-1302-research" type="button" disabled>Run 13.02-13.52 Research</button>
-          </div>
-          <a class="link-button" href="./runtime/next13/index.html?v=next-universal-1302-1352-research-0024">NEXT 13.02–13.52 JAILBREAK</a>
+          <button id="run-next" type="button" disabled>NEXT Runtime</button>
+          
           <a class="link-button" href="./safe.html?v=next-universal-1302-1352-research-0024">Open Safe Recovery</a>
           <a class="link-button" href="./diagnostics.html?v=next-universal-1302-1352-research-0024">Open Diagnostics</a>
           <a class="link-button" href="./stability.html">Open 13.x Stability Dashboard</a>
@@ -763,7 +763,7 @@
       </div>
     </section>
 
-    <section class="panel selector-panel">
+    <section class="panel selector-panel dev-detail">
       <div class="panel-header">
         <h2>HEN / Payload Environment</h2>
       </div>
@@ -778,7 +778,7 @@
       <div id="payload-selection-status" class="selector-status">Loading payload catalog...</div>
     </section>
 
-    <section class="grid">
+    <section class="grid dev-detail">
       <div class="panel">
         <h2>Free Community Edition</h2>
         <p class="footnote">NEXT integrates only public or redistributable components represented in this repository. Paid backup archives, account/profile data, licensed retail games, and commercial package content are not part of this host.</p>
@@ -1017,11 +1017,8 @@
       }
 
       function runtimeButtonLabel(value) {
-        if (!value) return "NEXT Runtime Unsupported";
-        if (value.mode === "research") return "Run 13.02-13.52 Research";
-        if (value.mode === "compatibility") return "Run Compatibility Manually";
-        if (value.mode === "runtime") return "Run Manually";
-        return "NEXT Runtime Unsupported";
+        if (!value || !value.buttonAllowed) return "NEXT Runtime Unsupported";
+        return "NEXT Runtime";
       }
 
       function runtimeTargetHref(value) {
