@@ -610,7 +610,8 @@
     @media (prefers-reduced-motion:reduce) { h1::after { animation:none; } #matrix-rain { display:none; } }
 
   
-    /* Simplified public view: developer detail remains in Diagnostics/Stability pages. */
+    /* Simplified public view: developer detail remains available on demand. */
+    .runtime-details-panel{margin-top:18px;padding:0!important;overflow:hidden}.runtime-details-panel details{display:block}.runtime-details-panel summary{cursor:pointer;list-style:none;padding:20px 24px;color:#baffcd;font-weight:700;text-transform:uppercase;letter-spacing:.06em}.runtime-details-panel summary::-webkit-details-marker{display:none}.runtime-details-panel summary:before{content:"[ + ] ";color:#35ff7a}.runtime-details-panel details[open] summary:before{content:"[ - ] "}.runtime-details-panel summary span{display:block;margin:7px 0 0 52px;color:#568c69;font-size:.78rem;font-weight:400;text-transform:none;letter-spacing:.02em}.runtime-details-body{padding:0 24px 24px}.runtime-details-body .stats{margin-top:4px}
     .dev-detail{display:none!important}
   </style>
   <script src="./js/autoload-guard.js?v=next-universal-1302-1352-research-0024"></script>
@@ -640,17 +641,13 @@
   <div class="shell">
     <section class="hero">
       <span class="eyebrow">Private Development Host</span>
-      <h1>PS4 WebKit Next<br>Free Community Edition</h1>
+      <h1>PS4 WebKit Next</h1>
       <p class="lead">Created and maintained by KillerNoS. NEXT is free software built around publicly disclosed PS4 security research and community projects. No payment is required to use this host.</p>
 
       <div class="notice-row">
         <div class="notice">
           <strong>Risk Notice</strong>
           I am not responsible for any damage. Jailbreak at your own risk.
-        </div>
-        <div class="notice">
-          <strong>Free Means Free</strong>
-          PS4 WebKit NEXT is provided free for the PS4 homebrew and security research community. Third-party authors and licenses remain credited here.
         </div>
         <div class="notice">
           <strong>Local Validation Boundary</strong>
@@ -663,8 +660,7 @@
       </div>
     </section>
 
-    <section class="grid">
-      <div class="panel">
+    <section class="panel runtime-details-panel"><details id="runtime-details"><summary>NEXT Runtime Details <span>Firmware, routing, recovery and developer status</span></summary><div class="runtime-details-body">
         <h2>Runtime Routing</h2>
         <div class="stats">
           <div class="stat">
@@ -738,9 +734,9 @@
           <a class="link-button" href="./diagnostics.html?v=next-universal-1302-1352-research-0024">Open Diagnostics</a>
           <a class="link-button" href="./stability.html">Open 13.x Stability Dashboard</a>
         </div>
-      </div>
+      </div></div></details></section>
 
-      <div class="panel">
+<section class="grid dev-detail"><div class="panel">
         <h2>Upstream Support Reference</h2>
         <div class="support-list">
           <div class="support-row">
