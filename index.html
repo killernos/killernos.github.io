@@ -611,7 +611,7 @@
 
   
     /* Simplified public view: developer detail remains available on demand. */
-    .runtime-details-panel{margin-top:18px;padding:0!important;overflow:hidden}.runtime-details-panel details{display:block}.runtime-details-panel summary{cursor:pointer;list-style:none;padding:20px 24px;color:#baffcd;font-weight:700;text-transform:uppercase;letter-spacing:.06em}.runtime-details-panel summary::-webkit-details-marker{display:none}.runtime-details-panel summary:before{content:"[ + ] ";color:#35ff7a}.runtime-details-panel details[open] summary:before{content:"[ - ] "}.runtime-details-panel summary span{display:block;margin:7px 0 0 52px;color:#568c69;font-size:.78rem;font-weight:400;text-transform:none;letter-spacing:.02em}.runtime-details-body{padding:0 24px 24px}.runtime-details-body .stats{margin-top:4px}
+    .runtime-details-panel{margin-top:18px;padding:0!important;overflow:hidden}.runtime-details-panel details{display:block}.runtime-details-panel summary{cursor:pointer;list-style:none;padding:20px 24px;color:#baffcd;font-weight:700;text-transform:uppercase;letter-spacing:.06em}.runtime-details-panel summary::-webkit-details-marker{display:none}.runtime-details-panel summary:before{content:"[ + ] ";color:#35ff7a}.runtime-details-panel details[open] summary:before{content:"[ - ] "}.runtime-details-panel summary span{display:block;margin:7px 0 0 52px;color:#568c69;font-size:.78rem;font-weight:400;text-transform:none;letter-spacing:.02em}.runtime-details-body{padding:0 24px 24px}.runtime-details-body .stats{margin-top:4px}.main-actions-panel{margin-top:18px}.main-actions-panel h2{margin-top:0}.main-actions-panel .actions{margin-top:14px}
     .dev-detail{display:none!important}
   </style>
   <script src="./js/autoload-guard.js?v=next-universal-1302-1352-research-0024"></script>
@@ -727,14 +727,18 @@
           </div>
         </div>
         <p id="home-instruction" class="home-instruction">Return to PS4 home if the browser becomes unstable. This host stays on the current page until you manually launch.</p>
-        <div class="actions">
-          <button id="run-next" type="button" disabled>NEXT Runtime</button>
-          
-          <a class="link-button" href="./safe.html?v=next-universal-1302-1352-research-0024">Open Safe Recovery</a>
-          <a class="link-button" href="./diagnostics.html?v=next-universal-1302-1352-research-0024">Open Diagnostics</a>
-          <a class="link-button" href="./stability.html">Open 13.x Stability Dashboard</a>
-        </div>
+        
       </div></div></details></section>
+
+<section class="panel main-actions-panel">
+  <h2>NEXT://CONTROL</h2>
+  <div class="actions">
+    <button id="run-next" type="button" disabled>NEXT Runtime</button>
+    <a class="link-button" href="./safe.html?v=next-universal-1302-1352-research-0024">Open Safe Recovery</a>
+    <a class="link-button" href="./diagnostics.html?v=next-universal-1302-1352-research-0024">Open Diagnostics</a>
+    <a class="link-button" href="./stability.html">Open 13.x Stability Dashboard</a>
+  </div>
+</section>
 
 <section class="grid dev-detail"><div class="panel">
         <h2>Upstream Support Reference</h2>
