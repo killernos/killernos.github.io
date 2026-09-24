@@ -151,7 +151,16 @@
     var exact = normalized && capabilityRegistry && typeof capabilityRegistry.findExact === "function"
       ? capabilityRegistry.findExact(normalized)
       : null;
-    if (normalized && firmwareNumber(normalized) >= firmwareNumber("13.02") && firmwareNumber(normalized) <= firmwareNumber("13.52")) return researchCapability(normalized);
+    if (normalized && firmwareNumber(normalized) >= firmwareNumber("13.02") && firmwareNumber(normalized) <= firmwareNumber("13.52")) {
+      return {
+        firmware: normalized, firmwareNumber: firmwareNumber(normalized), buttonAllowed: true,
+        mode: "runtime", backend: "NEXT13", target: "./runtime/next13/index.html",
+        runtimeConfigured: true, research: false, nextAccess: "AVAILABLE",
+        runtimeStatus: "CONFIGURED RUNTIME", hardwareVerification: "COMMUNITY",
+        researchCandidate: "", candidateStatus: "configured", exact: true,
+        offsetKey: normalized, releaseChannel: "next13"
+      };
+    }
     if (exact) {
       if (exact.mode === "runtime") return configuredCapability(normalized, exact);
       return exactEntryCapability(normalized, exact);
