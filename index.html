@@ -648,7 +648,8 @@
     <section class="panel main-actions-panel">
   <h2>NEXT://CONTROL</h2>
   <div class="actions">
-    <button id="run-next" type="button" disabled>NEXT Runtime</button>
+    <button id="run-next" type="button" disabled>NEXT 11.00–13.00 JAILBREAK</button>
+    <button id="run-next13" type="button" disabled>NEXT 13.02–13.52 JAILBREAK</button>
     <a class="link-button" href="./safe.html?v=next-universal-1302-1352-research-0024">Open Safe Recovery</a>
     <a class="link-button" href="./diagnostics.html?v=next-universal-1302-1352-research-0024">Open Diagnostics</a>
     <a class="link-button" href="./stability.html">Open 13.x Stability Dashboard</a>
@@ -826,6 +827,7 @@
       var simulationNotice = document.getElementById("simulation-notice");
       var homeInstructionElement = document.getElementById("home-instruction");
       var runButton = document.getElementById("run-next");
+      var next13Button = document.getElementById("run-next13");
       var reenableAutoloadButton = document.getElementById("reenable-autoload");
       var cancelAutoloadButton = document.getElementById("cancel-autoload");
       var research1302Button = document.getElementById("run-1302-research");
@@ -1247,8 +1249,9 @@
         nextAccessElement.className = "status-pill " + capabilityStatusClass(capability.nextAccess);
         runtimeStatusElement.textContent = capability.runtimeStatus;
         runtimeStatusElement.className = "status-pill " + capabilityStatusClass(capability.runtimeStatus);
-        runButton.disabled = !ready;
-        runButton.textContent = runtimeButtonLabel(capability);
+        // Keep both range buttons visible; only the matching PS4 firmware may launch.
+        runButton.disabled = !(hardwareDetected && firmwareNumber !== null && firmwareNumber >= 1100 && firmwareNumber <= 1300 && ready && !!capability.target);
+        if (next13Button) next13Button.disabled = !(hardwareDetected && (firmware === "13.02" || firmware === "13.04" || firmware === "13.50" || firmware === "13.52"));
         backendElement.textContent = capability.backend;
         if (hardwareVerificationElement) hardwareVerificationElement.textContent = capability.hardwareVerification;
         if (backendStateElement) {
@@ -1656,8 +1659,14 @@
       }
 
       runButton.addEventListener("click", function () {
+        if (runButton.disabled) return;
         cancelScheduledAutoload("manual-launch", false);
-        navigateToRuntime("Manual");
+        navigateToRuntime("Manual 11.00-13.00");
+      });
+      if (next13Button) next13Button.addEventListener("click", function () {
+        if (next13Button.disabled) return;
+        cancelScheduledAutoload("manual-launch", false);
+        location.href = "./runtime/next13/index.html?v=next-universal-1302-1352-research-0024";
       });
 
       if (reenableAutoloadButton) {
