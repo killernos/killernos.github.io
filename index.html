@@ -612,7 +612,7 @@
   
     /* Simplified public view: developer detail remains available on demand. */
     .runtime-details-panel{margin-top:18px;padding:0!important;overflow:hidden}.runtime-details-panel details{display:block}.runtime-details-panel summary{cursor:pointer;list-style:none;padding:20px 24px;color:#baffcd;font-weight:700;text-transform:uppercase;letter-spacing:.06em}.runtime-details-panel summary::-webkit-details-marker{display:none}.runtime-details-panel summary:before{content:"[ + ] ";color:#35ff7a}.runtime-details-panel details[open] summary:before{content:"[ - ] "}.runtime-details-panel summary span{display:block;margin:7px 0 0 52px;color:#568c69;font-size:.78rem;font-weight:400;text-transform:none;letter-spacing:.02em}.runtime-details-body{padding:0 24px 24px}.runtime-details-body .stats{margin-top:4px}.main-actions-panel{margin-top:18px}.main-actions-panel h2{margin-top:0}.main-actions-panel .actions{margin-top:14px}
-    .dev-detail{display:none!important}
+    .control-hen-picker{display:flex;align-items:center;gap:12px;width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid rgba(53,255,122,.45);border-radius:4px;background:#031108;color:#35ff7a;font-weight:700}.control-hen-picker label{white-space:nowrap;text-transform:uppercase;letter-spacing:.06em}.control-hen-picker select{-webkit-appearance:none;appearance:none;flex:1;min-width:0;padding:11px 38px 11px 14px;border:1px solid rgba(53,255,122,.55);border-radius:3px;background:#031108;color:#baffcd;font:700 .9rem/1.2 "Courier New",monospace;color-scheme:dark}.control-hen-picker select option{background:#031108;color:#baffcd}.dev-detail{display:none!important}
   </style>
   <script src="./js/autoload-guard.js?v=next-universal-1302-1352-research-0024"></script>
   <script>
@@ -633,8 +633,8 @@
   <script src="./js/entrypoints.js?v=next-universal-1302-1352-research-0024" defer></script>
   <script src="./js/hens.js?v=next-universal-1302-1352-research-0024-goldhen-241811" defer></script>
   <script src="./js/payloads.js?v=next-universal-1302-1352-research-0024" defer></script>
-  <script src="./payloads/catalog.js?v=next-universal-1302-1352-research-0024" defer></script>
-  <script src="./js/payload-loader.js?v=next-universal-1302-1352-research-0024" defer></script>
+  <script src="./payloads/catalog.js?v=next-universal-1302-1352-research-0028-goldhen-1812" defer></script>
+  <script src="./js/payload-loader.js?v=next-universal-1302-1352-research-0028-goldhen-1812" defer></script>
   <script src="./js/next-firmware-capability.js?v=next-universal-1302-1352-research-0024" defer></script>
 </head>
 <body>\n  <canvas id="matrix-rain" aria-hidden="true"></canvas>
@@ -752,20 +752,7 @@
       </div>
     </section>
 
-    <section class="panel selector-panel dev-detail">
-      <div class="panel-header">
-        <h2>HEN / Payload Environment</h2>
-      </div>
-      <div id="preview-banner" class="preview-banner" hidden>PREVIEW MODE - EXPLOIT DISABLED</div>
-      <div class="selector-grid">
-        <div class="selector-field">
-          <label for="hen-select">Configured HEN</label>
-          <select id="hen-select" aria-live="polite"></select>
-        </div>
-      </div>
-      <div id="payload-choices" class="selector-status" aria-live="polite">Selected: No HEN</div>
-      <div id="payload-selection-status" class="selector-status">Loading payload catalog...</div>
-    </section>
+    <div id="preview-banner" class="preview-banner" hidden>PREVIEW MODE - EXPLOIT DISABLED</div><div id="payload-choices" class="selector-status" aria-live="polite" hidden>Selected: No HEN</div><div id="payload-selection-status" class="selector-status" hidden>Loading payload catalog...</div>
 
     <section class="grid dev-detail">
       <div class="panel">
