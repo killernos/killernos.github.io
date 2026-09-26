@@ -633,8 +633,8 @@
   <script src="./js/entrypoints.js?v=next-universal-1302-1352-research-0024" defer></script>
   <script src="./js/hens.js?v=next-universal-1302-1352-research-0024-goldhen-241811" defer></script>
   <script src="./js/payloads.js?v=next-universal-1302-1352-research-0024" defer></script>
-  <script src="./payloads/catalog.js?v=next-universal-1302-1352-research-0028-goldhen-1812" defer></script>
-  <script src="./js/payload-loader.js?v=next-universal-1302-1352-research-0028-goldhen-1812" defer></script>
+  <script src="./payloads/catalog.js?v=next-universal-1302-1352-research-0029-goldhen-1812" defer></script>
+  <script src="./js/payload-loader.js?v=next-universal-1302-1352-research-0029-goldhen-1812" defer></script>
   <script src="./js/next-firmware-capability.js?v=next-universal-1302-1352-research-0024" defer></script>
 </head>
 <body>\n  <canvas id="matrix-rain" aria-hidden="true"></canvas>
@@ -1325,7 +1325,7 @@
             var optionIndex;
             for (optionIndex = 0; optionIndex < familyOptions.length; optionIndex++) {
               var option = familyOptions[optionIndex];
-              inner.push('<option value="' + option.id + '"' + (option.id === selectedPayloadId ? ' selected' : '') + '>' + option.displayName + (option.version ? ' (' + option.version + ')' : '') + '</option>');
+              inner.push('<option value="' + option.id + '"' + (option.id === selectedPayloadId ? ' selected' : '') + '>' + (option.version || option.displayName) + '</option>');
             }
             options.push('<optgroup label="' + (familyOptions[0].name || family) + '">' + inner.join("") + '</optgroup>');
           }
