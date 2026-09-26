@@ -1,7 +1,7 @@
 <!doctype html>
-<html>
+<html manifest="/runtime/next13/cache.appcache">
 <head>
-  <base href="../raw13g/">
+  <base href="../next13-core/">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>KillerNoS NEXT13 — 13.02–13.52 Jailbreak</title>
@@ -64,8 +64,13 @@ button,a.button,select{max-width:100%;white-space:normal;overflow-wrap:anywhere}
     <div class="grid">
       <label for="payload">HEN payload<br>
         <select id="payload">
-          <option value="/payloads/goldhen/goldhen-2.4b18.12.bin" selected>GoldHEN v2.4b18.12 (latest)</option>
-          <option value="goldhen.bin">GoldHEN v2.4b18.11 (fallback)</option>
+          <option value="goldhen-2.4b18.11.bin" selected>GoldHEN v2.4b18.11 (latest available)</option>
+          <option value="goldhen-2.4b18.10.bin">GoldHEN v2.4b18.10</option>
+          <option value="goldhen-2.4b18.9.bin">GoldHEN v2.4b18.9</option>
+          <option value="goldhen-2.4b18.8.bin">GoldHEN v2.4b18.8</option>
+          <option value="goldhen-2.4b18.7.bin">GoldHEN v2.4b18.7</option>
+          <option value="goldhen-2.4b18.6.bin">GoldHEN v2.4b18.6</option>
+          <option value="goldhen-2.4b18.5.bin">GoldHEN v2.4b18.5</option>
           <option value="payload2.bin">PS4 HEN 2.2.0 (fallback)</option>
         </select>
       </label>
@@ -90,7 +95,7 @@ button,a.button,select{max-width:100%;white-space:normal;overflow-wrap:anywhere}
       </label>
     </div>
     <p id="integrity" class="meta">Payload integrity is checked before every arm.</p>
-    <p class="meta">GoldHEN v2.4b18.12 SHA-256: df3f27c1b35bc7c40e3a08caab948930914dc7d0301a73b68945cf6ffe40ea12. v2.4b18.11 remains available as fallback.</p>
+    <p class="meta">GoldHEN SHA-256: 48d46667249330c9be48c96a2a3a2dab4464dababa8fcb3e38170c98caf3851f</p>
     <p class="muted">AIO blobs are reproducible builds from Al-Azif's AGPL source with <code>AIO_PATCH=1</code>. They are firmware-gated and hash-checked, but remain unverified on hardware. Use Standard for rollback.</p>
     <p class="muted">Attempt profiles limit manual attempts; they do not change exploit primitives or offsets.</p>
   </section>
@@ -100,9 +105,9 @@ button,a.button,select{max-width:100%;white-space:normal;overflow-wrap:anywhere}
   </section>
   <section>
     <h2>Manual launch</h2>
-    <p id="countdown">Ready for manual launch.</p>
+    <p id="countdown">Ready. No launch is scheduled.</p>
     <p id="attempts" class="meta"></p>
-    <div class="actions-next"><button id="arm" type="button" disabled>Launch jailbreak</button><button id="cancel" type="button">Cancel</button><a class="button" href="../../index.html">Return to NEXT</a></div>
+    <div class="actions-next"><button id="arm" type="button" disabled>Validate and arm 8-second launch</button><button id="cancel" type="button">Cancel</button><a class="button" href="../../index.html">Return to NEXT</a></div>
   </section>
   <section>
     <h2>Local stability report</h2>
@@ -116,15 +121,16 @@ button,a.button,select{max-width:100%;white-space:normal;overflow-wrap:anywhere}
     <p class="meta">KillerNoS NEXT build: next-universal-1302-1352-research-0025</p>
   </section>
 </main>
-<script src="/runtime/raw13g/stability.js?v=4"></script>
+<script src="./stability.js?v=2"></script>
 <script>
 (function(){
   "use strict";
-  var supported=["13.02","13.04","13.50","13.52"],ua=navigator.userAgent||"",m=ua.match(/PlayStation\s*4[^0-9]*(\d+)\.(\d+)/i),fw=null,timer=null,eligible=false;
-  var api=window.NEXTRaw13gStability;
+  var supported=["13.02","13.04","13.50","13.52"],m=navigator.userAgent.match(/PlayStation\s+4[\/ ](\d+)\.(\d+)/),fw=null,timer=null,left=8,eligible=false;
+  var api=window.NEXT13Stability;
   var firmware=document.getElementById("firmware"),status=document.getElementById("status"),simulation=document.getElementById("simulation"),arm=document.getElementById("arm"),cancel=document.getElementById("cancel"),countdown=document.getElementById("countdown"),payload=document.getElementById("payload"),kpatch=document.getElementById("kpatch"),mode=document.getElementById("mode"),profile=document.getElementById("profile"),attempts=document.getElementById("attempts"),integrity=document.getElementById("integrity"),recovery=document.getElementById("recovery"),download=document.getElementById("download"),reset=document.getElementById("reset"),submitKillerNoS=document.getElementById("submit-killernos");
-  if(m){var major=parseInt(m[1],10),minor=parseInt(m[2],10);if(!isNaN(major)&&!isNaN(minor)){fw=major+"."+(minor<10?"0":"")+minor}}
-  firmware.textContent=fw||"Not detected";
+  if(m){var minor=parseInt(m[2],16).toString(16);if(minor.length<2)minor="0"+minor;fw=m[1]+"."+minor}
+  try{var requestedPayload=new URL(location.href).searchParams.get("payloadfile");if(requestedPayload){for(var pi=0;pi<payload.options.length;pi++){if(payload.options[pi].value===requestedPayload){payload.value=requestedPayload;break}}}}catch(e){}
+  firmware.textContent=fw||"Not a PS4";
   if(!fw){status.textContent="BLOCKED — real PS4 required";status.className="bad";simulation.hidden=false}
   else if(supported.indexOf(fw)===-1){status.textContent="BLOCKED — unsupported firmware";status.className="bad"}
   else{status.textContent="ACTIVE — manual launch only";status.className="ok";eligible=true}
@@ -141,14 +147,21 @@ button,a.button,select{max-width:100%;white-space:normal;overflow-wrap:anywhere}
   function stop(reason){
     if(timer){clearInterval(timer);timer=null}
     if(api)api.cancel(reason);
-    countdown.textContent="Cancelled: "+reason+".";refreshGate();
+    left=8;countdown.textContent="Cancelled: "+reason+". No launch is scheduled.";refreshGate();
   }
   function beginCountdown(validation){
     var started=api.begin({firmware:fw,payload:payload.value,kpatch:kpatch.value,profile:profile.value,mode:mode.value,integrity:validation.integrity});
     if(!started.ok){countdown.textContent="Blocked: "+started.gate.reason+".";refreshGate();return}
-    arm.disabled=true;
-    countdown.textContent="Starting jailbreak...";
-    location.href="/runtime/next13/jb.html?payloadfile="+encodeURIComponent(payload.value)+"&aio="+(kpatch.value==="aio"?"1":"0")+"&mode="+encodeURIComponent(mode.value)+"&profile="+encodeURIComponent(profile.value)+"&attemptId="+encodeURIComponent(started.record.id);
+    arm.disabled=true;left=8;countdown.textContent="Launch in 8 seconds. Press Cancel to stop.";
+    timer=setInterval(function(){
+      left--;
+      if(left<=0){
+        clearInterval(timer);timer=null;countdown.textContent="Starting jailbreak...";
+        location.href="/runtime/next13/jb.html?payloadfile="+encodeURIComponent(payload.value)+"&aio="+(kpatch.value==="aio"?"1":"0")+"&mode="+encodeURIComponent(mode.value)+"&profile="+encodeURIComponent(profile.value)+"&attemptId="+encodeURIComponent(started.record.id);
+        return;
+      }
+      countdown.textContent="Launch in "+left+" seconds. Press Cancel to stop.";
+    },1000);
   }
   arm.onclick=function(){
     if(arm.disabled||timer)return;
@@ -165,10 +178,11 @@ button,a.button,select{max-width:100%;white-space:normal;overflow-wrap:anywhere}
   profile.onchange=refreshGate;mode.onchange=refreshGate;payload.onchange=refreshGate;kpatch.onchange=refreshGate;
   download.onclick=function(){
     var text=JSON.stringify(api.report(),null,2),blob=new Blob([text],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");
-    a.href=url;a.download="killernos-next-raw13g-stability-"+Date.now()+".json";document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url)},1000);
+    a.href=url;a.download="killernos-next13-stability-"+Date.now()+".json";document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url)},1000);
   };
   reset.onclick=function(){if(timer)return;api.reset();recovery.textContent="Local stability report reset.";recovery.className="muted";refreshGate()};
   submitKillerNoS.onclick=function(){try{localStorage.setItem("ps4next.next13.stability.report",JSON.stringify(api.report()));}catch(e){} location.href="../../diagnostics.html?source=next13&submit=1#community-report";};
+  window.addEventListener("pagehide",function(){if(timer)clearInterval(timer)});
   refreshGate();setInterval(refreshGate,1000);
 })();
 </script>

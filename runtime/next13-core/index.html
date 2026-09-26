@@ -1,0 +1,137 @@
+<!doctype html>
+<html manifest="cache.appcache">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>KillerNoS NEXT — 13.02–13.52 Jailbreak</title>
+  <style>
+    body{margin:0;background:#07111f;color:#eef4ff;font:16px Georgia,serif}main{max-width:860px;margin:auto;padding:28px 18px 60px}
+    section{background:#0d1d33;border:1px solid #375170;border-radius:18px;padding:20px;margin:16px 0}h1{margin-top:0}
+    .warn{color:#ffd27a}.bad{color:#ffadad}.ok{color:#87e7c7}.muted{color:#a8bad4}button,a.button,select{display:inline-block;margin:8px 8px 0 0;padding:13px 18px;border-radius:10px;border:1px solid #79e0c3;background:#14314a;color:#fff;text-decoration:none;font:inherit}
+    select{background:#f4f8ff;color:#07111f;min-width:280px}button[disabled]{opacity:.45}.meta{font-family:monospace;overflow-wrap:anywhere}.check{line-height:1.7}#countdown{font-size:1.2em;font-weight:bold}.grid{display:grid;grid-template-columns:1fr;gap:16px}.grid label{display:block;min-width:0}.grid select{display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box}
+  </style>
+</head>
+<body>
+<main>
+  <h1>KillerNoS NEXT: 13.02–13.52 Jailbreak</h1>
+  <p class="warn">Manual hardware evaluation only. This early-release path can crash or restart the console. Launch is manual and never autoloads.</p>
+  <section>
+    <h2>Eligibility</h2>
+    <p>Detected firmware: <strong id="firmware">Checking</strong></p>
+    <p>Status: <strong id="status">Checking</strong></p>
+    <p id="simulation" class="bad" hidden>Desktop and query previews cannot launch this runtime; hardware UA required.</p>
+  </section>
+  <section>
+    <h2>Payload and stability profile</h2>
+    <div class="grid">
+      <label for="payload">HEN payload<br>
+        <select id="payload">
+          <option value="goldhen.bin" selected>GoldHEN v2.4b18.11 (experimental)</option>
+          <option value="payload2.bin">PS4 HEN 2.2.0 (fallback)</option>
+        </select>
+      </label>
+      <label for="mode">Launch mode<br>
+        <select id="mode">
+          <option value="guarded" selected>Guarded — coarse crash stages</option>
+          <option value="clean">Clean — minimal instrumentation</option>
+        </select>
+      </label>
+      <label for="profile">Attempt profile<br>
+        <select id="profile">
+          <option value="conservative">Conservative — 2 / 30 sec</option>
+          <option value="balanced">Balanced — 3 / 15 sec</option>
+          <option value="aggressive" selected>Aggressive — 5 / 5 sec</option>
+        </select>
+      </label>
+    </div>
+    <p id="integrity" class="meta">Payload integrity is checked before every arm.</p>
+    <p class="meta">GoldHEN SHA-256: 48d46667249330c9be48c96a2a3a2dab4464dababa8fcb3e38170c98caf3851f</p>
+    <p class="muted">Profiles limit manual attempts; they do not change exploit primitives, offsets, patch blobs, or automatically retry.</p>
+  </section>
+  <section>
+    <h2>Before testing</h2>
+    <div class="check">1. Start from a complete power-off and cold boot.<br>2. Confirm HEN and Debug Settings are absent.<br>3. Keep the same profile for an A/B batch.<br>4. If it crashes, reboot fully before retrying.</div>
+  </section>
+  <section>
+    <h2>Manual launch</h2>
+    <p id="countdown">Ready. No launch is scheduled.</p>
+    <p id="attempts" class="meta"></p>
+    <button id="arm" type="button" disabled>Validate and arm 8-second launch</button>
+    <button id="cancel" type="button">Cancel</button>
+    <a class="button" href="../../index.html">Return to NEXT</a>
+  </section>
+  <section>
+    <h2>Local stability report</h2>
+    <p id="recovery" class="muted">No recovered crash marker.</p>
+    <p class="muted">The journal stores firmware, profile, mode, payload, timestamps, outcomes, and coarse stages only. It does not store addresses or exploit details.</p>
+    <button id="download" type="button">Download A/B report</button>
+    <button id="reset" type="button">Reset local report</button>
+  </section>
+  <section>
+    <h2>Source and status</h2>
+    <p>This isolated runtime is maintained as the NEXT13 core runtime. Firmware support is active for 13.02, 13.04, 13.50 and 13.52. Stability remains under evaluation.</p>
+    <p class="meta">KillerNoS NEXT build: next-universal-1302-1352-research-0024</p>
+  </section>
+</main>
+<script src="./stability.js?v=1"></script>
+<script>
+(function(){
+  "use strict";
+  var supported=["13.02","13.04","13.50","13.52"],m=navigator.userAgent.match(/PlayStation\s+4[\/ ](\d+)\.(\d+)/),fw=null,timer=null,left=8,eligible=false;
+  var api=window.NEXT13Stability;
+  var firmware=document.getElementById("firmware"),status=document.getElementById("status"),simulation=document.getElementById("simulation"),arm=document.getElementById("arm"),cancel=document.getElementById("cancel"),countdown=document.getElementById("countdown"),payload=document.getElementById("payload"),mode=document.getElementById("mode"),profile=document.getElementById("profile"),attempts=document.getElementById("attempts"),integrity=document.getElementById("integrity"),recovery=document.getElementById("recovery"),download=document.getElementById("download"),reset=document.getElementById("reset");
+  if(m){var minor=parseInt(m[2],16).toString(16);if(minor.length<2)minor="0"+minor;fw=m[1]+"."+minor}
+  firmware.textContent=fw||"Not a PS4";
+  if(!fw){status.textContent="BLOCKED — real PS4 required";status.className="bad";simulation.hidden=false}
+  else if(supported.indexOf(fw)===-1){status.textContent="BLOCKED — unsupported firmware";status.className="bad"}
+  else{status.textContent="ACTIVE — manual launch only";status.className="ok";eligible=true}
+  if(!api){status.textContent="BLOCKED — stability guard failed to load";status.className="bad";eligible=false}
+  var recovered=api&&api.recoverPrevious();
+  if(recovered){recovery.textContent="Recovered incomplete attempt "+recovered.id+" at stage: "+recovered.stage+".";recovery.className="warn"}
+  function seconds(ms){return Math.max(1,Math.ceil(ms/1000))}
+  function refreshGate(){
+    if(!eligible||timer)return;
+    var gate=api.canStart(fw,profile.value,mode.value);
+    arm.disabled=!gate.ok;
+    attempts.textContent="Session attempts: "+(gate.attempts||0)+" / "+(gate.limit||0)+(gate.ok?" — ready":" — "+gate.reason+"; retry in "+seconds(gate.retryAfterMs)+"s");
+  }
+  function stop(reason){
+    if(timer){clearInterval(timer);timer=null}
+    if(api)api.cancel(reason);
+    left=8;countdown.textContent="Cancelled: "+reason+". No launch is scheduled.";refreshGate();
+  }
+  function beginCountdown(validation){
+    var started=api.begin({firmware:fw,payload:payload.value,profile:profile.value,mode:mode.value,integrity:validation.integrity});
+    if(!started.ok){countdown.textContent="Blocked: "+started.gate.reason+".";refreshGate();return}
+    arm.disabled=true;left=8;countdown.textContent="Launch in 8 seconds. Press Cancel to stop.";
+    timer=setInterval(function(){
+      left--;
+      if(left<=0){
+        clearInterval(timer);timer=null;countdown.textContent="Starting jailbreak...";
+        location.href="./jb.html?payloadfile="+encodeURIComponent(payload.value)+"&mode="+encodeURIComponent(mode.value)+"&profile="+encodeURIComponent(profile.value)+"&attemptId="+encodeURIComponent(started.record.id);
+        return;
+      }
+      countdown.textContent="Launch in "+left+" seconds. Press Cancel to stop.";
+    },1000);
+  }
+  arm.onclick=function(){
+    if(arm.disabled||timer)return;
+    arm.disabled=true;integrity.textContent="Validating cached payload...";integrity.className="meta warn";
+    api.validatePayload(payload.value,function(result){
+      if(!result.ok){integrity.textContent="BLOCKED — "+result.reason;integrity.className="meta bad";countdown.textContent="Payload validation failed. No launch is scheduled.";refreshGate();return}
+      integrity.textContent="PASS — "+result.reason+" ("+result.integrity+")";integrity.className="meta ok";beginCountdown(result);
+    });
+  };
+  cancel.onclick=function(){stop("user cancellation")};
+  profile.onchange=refreshGate;mode.onchange=refreshGate;payload.onchange=refreshGate;
+  download.onclick=function(){
+    var text=JSON.stringify(api.report(),null,2),blob=new Blob([text],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");
+    a.href=url;a.download="killernos-next13-stability-"+Date.now()+".json";document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url)},1000);
+  };
+  reset.onclick=function(){if(timer)return;api.reset();recovery.textContent="Local stability report reset.";recovery.className="muted";refreshGate()};
+  window.addEventListener("pagehide",function(){if(timer)clearInterval(timer)});
+  refreshGate();setInterval(refreshGate,1000);
+})();
+</script>
+</body>
+</html>

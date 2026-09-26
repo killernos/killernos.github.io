@@ -1,27 +1,34 @@
 CACHE MANIFEST
-# rev 20260923-killernos-next13-0026-aio-goldhen12
+# rev 20260925-killernos-next13-0027-goldhen-selector
 
-index.html #4ec65cdab9177e59b911bf2e51a50eb447d7c3f8cde30c4537a68171bedad284
-jb.html #a00a2ed9414a4d4f45080de8e490d906fa88a5ef62eefda6223b516e90dfe1bf
-../raw13g/logo_raw.png #23cdc5f24ffd3508d2ca7c71fcdae5bd7fbe2718dad9393964957a930f3f02a5
-../raw13g/jb.js #569a3942a73cde7063e4304b69699073c7dcc7893a6467a6009b0f554c2c7ebc
-../raw13g/stability.js #54026ba109dca36b094df423acaf0159b7a01baa233b15a792d9a10a013e2e86
-../raw13g/core.js #a76c52afbc19b05d176be2059048a3c6a4fb61db084d56434cef2b17da00b2b3
-../raw13g/mem.js #ee5e52ea8c7ac349f3df4249e6245c6bb41aa9482081b452e629e589dead3b11
-../raw13g/int64.js #611da6a52da5ecf970a3718ab2a4561d3992c655c55342d066d12a9a50554f34
-../raw13g/ps4_offsets.js #9aa00462545d00ab35be9b5adbe35e47422ddf3133e2c606c6d7372c53391498
-../raw13g/rpc_worker.js #2d030c4cc92f46f96e1e4aea0463e1cde84e7f9a2ec17411473880a0c3f4e682
-../raw13g/payload2.bin #fab982aea6c9b2aa9d590eae4adb1530f7b4ccd32322c097d6e3c2527bbd6135
-../raw13g/goldhen.bin #48d46667249330c9be48c96a2a3a2dab4464dababa8fcb3e38170c98caf3851f
-../raw13g/patches/1302.bin #76584f8a02be806816aa7987ff6f2aed3a4a7f9494c49643e32f9cb9d75ab71b
-../raw13g/patches/1350.bin #b9ab32fa10c272c341da97159a13818d98316b9998f3cf89d874e0b35e41cdbd
-../raw13g/patches/1352.bin #a4ca7dc1f31a342cd80cb3b4aee0fcd56e92685e3ce1491c34cbd656c1af562c
-../raw13g/patches/1302-aio.bin #235a051f5a066daa546253de6eb61c1223a2682cb34edd916fc4565bb2c02fc6
-../raw13g/patches/1350-aio.bin #f771c196d012496c01f575674e95a74d7b00b7c1bc22325c7321f3ab6eb77b56
-../raw13g/patches/1352-aio.bin #adfb9771904f71cd1f5a82cbded8ac46c7ffeb3df974579535cf711904ac347e
-../raw13g/stability.js?v=4 #54026ba109dca36b094df423acaf0159b7a01baa233b15a792d9a10a013e2e86
-../raw13g/core.js?v=10 #a76c52afbc19b05d176be2059048a3c6a4fb61db084d56434cef2b17da00b2b3
-../raw13g/jb.js?v=12 #569a3942a73cde7063e4304b69699073c7dcc7893a6467a6009b0f554c2c7ebc
+index.html #04ea2b5411b9d010ab110c2c1b3b5dd1dc5cfa12baffb646b7cd40fa70d8fe52
+jb.html #668dcd95ea2e2e6aebdd467db814452994afadcbff978f0260a473e215d31be5
+../next13-core/logo_raw.png #23cdc5f24ffd3508d2ca7c71fcdae5bd7fbe2718dad9393964957a930f3f02a5
+../next13-core/jb.js #8e21805f1c61a7f1de3749e4d37f57feda0fc0aa203194a9d2195f8fe72708f0
+../next13-core/stability.js #7d7138858f10a3be5cc3431217c7b1fcec21007bd5310674aca3008a3cdc53b9
+../next13-core/core.js #a76c52afbc19b05d176be2059048a3c6a4fb61db084d56434cef2b17da00b2b3
+../next13-core/mem.js #ee5e52ea8c7ac349f3df4249e6245c6bb41aa9482081b452e629e589dead3b11
+../next13-core/int64.js #611da6a52da5ecf970a3718ab2a4561d3992c655c55342d066d12a9a50554f34
+../next13-core/ps4_offsets.js #e991fde6fb696a8ac7eeb34ce7838256e7217d77a628b7a816a225548d9751db
+../next13-core/rpc_worker.js #2d030c4cc92f46f96e1e4aea0463e1cde84e7f9a2ec17411473880a0c3f4e682
+../next13-core/payload2.bin #fab982aea6c9b2aa9d590eae4adb1530f7b4ccd32322c097d6e3c2527bbd6135
+../next13-core/goldhen.bin
+../next13-core/goldhen-2.4b18.5.bin
+../next13-core/goldhen-2.4b18.6.bin
+../next13-core/goldhen-2.4b18.7.bin
+../next13-core/goldhen-2.4b18.8.bin
+../next13-core/goldhen-2.4b18.9.bin
+../next13-core/goldhen-2.4b18.10.bin
+../next13-core/goldhen-2.4b18.11.bin #48d46667249330c9be48c96a2a3a2dab4464dababa8fcb3e38170c98caf3851f
+../next13-core/patches/1302.bin #76584f8a02be806816aa7987ff6f2aed3a4a7f9494c49643e32f9cb9d75ab71b
+../next13-core/patches/1350.bin #b9ab32fa10c272c341da97159a13818d98316b9998f3cf89d874e0b35e41cdbd
+../next13-core/patches/1352.bin #a4ca7dc1f31a342cd80cb3b4aee0fcd56e92685e3ce1491c34cbd656c1af562c
+../next13-core/patches/1302-aio.bin #235a051f5a066daa546253de6eb61c1223a2682cb34edd916fc4565bb2c02fc6
+../next13-core/patches/1350-aio.bin #f771c196d012496c01f575674e95a74d7b00b7c1bc22325c7321f3ab6eb77b56
+../next13-core/patches/1352-aio.bin #adfb9771904f71cd1f5a82cbded8ac46c7ffeb3df974579535cf711904ac347e
+../next13-core/stability.js?v=2 #7d7138858f10a3be5cc3431217c7b1fcec21007bd5310674aca3008a3cdc53b9
+../next13-core/core.js?v=10 #a76c52afbc19b05d176be2059048a3c6a4fb61db084d56434cef2b17da00b2b3
+../next13-core/jb.js?v=12 #8e21805f1c61a7f1de3749e4d37f57feda0fc0aa203194a9d2195f8fe72708f0
 
 NETWORK:
 *
