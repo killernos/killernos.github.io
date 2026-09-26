@@ -1,5 +1,5 @@
 CACHE MANIFEST
-# rev 20260925-killernos-next13-0027-goldhen-selector
+# rev 20260925-killernos-next13-0028-goldhen-1812
 
 index.html #04ea2b5411b9d010ab110c2c1b3b5dd1dc5cfa12baffb646b7cd40fa70d8fe52
 jb.html #668dcd95ea2e2e6aebdd467db814452994afadcbff978f0260a473e215d31be5
@@ -20,6 +20,7 @@ jb.html #668dcd95ea2e2e6aebdd467db814452994afadcbff978f0260a473e215d31be5
 ../next13-core/goldhen-2.4b18.9.bin
 ../next13-core/goldhen-2.4b18.10.bin
 ../next13-core/goldhen-2.4b18.11.bin #48d46667249330c9be48c96a2a3a2dab4464dababa8fcb3e38170c98caf3851f
+../next13-core/goldhen-2.4b18.12.bin #df3f27c1b35bc7c40e3a08caab948930914dc7d0301a73b68945cf6ffe40ea12
 ../next13-core/patches/1302.bin #76584f8a02be806816aa7987ff6f2aed3a4a7f9494c49643e32f9cb9d75ab71b
 ../next13-core/patches/1350.bin #b9ab32fa10c272c341da97159a13818d98316b9998f3cf89d874e0b35e41cdbd
 ../next13-core/patches/1352.bin #a4ca7dc1f31a342cd80cb3b4aee0fcd56e92685e3ce1491c34cbd656c1af562c
