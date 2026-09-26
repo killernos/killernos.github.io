@@ -84,7 +84,7 @@
       supportedFirmware: ["12.00", "12.02", "12.50", "12.52", "13.00"],
       evidence: "SOURCE-CONFIRMED",
       enabled: true,
-      defaultSelection: true,
+      defaultSelection: false,
       notes: "Registered only because the payload binary exists locally."
     },
     {
@@ -99,6 +99,19 @@
       enabled: true,
       defaultSelection: false,
       notes: "Experimental 13.x payload. Availability does not imply equal stability on every console."
+    },
+    {
+      id: "goldhen-2.4b18.12",
+      family: "goldhen",
+      displayName: "GoldHEN v2.4b18.12",
+      version: "2.4b18.12",
+      payloadPath: "payloads/goldhen/goldhen-2.4b18.12.bin",
+      loader: "payload-bin",
+      supportedFirmware: ["13.02", "13.04", "13.50", "13.52"],
+      evidence: "SOURCE-CONFIRMED",
+      enabled: true,
+      defaultSelection: true,
+      notes: "Latest registered 13.x payload binary available locally."
     }
   ];
 })();
