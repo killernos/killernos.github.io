@@ -593,10 +593,6 @@
       border-color:rgba(53,255,122,.65);
       box-shadow:0 0 18px rgba(53,255,122,.13);
     }
-    .control-hen-picker{display:inline-flex;align-items:center;gap:8px;padding:0 10px;border:1px solid rgba(53,255,122,.35);border-radius:4px;background:rgba(6,25,14,.88);color:#a8ffc1;text-transform:uppercase;letter-spacing:.045em;font-weight:700}
-    .control-hen-picker label{white-space:nowrap;cursor:default}
-    .control-hen-picker select{position:relative;z-index:100;pointer-events:auto;-webkit-appearance:menulist;appearance:auto;min-width:190px;max-width:250px;padding:12px 10px;border:0;border-left:1px solid rgba(53,255,122,.22);background:#031108;color:#caffd8;font:inherit;font-weight:700;color-scheme:dark;cursor:pointer}
-    .control-hen-picker select option{background:#031108;color:#caffd8}
     .selector-panel { position:relative; z-index:20; overflow:visible; }
     .selector-field { position:relative; z-index:30; max-width:520px; overflow:visible; }
     .selector-field select {
@@ -613,6 +609,10 @@
     .preview-banner,.recovery-banner { border-radius:4px; }
     @media (prefers-reduced-motion:reduce) { h1::after { animation:none; } #matrix-rain { display:none; } }
 
+  
+    /* Simplified public view: developer detail remains available on demand. */
+    .runtime-details-panel{margin-top:18px;padding:0!important;overflow:hidden}.runtime-details-panel details{display:block}.runtime-details-panel summary{cursor:pointer;list-style:none;padding:20px 24px;color:#baffcd;font-weight:700;text-transform:uppercase;letter-spacing:.06em}.runtime-details-panel summary::-webkit-details-marker{display:none}.runtime-details-panel summary:before{content:"[ + ] ";color:#35ff7a}.runtime-details-panel details[open] summary:before{content:"[ - ] "}.runtime-details-panel summary span{display:block;margin:7px 0 0 52px;color:#568c69;font-size:.78rem;font-weight:400;text-transform:none;letter-spacing:.02em}.runtime-details-body{padding:0 24px 24px}.runtime-details-body .stats{margin-top:4px}.main-actions-panel{margin-top:18px}.main-actions-panel h2{margin-top:0}.main-actions-panel .actions{margin-top:14px}
+    .dev-detail{display:none!important}
   </style>
   <script src="./js/autoload-guard.js?v=next-universal-1302-1352-research-0024"></script>
   <script>
@@ -641,31 +641,23 @@
   <div class="shell">
     <section class="hero">
       <span class="eyebrow">Private Development Host</span>
-      <h1>PS4 WebKit Next<br>Free Community Edition</h1>
-      <p class="lead">Created and maintained by KillerNoS. NEXT is free software built around publicly disclosed PS4 security research and community projects. No payment is required to use this host.</p>
-
-      <div class="notice-row">
-        <div class="notice">
-          <strong>Risk Notice</strong>
-          I am not responsible for any damage. Jailbreak at your own risk.
-        </div>
-        <div class="notice">
-          <strong>Free Means Free</strong>
-          PS4 WebKit NEXT is provided free for the PS4 homebrew and security research community. Third-party authors and licenses remain credited here.
-        </div>
-        <div class="notice">
-          <strong>Local Validation Boundary</strong>
-          12.00 is the only locally hardware-testable firmware in this workspace.
-        </div>
-        <div class="notice" id="simulation-notice" hidden>
-          <strong>Simulated Firmware</strong>
-          Development only. Not hardware verified.
-        </div>
-      </div>
+      <h1>PS4 WebKit Next</h1>
+      <p class="lead">Created and maintained by KillerNoS. NEXT is built for the PS4 community—bringing together community research, testing, and development in one place with a focus on making the jailbreak experience simpler, more reliable, and easier for everyone to use.</p>
     </section>
 
-    <section class="grid">
-      <div class="panel">
+    <section class="panel main-actions-panel">
+  <h2>NEXT://CONTROL</h2>
+  <div class="actions">
+    <button id="run-next" type="button" disabled>NEXT 11.00–13.00 JAILBREAK</button>
+    <button id="run-next13" type="button" disabled>NEXT 13.02–13.52 JAILBREAK</button>
+    <div class="control-hen-picker"><label for="hen-select">GoldHEN</label><select id="hen-select" aria-label="GoldHEN version"></select></div>
+    <a class="link-button" href="./safe.html?v=next-universal-1302-1352-research-0024">Open Safe Recovery</a>
+    <a class="link-button" href="./diagnostics.html?v=next-universal-1302-1352-research-0024">Open Diagnostics</a>
+    <a class="link-button" href="./stability.html">Open 13.x Stability Dashboard</a>
+  </div>
+</section>
+
+    <section class="panel runtime-details-panel"><details id="runtime-details"><summary>NEXT Runtime Details <span>Firmware, routing, recovery and developer status</span></summary><div class="runtime-details-body">
         <h2>Runtime Routing</h2>
         <div class="stats">
           <div class="stat">
@@ -732,17 +724,12 @@
           </div>
         </div>
         <p id="home-instruction" class="home-instruction">Return to PS4 home if the browser becomes unstable. This host stays on the current page until you manually launch.</p>
-        <div class="actions">
-          <button id="run-next" type="button" disabled>NEXT 11.00–13.00 JAILBREAK</button>
-          <button id="run-next13" type="button" disabled>NEXT 13.02–13.52 JAILBREAK</button>
-          <div class="control-hen-picker"><label for="hen-select">GoldHEN</label><select id="hen-select" aria-label="GoldHEN version"><option value="goldhen-2.4b18.11">GoldHEN v2.4b18.11</option><option value="goldhen-2.4b18.10">GoldHEN v2.4b18.10</option><option value="goldhen-2.4b18.9">GoldHEN v2.4b18.9</option><option value="goldhen-2.4b18.8">GoldHEN v2.4b18.8</option><option value="goldhen-2.4b18.7">GoldHEN v2.4b18.7</option><option value="goldhen-2.4b18.6">GoldHEN v2.4b18.6</option><option value="goldhen-2.4b18.5">GoldHEN v2.4b18.5</option><option value="none">No HEN</option></select></div>
-          <a class="link-button" href="./safe.html?v=next-universal-1302-1352-research-0024">Open Safe Recovery</a>
-          <a class="link-button" href="./diagnostics.html?v=next-universal-1302-1352-research-0024">Open Diagnostics</a>
-          <a class="link-button" href="./stability.html">Open 13.x Stability Dashboard</a>
-        </div>
-      </div>
+        
+      </div></div></details></section>
 
-      <div class="panel">
+
+
+<section class="grid dev-detail"><div class="panel">
         <h2>Upstream Support Reference</h2>
         <div class="support-list">
           <div class="support-row">
@@ -765,11 +752,22 @@
       </div>
     </section>
 
-    <div id="preview-banner" class="preview-banner" hidden>PREVIEW MODE - EXPLOIT DISABLED</div>
-    <div id="payload-choices" class="selector-status" aria-live="polite" hidden>Selected: No HEN</div>
-    <div id="payload-selection-status" class="selector-status" hidden>Loading payload catalog...</div>
+    <section class="panel selector-panel dev-detail">
+      <div class="panel-header">
+        <h2>HEN / Payload Environment</h2>
+      </div>
+      <div id="preview-banner" class="preview-banner" hidden>PREVIEW MODE - EXPLOIT DISABLED</div>
+      <div class="selector-grid">
+        <div class="selector-field">
+          <label for="hen-select">Configured HEN</label>
+          <select id="hen-select" aria-live="polite"></select>
+        </div>
+      </div>
+      <div id="payload-choices" class="selector-status" aria-live="polite">Selected: No HEN</div>
+      <div id="payload-selection-status" class="selector-status">Loading payload catalog...</div>
+    </section>
 
-    <section class="grid">
+    <section class="grid dev-detail">
       <div class="panel">
         <h2>Free Community Edition</h2>
         <p class="footnote">NEXT integrates only public or redistributable components represented in this repository. Paid backup archives, account/profile data, licensed retail games, and commercial package content are not part of this host.</p>
@@ -830,9 +828,10 @@
       var simulationNotice = document.getElementById("simulation-notice");
       var homeInstructionElement = document.getElementById("home-instruction");
       var runButton = document.getElementById("run-next");
+      var next13Button = document.getElementById("run-next13");
       var reenableAutoloadButton = document.getElementById("reenable-autoload");
       var cancelAutoloadButton = document.getElementById("cancel-autoload");
-      var next13Button = document.getElementById("run-next13");
+      var research1302Button = document.getElementById("run-1302-research");
       var backendStateElement = document.getElementById("backend-state");
       var payloadStateElement = document.getElementById("payload-state");
       var payloadChoicesElement = document.getElementById("payload-choices");
@@ -1008,11 +1007,8 @@
       }
 
       function runtimeButtonLabel(value) {
-        if (!value) return "NEXT Runtime Unsupported";
-        if (value.mode === "research") return "Run 13.02-13.52 Research";
-        if (value.mode === "compatibility") return "Run Compatibility Manually";
-        if (value.mode === "runtime") return "Run Manually";
-        return "NEXT Runtime Unsupported";
+        if (!value || !value.buttonAllowed) return "NEXT Runtime Unsupported";
+        return "NEXT Runtime";
       }
 
       function runtimeTargetHref(value) {
@@ -1254,7 +1250,8 @@
         nextAccessElement.className = "status-pill " + capabilityStatusClass(capability.nextAccess);
         runtimeStatusElement.textContent = capability.runtimeStatus;
         runtimeStatusElement.className = "status-pill " + capabilityStatusClass(capability.runtimeStatus);
-        runButton.disabled = !(hardwareDetected && firmwareInRange(1100, 1300) && ready && !!capability.target);
+        // Keep both range buttons visible; only the matching PS4 firmware may launch.
+        runButton.disabled = !(hardwareDetected && firmwareNumber !== null && firmwareNumber >= 1100 && firmwareNumber <= 1300 && ready && !!capability.target);
         if (next13Button) next13Button.disabled = !(hardwareDetected && (firmware === "13.02" || firmware === "13.04" || firmware === "13.50" || firmware === "13.52"));
         backendElement.textContent = capability.backend;
         if (hardwareVerificationElement) hardwareVerificationElement.textContent = capability.hardwareVerification;
@@ -1334,13 +1331,18 @@
         }
         if (henSelectElement) {
           var options = ['<option value="none"' + (selectedPayloadId === "none" ? ' selected' : '') + '>No HEN</option>'];
-          for (index = 0; index < displayCatalog.length; index++) {
-            var option = displayCatalog[index];
-            if (window.PS4PayloadLoader.isNoHenSelection(option)) continue;
-            options.push('<option value="' + option.id + '"' + (option.id === selectedPayloadId ? ' selected' : '') + '>' + option.displayName + '</option>');
+          for (index = 0; index < groupNames.length; index++) {
+            var family = groupNames[index];
+            var familyOptions = groups[family];
+            var inner = [];
+            var optionIndex;
+            for (optionIndex = 0; optionIndex < familyOptions.length; optionIndex++) {
+              var option = familyOptions[optionIndex];
+              inner.push('<option value="' + option.id + '"' + (option.id === selectedPayloadId ? ' selected' : '') + '>' + option.displayName + (option.version ? ' (' + option.version + ')' : '') + '</option>');
+            }
+            options.push('<optgroup label="' + (familyOptions[0].name || family) + '">' + inner.join("") + '</optgroup>');
           }
           henSelectElement.innerHTML = options.join("");
-          henSelectElement.disabled = false;
         }
         payloadChoicesElement.textContent = selectedHenDetails(selectedPayload);
         updateLaunchState();
@@ -1650,28 +1652,16 @@
         }
       }
 
-      function firmwareInRange(min, max) {
-        return firmwareNumber !== null && firmwareNumber >= min && firmwareNumber <= max;
-      }
-
-      // Keep the two jailbreak families isolated. Never fall through from one
-      // firmware family into the other runtime.
       runButton.addEventListener("click", function () {
         if (runButton.disabled) return;
         cancelScheduledAutoload("manual-launch", false);
         navigateToRuntime("Manual 11.00-13.00");
       });
-
-      if (next13Button) {
-        next13Button.addEventListener("click", function () {
-          if (next13Button.disabled) return;
-          cancelScheduledAutoload("manual-launch-next13", false);
-          var selectedFile = selectedPayload && selectedPayload.file ? selectedPayload.file.split("/").pop() : "";
-          var next13Url = "./runtime/next13/index.html?v=next-universal-1302-1352-research-0025";
-          if (selectedFile && selectedPayload && selectedPayload.family === "goldhen") next13Url += "&payloadfile=" + encodeURIComponent(selectedFile);
-          location.href = next13Url;
-        });
-      }
+      if (next13Button) next13Button.addEventListener("click", function () {
+        if (next13Button.disabled) return;
+        cancelScheduledAutoload("manual-launch", false);
+        location.href = "./runtime/next13/index.html?v=next-universal-1302-1352-research-0024";
+      });
 
       if (reenableAutoloadButton) {
         reenableAutoloadButton.onclick = function () {
@@ -1704,6 +1694,12 @@
         };
       }
 
+      if (research1302Button) {
+        research1302Button.onclick = function () {
+          if (research1302Button.disabled) return;
+          location.href = research1302TargetHref();
+        };
+      }
 
       initializeAutoload();
     });
