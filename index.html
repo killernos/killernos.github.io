@@ -1350,6 +1350,17 @@
         var savedId = getStoredSelection();
         var saved = savedId ? window.PS4PayloadLoader.getSelectionById(savedId) : null;
         var savedState = compatibilityState(saved);
+        if (String(firmware || "") === "12.00" && (!saved || window.PS4PayloadLoader.isNoHenSelection(saved) || saved.id === "goldhen-2.4b18.11" || saved.id === "goldhen-2.4b18.12")) {
+          saved = window.PS4PayloadLoader.getSelectionById("goldhen-2.4b18.10");
+          savedState = compatibilityState(saved);
+          if (saved && savedState === "COMPATIBLE") {
+            selectedPayload = saved;
+            selectedPayloadId = saved.id;
+            setStoredSelection(saved.id);
+            updatePayloadState(false);
+            return;
+          }
+        }
         if (saved && (window.PS4PayloadLoader.isNoHenSelection(saved) || savedState === "COMPATIBLE")) {
           selectedPayload = saved;
           selectedPayloadId = saved.id;
