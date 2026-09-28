@@ -1370,8 +1370,23 @@
         updatePayloadState(false);
       }
 
+      function enforce1200GoldHenCeiling() {
+        if (String(firmware || "") !== "12.00" || !selectedPayload || isNoHenSelected()) return;
+        var version = String(selectedPayload.version || "");
+        if (version !== "2.4b18.11" && version !== "2.4b18.12") return;
+        var safePayload = window.PS4PayloadLoader.getSelectionById("goldhen-2.4b18.10");
+        if (!safePayload) return;
+        selectedPayload = safePayload;
+        selectedPayloadId = safePayload.id;
+        setStoredSelection(safePayload.id);
+        if (henSelectElement) henSelectElement.value = safePayload.id;
+        updatePayloadState(false);
+        if (payloadSelectionStatus) payloadSelectionStatus.textContent = "Firmware 12.00 is locked to GoldHEN 2.4b18.10 maximum; selection was changed to 2.4b18.10 before launch.";
+      }
+
       function navigateToRuntime(triggerLabel) {
         var href;
+        enforce1200GoldHenCeiling();
         capability = currentCapability();
         if (!launchReady() || !capability || !capability.target) return;
         if (autoloadLaunchStarted) return;
